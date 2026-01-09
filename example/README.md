@@ -33,14 +33,14 @@ This directory contains a complete working example of an Oursky-configured proje
    ```
 
 3. **Open in your AI agent**:
-   - **Cursor**: Open `.oursky/worktrees/example-branch/`
+   - **Cursor**: Open `.vendatta/worktrees/example-branch/`
    - **OpenCode**: Uses the generated `opencode.json`
    - **Claude**: Uses the generated config files
 
 ## Configuration Structure
 
 ```
-.oursky/
+.vendatta/
 ├── config.yaml          # Project configuration
 ├── templates/           # Shared AI capabilities
 │   ├── skills/          # Reusable skills
@@ -75,7 +75,7 @@ PostgreSQL runs on `localhost:5432` with credentials from `.env`.
 ## Customizing
 
 ### Add Your Own Skills
-Create `.oursky/templates/skills/my-skill.yaml`:
+Create `.vendatta/templates/skills/my-skill.yaml`:
 ```yaml
 name: "my-skill"
 description: "Does something useful"
@@ -89,10 +89,10 @@ execute:
 ```
 
 ### Modify Rules
-Edit `.oursky/templates/rules/code-quality.md` to match your team's standards.
+Edit `.vendatta/templates/rules/code-quality.md` to match your team's standards.
 
 ### Configure Services
-Update `.oursky/config.yaml` to change ports, add services, or enable different agents.
+Update `.vendatta/config.yaml` to change ports, add services, or enable different agents.
 
 ## Troubleshooting
 
