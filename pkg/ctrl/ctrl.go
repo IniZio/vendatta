@@ -1,0 +1,187 @@
+package ctrl
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/vibegear/oursky/pkg/config"
+	"github.com/vibegear/oursky/pkg/provider"
+	"github.com/vibegear/oursky/pkg/worktree"
+)
+
+type Controller interface {
+	Init(ctx context.Context) error
+	Dev(ctx context.Context, branch string) error
+	Kill(ctx context.Context, sessionID string) error
+	List(ctx context.Context) ([]provider.Session, error)
+	Exec(ctx context.Context, sessionID string, cmd []string) error
+}
+
+type BaseController struct {
+	Providers map[string]provider.Provider
+}
+
+func NewBaseController(providers []provider.Provider) *BaseController {
+	pMap := make(map[string]provider.Provider)
+	for _, p := range providers {
+		pMap[p.Name()] = p
+	}
+	return &BaseController{Providers: pMap}
+}
+
+func (c *BaseController) Init(ctx context.Context) error {
+	dirs := []string{
+		".oursky/hooks",
+		".oursky/worktrees",
+		".oursky/agents/rules",
+		".oursky/agents/skills",
+		".oursky/agents/commands",
+	}
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
+	}
+
+	configYaml := `name: my-project
+provider: docker
+services:
+  web: 3000
+docker:
+  image: ubuntu:22.04
+  dind: true
+hooks:
+  setup: .oursky/hooks/setup.sh
+  dev: .oursky/hooks/dev.sh
+`
+	if err := os.WriteFile(".oursky/config.yaml", []byte(configYaml), 0644); err != nil {
+		return err
+	}
+
+	setupSh := `#!/bin/bash
+# Install docker if dind is enabled
+echo "Setting up environment..."
+`
+	if err := os.WriteFile(".oursky/hooks/setup.sh", []byte(setupSh), 0755); err != nil {
+		return err
+	}
+
+	baseRule := `# Base Rules
+- Follow existing code patterns.
+- Ensure type safety.
+`
+	if err := os.WriteFile(".oursky/agents/rules/base.md", []byte(baseRule), 0644); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *BaseController) Dev(ctx context.Context, branch string) error {
+	cfg, err := config.LoadConfig(".oursky/config.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	p, ok := c.Providers[cfg.Provider]
+	if !ok {
+		return fmt.Errorf("provider %s not found", cfg.Provider)
+	}
+
+	wtManager := worktree.NewManager(".", ".oursky/worktrees")
+	wtPath, err := wtManager.Add(branch)
+	if err != nil {
+		return fmt.Errorf("failed to setup worktree: %w", err)
+	}
+
+	absWtPath, err := filepath.Abs(wtPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for worktree: %w", err)
+	}
+
+	sessionID := fmt.Sprintf("%s-%s", cfg.Name, branch)
+	session, err := p.Create(ctx, sessionID, absWtPath, cfg)
+	if err != nil {
+		return fmt.Errorf("failed to create session: %w", err)
+	}
+
+	if err := p.Start(ctx, session.ID); err != nil {
+		return fmt.Errorf("failed to start session: %w", err)
+	}
+
+	sessions, _ := p.List(ctx)
+	var activeSession *provider.Session
+	for _, s := range sessions {
+		if s.ID == session.ID || s.Labels["oursky.session.id"] == sessionID {
+			activeSession = &s
+			break
+		}
+	}
+
+	env := []string{}
+	if activeSession != nil {
+		for name, port := range cfg.Services {
+			pStr := fmt.Sprintf("%d", port)
+			if publicPort, ok := activeSession.Services[pStr]; ok {
+				url := fmt.Sprintf("http://localhost:%d", publicPort)
+				env = append(env, fmt.Sprintf("OURSKY_SERVICE_%s_URL=%s", name, url))
+			}
+		}
+	}
+
+	if cfg.Hooks.Setup != "" {
+		fmt.Printf("Running setup hook: %s\n", cfg.Hooks.Setup)
+		err = p.Exec(ctx, session.ID, provider.ExecOptions{
+			Cmd:    []string{"/bin/bash", "/workspace/" + cfg.Hooks.Setup},
+			Env:    env,
+			Stdout: true,
+		})
+		if err != nil {
+			return fmt.Errorf("setup hook failed: %w", err)
+		}
+	}
+
+	fmt.Printf("Session %s is ready!\n", session.ID)
+	return nil
+}
+
+func (c *BaseController) Kill(ctx context.Context, sessionID string) error {
+	for _, p := range c.Providers {
+		sessions, _ := p.List(ctx)
+		for _, s := range sessions {
+			if s.ID == sessionID || s.Labels["oursky.session.id"] == sessionID {
+				return p.Destroy(ctx, s.ID)
+			}
+		}
+	}
+	return fmt.Errorf("session %s not found", sessionID)
+}
+
+func (c *BaseController) List(ctx context.Context) ([]provider.Session, error) {
+	var all []provider.Session
+	for _, p := range c.Providers {
+		sessions, err := p.List(ctx)
+		if err != nil {
+			continue
+		}
+		all = append(all, sessions...)
+	}
+	return all, nil
+}
+
+func (c *BaseController) Exec(ctx context.Context, sessionID string, cmd []string) error {
+	for _, p := range c.Providers {
+		sessions, _ := p.List(ctx)
+		for _, s := range sessions {
+			if s.ID == sessionID || s.Labels["oursky.session.id"] == sessionID {
+				return p.Exec(ctx, s.ID, provider.ExecOptions{
+					Cmd:    cmd,
+					Stdout: true,
+				})
+			}
+		}
+	}
+	return fmt.Errorf("session %s not found", sessionID)
+}
