@@ -41,13 +41,19 @@ type TemplateRepo struct {
 	Path   string `yaml:"path,omitempty"` // Path within repo to templates
 }
 
+type Remote struct {
+	Name string `yaml:"name"`
+	URL  string `yaml:"url"`
+}
+
 type Config struct {
-	Name     string             `yaml:"name"`
-	Provider string             `yaml:"provider,omitempty"`
-	Services map[string]Service `yaml:"services"`
-	Remotes  []TemplateRepo     `yaml:"remotes,omitempty"`
-	Agents   []Agent            `yaml:"agents,omitempty"`
-	MCP      struct {
+	Name        string             `yaml:"name"`
+	Provider    string             `yaml:"provider,omitempty"`
+	Services    map[string]Service `yaml:"services"`
+	Remotes     []TemplateRepo     `yaml:"remotes,omitempty"`
+	SyncTargets []Remote           `yaml:"sync_targets,omitempty"`
+	Agents      []Agent            `yaml:"agents,omitempty"`
+	MCP         struct {
 		Enabled bool   `yaml:"enabled,omitempty"`
 		Port    int    `yaml:"port,omitempty"`
 		Host    string `yaml:"host,omitempty"`

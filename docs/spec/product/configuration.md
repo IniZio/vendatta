@@ -16,6 +16,7 @@ agents: []                     # Enabled AI agents
 mcp: {}                        # MCP server configuration
 docker: {}                     # Container runtime settings
 hooks: {}                      # Lifecycle scripts
+sync_targets: []              # Remote targets for .vendatta sync
 ```
 
 ### **Services Configuration**
@@ -120,9 +121,36 @@ docker:
 #### **Lifecycle Scripts**
 ```yaml
 hooks:
-  setup: ".oursky/hooks/setup.sh"  # Run after container creation
-  dev: ".oursky/hooks/dev.sh"      # Run before dev session starts
-  teardown: ".oursky/hooks/teardown.sh"  # Run before cleanup
+  setup: ".vendatta/hooks/setup.sh"  # Run after container creation
+  dev: ".vendatta/hooks/dev.sh"      # Run before dev session starts
+  teardown: ".vendatta/hooks/teardown.sh"  # Run before cleanup
+```
+
+### **Sync Targets Configuration**
+
+#### **Remote Sync Targets**
+```yaml
+sync_targets:
+  - name: "upstream"              # Remote name
+    url: "https://github.com/example/upstream.git"  # Repository URL
+  - name: "configs"
+    url: "https://github.com/example/configs.git"
+```
+
+#### **Remote Options**
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `name` | string | Yes | Git remote name |
+| `url` | string | Yes | Repository URL |
+
+#### **Usage**
+Configured sync targets push only the `.vendatta` directory to the specified remote. Sync individually or all at once:
+```bash
+# Sync specific target
+vendatta remote sync <target-name>
+
+# Sync all configured targets
+vendatta remote sync-all
 ```
 
 ## 3. Template System
@@ -337,7 +365,7 @@ GITHUB_TOKEN=ghp_...
 - Enable D in D only when needed
 
 ### **Maintenance**
-- Version control your `.oursky/` directory
+- Version control your `.vendatta/` directory
 - Test configuration changes in isolated branches
 - Document custom templates and their purpose
 
@@ -385,16 +413,16 @@ cat .cursor/mcp.json
 cat opencode.json
 
 # Check container logs
-docker logs oursky-session-123
+docker logs vendatta-session-123
 ```
 
 ## 8. Migration Guide
 
 ### **Upgrading from Manual Config**
-1. Run `oursky init` to generate new structure
+1. Run `vendatta init` to generate new structure
 2. Move existing configs to appropriate template directories
 3. Update `config.yaml` with your settings
-4. Test with `oursky dev test-branch`
+4. Test with `vendatta dev test-branch`
 
 ### **From Other Tools**
 - **docker-compose**: Move service definitions to `services:` section

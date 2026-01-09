@@ -7,11 +7,14 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/vibegear/oursky/pkg/agent"
+	"github.com/vibegear/oursky/pkg/config"
 	"github.com/vibegear/oursky/pkg/ctrl"
 	"github.com/vibegear/oursky/pkg/provider"
 	"github.com/vibegear/oursky/pkg/provider/docker"
@@ -22,8 +25,8 @@ type GitHubRelease struct {
 	TagName string `json:"tag_name"`
 }
 
-func updateOursky() error {
-	const repo = "oursky/vendatta"
+func updateVendatta() error {
+	const repo = "IniZio/vendatta"
 
 	// Detect platform
 	osName := runtime.GOOS
@@ -133,6 +136,97 @@ func updateOursky() error {
 	return nil
 }
 
+func syncRemoteTarget(targetName string) error {
+	cfg, err := config.LoadConfig(".oursky/config.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	var target *config.Remote
+	for _, t := range cfg.SyncTargets {
+		if t.Name == targetName {
+			target = &t
+			break
+		}
+	}
+	if target == nil {
+		return fmt.Errorf("sync target '%s' not found in config", targetName)
+	}
+
+	fmt.Printf("Syncing .oursky to '%s' (%s)...\n", target.Name, target.URL)
+
+	fmt.Println("Pulling latest changes from origin...")
+	if err := runGit("pull", "origin", "main"); err != nil {
+		return fmt.Errorf("failed to pull from origin: %w", err)
+	}
+
+	fmt.Printf("Adding/updating remote '%s'...\n", target.Name)
+	if err := runGit("remote", "add", target.Name, target.URL); err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
+			return fmt.Errorf("failed to add remote: %w", err)
+		}
+		if err := runGit("remote", "set-url", target.Name, target.URL); err != nil {
+			return fmt.Errorf("failed to update remote: %w", err)
+		}
+	}
+
+	fmt.Println("Creating filtered branch with .oursky content...")
+	if err := runGit("checkout", "-b", "temp-sync"); err != nil {
+		return fmt.Errorf("failed to create temp branch: %w", err)
+	}
+	if err := runGit("rm", "-rf", "--cached", "."); err != nil {
+		return fmt.Errorf("failed to clear index: %w", err)
+	}
+	if err := runGit("add", ".oursky"); err != nil {
+		return fmt.Errorf("failed to add .oursky: %w", err)
+	}
+	if err := runGit("commit", "-m", "Sync .oursky directory"); err != nil {
+		return fmt.Errorf("failed to commit: %w", err)
+	}
+	if err := runGit("push", target.Name, "temp-sync:main"); err != nil {
+		return fmt.Errorf("failed to push .oursky: %w", err)
+	}
+	if err := runGit("checkout", "main"); err != nil {
+		return fmt.Errorf("failed to checkout main: %w", err)
+	}
+	if err := runGit("branch", "-D", "temp-sync"); err != nil {
+		return fmt.Errorf("failed to delete temp branch: %w", err)
+	}
+
+	fmt.Printf("Successfully synced .oursky to '%s'!\n", target.Name)
+	return nil
+}
+
+func syncAllRemotes() error {
+	cfg, err := config.LoadConfig(".oursky/config.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if len(cfg.SyncTargets) == 0 {
+		fmt.Println("No sync targets configured in .oursky/config.yaml")
+		return nil
+	}
+
+	for _, target := range cfg.SyncTargets {
+		fmt.Printf("Syncing to target '%s' (%s)...\n", target.Name, target.URL)
+		if err := syncRemoteTarget(target.Name); err != nil {
+			return fmt.Errorf("failed to sync target '%s': %w", target.Name, err)
+		}
+		fmt.Printf("Successfully synced target '%s'!\n", target.Name)
+	}
+
+	fmt.Println("All configured sync targets updated successfully!")
+	return nil
+}
+
+func runGit(args ...string) error {
+	cmd := exec.Command("git", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func main() {
 	var providers []provider.Provider
 	dProvider, err := docker.NewDockerProvider()
@@ -143,8 +237,8 @@ func main() {
 	controller := ctrl.NewBaseController(providers)
 
 	rootCmd := &cobra.Command{
-		Use:   "oursky",
-		Short: "Oursky Dev Environment Manager",
+		Use:   "vendatta",
+		Short: "Vendatta Dev Environment Manager",
 	}
 
 	initCmd := &cobra.Command{
@@ -281,15 +375,39 @@ func main() {
 
 	templatesCmd.AddCommand(templatesPullCmd, templatesListCmd, templatesMergeCmd)
 
-	updateCmd := &cobra.Command{
-		Use:   "update",
-		Short: "Update oursky to the latest version",
+	remoteCmd := &cobra.Command{
+		Use:   "remote",
+		Short: "Manage Git remotes",
+	}
+
+	syncCmd := &cobra.Command{
+		Use:   "sync [target-name]",
+		Short: "Sync .oursky directory to a configured remote target",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return updateOursky()
+			return syncRemoteTarget(args[0])
 		},
 	}
 
-	rootCmd.AddCommand(initCmd, devCmd, listCmd, killCmd, agentCmd, templatesCmd, updateCmd)
+	syncAllCmd := &cobra.Command{
+		Use:   "sync-all",
+		Short: "Sync all configured remotes from .oursky/config.yaml",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return syncAllRemotes()
+		},
+	}
+
+	remoteCmd.AddCommand(syncCmd, syncAllCmd)
+
+	updateCmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update vendatta to the latest version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return updateVendatta()
+		},
+	}
+
+	rootCmd.AddCommand(initCmd, devCmd, listCmd, killCmd, agentCmd, templatesCmd, remoteCmd, updateCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -18,16 +18,16 @@ Get started in 2 simple steps:
 
 ```bash
 # 1. Install Vendatta
-curl -fsSL https://raw.githubusercontent.com/oursky/vendatta/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | bash
 
 # Add ~/.local/bin to your PATH if not already:
 # export PATH="$HOME/.local/bin:$PATH"
 
 # 2. Initialize in your project
-oursky init
+vendatta init
 
 # 3. Start an isolated development session
-oursky dev my-feature
+vendatta dev my-feature
 ```
 
 That's it! Vendatta creates an isolated environment for your `my-feature` branch with automatic AI agent configuration.
@@ -38,7 +38,7 @@ If you prefer to build from source:
 
 ```bash
 # Requires Go 1.24+
-go build -o oursky cmd/oursky/main.go
+go build -o vendatta cmd/vendatta/main.go
 ```
 
 #### Updates
@@ -46,20 +46,20 @@ go build -o oursky cmd/oursky/main.go
 To update to the latest version:
 
 ```bash
-oursky update
+vendatta update
 ```
 
 ### Understanding What Happened
 
 - **Step 1**: Built a single Go binary that manages everything
-- **Step 2**: Created a `.oursky/` directory with basic configuration templates
-- **Step 3**: Generated a Git worktree at `.oursky/worktrees/my-feature/` and started any configured services
+- **Step 2**: Created a `.vendatta/` directory with basic configuration templates
+- **Step 3**: Generated a Git worktree at `.vendatta/worktrees/my-feature/` and started any configured services
 
 Your AI agents (Cursor, OpenCode, etc.) are now automatically configured to work with this isolated environment.
 
 ### Configure for Your Project
 
-Vendatta works with your existing development setup. Edit `.oursky/config.yaml` to define your services:
+Vendatta works with your existing development setup. Edit `.vendatta/config.yaml` to define your services:
 
 ```yaml
 # Example: Full-stack web app
@@ -81,78 +81,13 @@ agents:
     enabled: true
 ```
 
-Run `./oursky dev my-feature` again to apply your configuration.
-
-## When to Use Vendatta
-
-### Branch-Based Development
-Perfect for teams working on multiple features simultaneously:
-- Each branch gets its own isolated filesystem
-- No more "git stash" or conflicting dependencies
-- Parallel development without environment pollution
-
-### Complex Microservices
-When your local setup involves multiple services:
-- Databases, APIs, frontend apps
-- Docker-compose projects run inside containers
-- Automatic service discovery and port mapping
-
-### AI-Assisted Development
-Enhance your AI coding experience:
-- Secure tool execution for agents
-- Project-specific rules and capabilities
-- Standardized skills across different AI tools
-
-### Team Standardization
-Ensure consistent development environments:
-- Version-controlled configurations
-- Shared templates for coding standards
-- Easy onboarding for new team members
-
-## AI Agent Integration
-
-Vendatta automatically configures your favorite AI coding assistants to work securely with isolated environments.
-
-### Supported Agents
-
-| Agent | Description | Integration |
-|-------|-------------|-------------|
-| **Cursor** | VS Code with AI | `.cursor/mcp.json` |
-| **OpenCode** | Standalone AI assistant | `opencode.json` + `.opencode/` |
-| **Claude Desktop** | Anthropic's desktop app | `claude_desktop_config.json` |
-| **Claude Code** | CLI tool | `claude_code_config.json` |
-
-### How It Works
-
-1. **Enable agents** in `.oursky/config.yaml`
-2. **Start development**: `./oursky dev branch-name`
-3. **Open your worktree** in the AI agent of choice
-4. **Agents connect automatically** via MCP with full environment access
-
-### Shared Capabilities
-
-All enabled agents get access to:
-- **Skills**: Web search, file operations, data analysis
-- **Commands**: Build, deploy, git operations
-- **Rules**: Code quality standards, collaboration guidelines
-
-Customize these in `.oursky/templates/` and they're available to all your agents.
-
-### Agent Config Sharing
-
-Share standardized AI configurations across your team:
-- **Version-controlled setups**: Store agent configurations in git alongside your code
-- **Team consistency**: Ensure all developers use the same AI skills, commands, and rules
-- **Easy collaboration**: New team members get identical AI assistance setups
-- **Cross-agent compatibility**: Configurations work seamlessly across Cursor, OpenCode, Claude, and other agents
-
-Simply commit your `.oursky/templates/` directory to share configurations with your team.
+Run `./vendatta dev my-feature` again to apply your configuration.
 
 ## Configuration Reference
 
 ### Project Structure
 ```
-.oursky/
+.vendatta/
 ├── config.yaml          # Main project configuration
 ├── templates/           # Shared AI capabilities
 │   ├── skills/          # Reusable AI skills
@@ -164,7 +99,7 @@ Simply commit your `.oursky/templates/` directory to share configurations with y
 
 ### Main Configuration
 
-The `.oursky/config.yaml` file defines your development environment:
+The `.vendatta/config.yaml` file defines your development environment:
 
 ```yaml
 # Project settings
@@ -199,7 +134,7 @@ mcp:
 ### Customizing Templates
 
 #### Adding AI Skills
-Create `.oursky/templates/skills/my-skill.yaml`:
+Create `.vendatta/templates/skills/my-skill.yaml`:
 ```yaml
 name: "my-custom-skill"
 description: "Does something useful"
@@ -213,7 +148,7 @@ execute:
 ```
 
 #### Defining Commands
-Create `.oursky/templates/commands/my-command.yaml`:
+Create `.vendatta/templates/commands/my-command.yaml`:
 ```yaml
 name: "deploy"
 description: "Deploy to staging"
@@ -225,7 +160,7 @@ steps:
 ```
 
 #### Setting Coding Rules
-Create `.oursky/templates/rules/team-standards.md`:
+Create `.vendatta/templates/rules/team-standards.md`:
 ```markdown
 ---
 title: "Team Standards"
@@ -250,14 +185,14 @@ mcp:
 
 ```bash
 export MCP_PORT=3001
-./oursky dev my-branch
+./vendatta dev my-branch
 ```
 
 ### Service Discovery & Port Access
 
 Vendatta automatically discovers running services and provides environment variables for easy access:
 
-**Available in worktrees**: When you run `./oursky dev branch-name`, your worktree environment gets these variables:
+**Available in worktrees**: When you run `./vendatta dev branch-name`, your worktree environment gets these variables:
 
 - `OURSKY_SERVICE_DB_URL` - Database connection URL
 - `OURSKY_SERVICE_API_URL` - API service URL
@@ -287,10 +222,10 @@ This eliminates manual port management and ensures your services can communicate
 
 1. **Set up your project**:
    ```bash
-   ./oursky init
+   ./vendatta init
    ```
 
-2. **Configure services** (edit `.oursky/config.yaml`):
+2. **Configure services** (edit `.vendatta/config.yaml`):
    ```yaml
    services:
      db:
@@ -309,12 +244,132 @@ This eliminates manual port management and ensures your services can communicate
 
 3. **Start development**:
    ```bash
-   ./oursky dev new-feature
+   ./vendatta dev new-feature
    ```
 
 4. **Code with AI assistance**:
    - Open `.oursky/worktrees/new-feature/` in Cursor
    - AI agent connects automatically with full environment access
+
+## Complete Feature Walkthrough
+
+This example demonstrates all Vendatta features in a real development workflow.
+
+### 1. Initialize with Remote Templates
+
+For existing projects, pull shared configurations and templates:
+
+```bash
+# Initialize the project
+vendatta init
+
+# Pull agent templates from a remote repository
+vendatta templates pull https://github.com/IniZio/dotagents.git
+
+# List pulled template repositories
+vendatta templates list
+
+# Merge templates into your configuration
+vendatta templates merge
+```
+
+### 2. Configure Your Development Environment
+
+Edit `.oursky/config.yaml` to define your stack:
+
+```yaml
+name: "my-fullstack-app"
+
+services:
+  db:
+    command: "docker-compose up -d postgres"
+    healthcheck:
+      url: "http://localhost:5432/health"
+  api:
+    command: "cd server && npm run dev"
+    depends_on: ["db"]
+  web:
+    command: "cd client && npm run dev"
+    depends_on: ["api"]
+
+agents:
+  - name: "cursor"
+    enabled: true
+  - name: "opencode"
+    enabled: true
+
+sync_targets:
+  - name: "backup"
+    url: "https://github.com/your-org/configs.git"
+```
+
+### 3. Start Development Session
+
+```bash
+# Start isolated development environment
+vendatta dev feature-branch
+```
+
+### 4. Check Mapped Ports and Services
+
+Once running, Vendatta automatically maps service ports. Check available services:
+
+```bash
+# See all running sessions
+vendatta list
+
+# Check environment variables for service URLs
+env | grep OURSKY_SERVICE
+# Output:
+# OURSKY_SERVICE_DB_URL=postgresql://localhost:5432
+# OURSKY_SERVICE_API_URL=http://localhost:5000
+# OURSKY_SERVICE_WEB_URL=http://localhost:3000
+```
+
+### 5. Confirm Everything Works
+
+- **Database**: Connect to `OURSKY_SERVICE_DB_URL`
+- **API**: Visit `OURSKY_SERVICE_API_URL` or curl it
+- **Web App**: Open `OURSKY_SERVICE_WEB_URL` in browser
+- **AI Agents**: Open worktree in Cursor/OpenCode, agents connect automatically
+
+### 6. Use MCP Agent Gateway
+
+For direct AI agent integration:
+
+```bash
+# Start MCP server for a specific session
+vendatta agent <session-id>
+```
+
+### 7. Sync Configurations
+
+Push your `.oursky` configs to remote targets:
+
+```bash
+# Sync to a specific target
+vendatta remote sync backup
+
+# Sync to all configured targets
+vendatta remote sync-all
+```
+
+### 8. Clean Up
+
+```bash
+# Stop a specific session
+vendatta kill <session-id>
+
+# List all sessions before cleanup
+vendatta list
+```
+
+### Troubleshooting
+
+- **Services not starting**: Check `.oursky/config.yaml` syntax
+- **Ports not mapped**: Ensure services have healthchecks
+- **Agents not connecting**: Verify MCP port (default 3001) is available
+- **Git conflicts**: Pull latest changes before `vendatta dev`
 
 ---
 *Powered by OhMyOpenCode.*

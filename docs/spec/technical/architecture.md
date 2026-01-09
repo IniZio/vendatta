@@ -24,9 +24,9 @@ graph TD
     end
 
     subgraph "Filesystem"
-        WM --> WT[.oursky/worktrees/]
-        CP --> CFG[.oursky/config.yaml]
-        CP --> AS[.oursky/agents/]
+        WM --> WT[.vendatta/worktrees/]
+        CP --> CFG[.vendatta/config.yaml]
+        CP --> AS[.vendatta/agents/]
     end
 ```
 
@@ -34,7 +34,7 @@ graph TD
 
 ### **Control Plane (`pkg/ctrl`)**
 The central coordinator. It is responsible for:
-- Parsing `.oursky/config.yaml`.
+- Parsing `.vendatta/config.yaml`.
 - Orchestrating the sequence: `Worktree Create` -> `Provider Create` -> `Setup Hook` -> `Agent Gateway`.
 - Maintaining session state through Docker labels and filesystem markers.
 
@@ -59,7 +59,16 @@ Oursky solves the API discovery problem by injecting environment variables:
 - **Injection**: Variables like `OURSKY_SERVICE_[NAME]_URL` are passed to the container, allowing seamless CORS and endpoint configuration.
 
 ## 5. Agent Scaffold
-The `.oursky/agents/` directory acts as the **Single Source of Truth** for agent behavior.
+The `.vendatta/agents/` directory acts as the **Single Source of Truth** for agent behavior.
 - **Rules**: Markdown-based instructions.
 - **Skills**: YAML tool definitions.
 - **Sync**: CLI command `sync-agents` generates agent-specific configurations (e.g., `.cursorrules`).
+
+## 6. Remote Repository Management
+Oursky provides native CLI commands for advanced multi-remote Git operations:
+- **Remote Sync**: `vendatta remote sync <target>` syncs `.vendatta` directory to a configured remote target.
+- **Config-Driven Sync**: `vendatta remote sync-all` syncs `.vendatta` to all targets defined in `.vendatta/config.yaml` under `sync_targets`.
+- **Implementation**: Uses Go `exec.Command` for Git operations with comprehensive error handling.
+- **Use Case**: Rare scenarios requiring synchronization of `.vendatta` configs to additional repositories.
+
+This ensures users never need direct Git commands for remote management while maintaining standard Git workflows for normal operations.

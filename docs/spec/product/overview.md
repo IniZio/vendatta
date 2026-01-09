@@ -32,15 +32,15 @@ Zero-setup installation. A single Go binary manages everything from worktree cre
 | :--- | :--- | :--- |
 | **Senior Dev** | Complex orchestration, fast branch switching. | Automated Worktree + DinD orchestration. |
 | **Agent User** | Secure tool execution for AI. | Built-in MCP Server with session boundaries. |
-| **Team Lead** | Onboarding consistency. | Standardized `.oursky` config & lifecycle hooks. |
+| **Team Lead** | Onboarding consistency. | Standardized `.vendatta` config & lifecycle hooks. |
 
 ## 5. Configuration Guide
 
-### **Understanding the `.oursky/` Structure**
-Oursky uses a simple, intuitive configuration system centered around the `.oursky/` directory:
+### **Understanding the `.vendatta/` Structure**
+Oursky uses a simple, intuitive configuration system centered around the `.vendatta/` directory:
 
 ```
-.oursky/
+.vendatta/
 ├── config.yaml          # Main project configuration
 ├── templates/           # Shared capabilities (skills, commands, rules)
 │   ├── skills/          # Reusable AI skills
@@ -86,8 +86,11 @@ agents:
     enabled: true
   - name: "opencode"
     enabled: true
-  - name: "claude-desktop"
-    enabled: true
+
+# Remote sync targets
+sync_targets:
+  - name: "upstream"
+    url: "https://github.com/example/upstream.git"
 
 # MCP server configuration
 mcp:
@@ -102,8 +105,8 @@ docker:
 
 # Lifecycle hooks
 hooks:
-  setup: ".oursky/hooks/setup.sh"
-  dev: ".oursky/hooks/dev.sh"
+  setup: ".vendatta/hooks/setup.sh"
+  dev: ".vendatta/hooks/dev.sh"
 ```
 
 #### **Services Configuration**
@@ -127,7 +130,7 @@ Secure communication bridge between agents and your environment:
 ### **Shared Templates**
 Reusable capabilities that work across all agents:
 
-#### **Skills** (`.oursky/templates/skills/`)
+#### **Skills** (`.vendatta/templates/skills/`)
 AI capabilities following the [agentskills.io](https://agentskills.io) standard:
 ```yaml
 name: "web-search"
@@ -139,7 +142,7 @@ execute:
   url: "https://api.searchengine.com/search"
 ```
 
-#### **Commands** (`.oursky/templates/commands/`)
+#### **Commands** (`.vendatta/templates/commands/`)
 Standardized development workflows:
 ```yaml
 name: "build"
@@ -151,7 +154,7 @@ steps:
     command: "npm run build"
 ```
 
-#### **Rules** (`.oursky/templates/rules/`)
+#### **Rules** (`.vendatta/templates/rules/`)
 Development guidelines following [agents.md](https://github.com/agentsmd/agents.md):
 ```markdown
 ---
@@ -201,16 +204,17 @@ Each agent gets customized configuration:
 ```
 
 ### **Configuration Workflow**
-1. **Initialize**: `oursky init` creates the `.oursky/` structure
+1. **Initialize**: `vendatta init` creates the `.vendatta/` structure
 2. **Customize**: Edit `config.yaml` and templates for your project
-3. **Generate**: `oursky dev <branch>` auto-generates agent configs
+3. **Generate**: `vendatta dev <branch>` auto-generates agent configs
 4. **Use**: Open worktree in your preferred AI agent
 5. **Iterate**: Modify templates and regenerate as needed
 
 ## 6. The "Oursky" Workflow
-1.  **Onboard**: Run `oursky init`. Define services, agents, and MCP settings.
+1.  **Onboard**: Run `vendatta init`. Define services, agents, and MCP settings.
 2.  **Configure**: CLI generates agent configs (Cursor `.cursor/mcp.json`, OpenCode `opencode.json`, etc.) from templates.
-3.  **Dev**: Run `oursky dev feature-x`. Clean worktree + container + MCP server start.
+3.  **Dev**: Run `vendatta dev feature-x`. Clean worktree + container + MCP server start.
 4.  **Code**: Open worktree in any AI agent. Automatic MCP connection with full capabilities.
 5.  **Collaborate**: Multiple agents can work simultaneously with isolated environments.
-6.  **Clean**: Run `oursky kill`. All resources and generated configs are wiped.
+6.  **Sync**: For single-remote workflows, use standard `git pull`. For syncing .vendatta configs to multiple remotes, use `vendatta remote sync-all`.
+7.  **Clean**: Run `vendatta kill`. All resources and generated configs are wiped.
