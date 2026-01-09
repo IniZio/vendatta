@@ -13,7 +13,7 @@
 | `init` | `oursky init` | Interactive prompts + Success checklist. |
 | `dev` | `oursky dev <branch>` | Progress bars for Image Pull & Worktree creation. |
 | `list` | `oursky list` | Tabular data with color-coded status (Active=Green). |
-| `agent` | `oursky agent <id>` | Silent (Stdio mode) but logs to `.oursky/logs/agent.log`. |
+| `agent` | `oursky agent <session-id>` | Starts MCP server for agent connections. |
 | `kill` | `oursky kill <id>` | Explicit confirmation before destructive actions. |
 
 ## 3. Feedback Elements
@@ -41,5 +41,23 @@ Solution: Add this directory to Docker Desktop > Settings > Resources > File Sha
 - **Error**: Red Cross (`✖`).
 
 ## 5. Agent Interoperability UX
-- `oursky agent` should be robust. If the connection drops, it should auto-recover or provide a clean restart capability.
-- `oursky sync-agents` should show a diff of what rules are being updated in `.cursorrules`.
+
+### **Automatic Config Generation**
+- Agent configs are generated automatically during `init` and `dev` commands
+- Templates use variable substitution for project-specific settings
+- Generated files are gitignored to prevent version control pollution
+
+### **Multi-Agent Support**
+- Simultaneous configuration for Cursor, OpenCode, Claude Desktop/Code
+- Each agent gets appropriate config format and connection settings
+- Shared templates ensure consistency across agents
+
+### **MCP Gateway**
+- `oursky agent <session-id>` starts the MCP server for the session
+- Robust connection handling with automatic recovery
+- Secure tool execution within isolated environments
+
+### **Template System**
+- Shared templates follow open standards (agentskills.io, agents.md)
+- Agent-specific templates with `.tpl` extension
+- Easy customization and extension of capabilities

@@ -15,10 +15,11 @@ Oursky is a developer-centric, local-first development environment manager. It a
 Unlike standard `docker-compose` which shares the host filesystem, Oursky uses **Git Worktrees** to provide a unique, branch-specific filesystem for every session. This prevents file-locking and allows parallel work on multiple branches without pollution.
 
 ### **BYOA (Bring Your Own Agent)**
-Oursky provides a standardized **Model Context Protocol (MCP)** gateway. Any agent (Cursor, OpenCode, Claude) can connect to an Oursky session and immediately inherit:
-- **Environment-aware Tools**: (e.g., `exec` inside the container).
-- **Project-specific Rules**: Defined in `.oursky/agents/rules`.
-- **Role-based Capabilities**: (e.g., `frontend` vs `backend` roles).
+Oursky provides a comprehensive **agent configuration generation system** with standardized **Model Context Protocol (MCP)** gateway. Any agent (Cursor, OpenCode, Claude Desktop/Code) automatically gets configured to connect to isolated environments with:
+- **Environment-aware Tools**: MCP `exec` tool for secure command execution
+- **Shared Standard Capabilities**: Reusable skills, commands, and rules following open standards
+- **Dynamic Configuration**: Templates generate agent-specific configs with project context
+- **Multi-Agent Support**: Simultaneous configuration for different AI tools
 
 ### **Single-Binary Portability**
 Zero-setup installation. A single Go binary manages everything from worktree creation to container orchestration and port forwarding.
@@ -32,8 +33,9 @@ Zero-setup installation. A single Go binary manages everything from worktree cre
 | **Team Lead** | Onboarding consistency. | Standardized `.oursky` config & lifecycle hooks. |
 
 ## 5. The "Oursky" Workflow
-1.  **Onboard**: Run `oursky init`. Define ports and setup hooks.
-2.  **Dev**: Run `oursky dev feature-x`. A clean worktree and container appear.
-3.  **Code**: Open the worktree in Cursor. The agent connects to the MCP server.
-4.  **Ship**: Verify changes in the isolated environment and commit from the worktree.
-5.  **Clean**: Run `oursky kill`. All resources are wiped.
+1.  **Onboard**: Run `oursky init`. Define services, agents, and MCP settings.
+2.  **Configure**: CLI generates agent configs (Cursor `.cursor/mcp.json`, OpenCode `opencode.json`, etc.) from templates.
+3.  **Dev**: Run `oursky dev feature-x`. Clean worktree + container + MCP server start.
+4.  **Code**: Open worktree in any AI agent. Automatic MCP connection with full capabilities.
+5.  **Collaborate**: Multiple agents can work simultaneously with isolated environments.
+6.  **Clean**: Run `oursky kill`. All resources and generated configs are wiped.

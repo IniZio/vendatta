@@ -9,12 +9,14 @@
     - My existing `docker-compose` setup for the database works inside the Oursky environment (DinD).
 
 ## 2. Agent Collaboration (BYOA)
-> *As a developer using Cursor, I want my AI agent to be able to run tests and build commands inside my isolated environment so that it doesn't fail due to missing host dependencies.*
+> *As a developer using any AI agent (Cursor, OpenCode, Claude), I want seamless integration with my isolated development environment so that agents can execute commands, follow project standards, and access shared capabilities.*
 
 - **Acceptance Criteria**:
-    - `oursky agent` provides an MCP endpoint.
-    - The agent can use the `exec` tool to run `npm test` inside the container.
-    - The agent follows the rules defined in `.oursky/agents/rules`.
+    - Automatic generation of agent configs during `init`/`dev` commands
+    - Support for Cursor, OpenCode, Claude Desktop, and Claude Code
+    - MCP gateway provides secure tool execution (`exec`, dynamic skills)
+    - Agents inherit shared rules, skills, and commands from standard templates
+    - Template system allows customization while following open standards
 
 ## 3. Microservices & API Discovery
 > *As a frontend developer, I want to automatically know the URL of my backend API running in the Oursky environment so that I don't have to manually update my `.env.local` every time.*
@@ -23,12 +25,14 @@
     - Oursky discovers the host-mapped port for the `api` service.
     - The environment variable `OURSKY_SERVICE_API_URL` is automatically injected into my frontend container.
 
-## 4. Multi-Role Onboarding
-> *As a team lead, I want to define different rules for 'Designer' and 'Developer' roles in my project so that the AI agent provides relevant suggestions based on who is using it.*
+## 4. Multi-Agent Standardization
+> *As a team lead, I want standardized agent configurations across my team so that all developers get consistent AI assistance regardless of their preferred tools.*
 
 - **Acceptance Criteria**:
-    - `.oursky/config.yaml` supports an `agent.role` field.
-    - `oursky sync-agents` pulls role-specific rules from `.oursky/agents/rules/roles/`.
+    - Shared templates in `.oursky/templates/` follow open standards
+    - Agent-specific configs generated from templates with team standards
+    - Easy customization of capabilities per project or team needs
+    - Version-controlled templates with gitignored generated configs
 
 ## 5. Teardown & Cleanup
 > *As a developer, I want to completely remove all artifacts (containers, worktrees) related to a finished feature branch so that I don't waste disk space.*
