@@ -310,6 +310,37 @@ sync_targets:
 vendatta dev feature-branch
 ```
 
+Vendatta will show progress as it:
+- Initializes template remotes
+- Merges AI agent templates
+- Sets up Git worktree
+- Generates agent configurations
+- Creates and starts the container session
+- Maps service ports
+- Runs setup hooks (if configured)
+
+Example output:
+```
+🚀 Starting dev session for branch 'feature-branch'...
+📦 Initializing template remotes...
+🔧 Merging AI agent templates...
+🌳 Setting up Git worktree...
+🤖 Generating AI agent configurations...
+🐳 Creating docker session...
+▶️  Starting session...
+🌐 Service port mappings:
+  📍 DB → http://localhost:5432
+  📍 API → http://localhost:5000
+  📍 WEB → http://localhost:3000
+🔧 Running setup hook: .vendatta/hooks/setup.sh
+✅ Setup hook completed successfully
+
+🎉 Session my-project-feature-branch is ready!
+📂 Worktree: /path/to/project/.vendatta/worktrees/feature-branch
+💡 Open this directory in your AI agent (Cursor, OpenCode, etc.)
+🔍 Use 'vendatta list' to see active sessions
+```
+
 ### 4. Check Mapped Ports and Services
 
 Once running, Vendatta automatically maps service ports. Check available services:

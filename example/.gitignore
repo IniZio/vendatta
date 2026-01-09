@@ -4,25 +4,19 @@
 opencode.json
 claude_desktop_config.json
 claude_code_config.json
-
 # Generated worktrees
 .oursky/worktrees/
-
 # Dependencies
 node_modules/
 server/node_modules/
-
 # Environment files
 .env
 .env.local
-
 # Logs
 *.log
 npm-debug.log*
-
 # Build outputs
 client/dist/
 server/dist/
-
 # Database
 postgres_data_demo/

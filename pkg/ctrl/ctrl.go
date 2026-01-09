@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/vibegear/oursky/pkg/config"
 	"github.com/vibegear/oursky/pkg/provider"
@@ -85,17 +86,21 @@ echo "Setting up environment..."
 }
 
 func (c *BaseController) Dev(ctx context.Context, branch string) error {
+	fmt.Printf("🚀 Starting dev session for branch '%s'...\n", branch)
+
 	cfg, err := config.LoadConfig(".vendatta/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	// Initialize remotes
+	fmt.Println("📦 Initializing template remotes...")
 	if err := cfg.InitializeRemotes(".vendatta"); err != nil {
 		return fmt.Errorf("failed to initialize remotes: %w", err)
 	}
 
 	// Get merged templates
+	fmt.Println("🔧 Merging AI agent templates...")
 	merged, err := cfg.GetMergedTemplates(".vendatta")
 	if err != nil {
 		return fmt.Errorf("failed to merge templates: %w", err)
@@ -106,6 +111,7 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 		return fmt.Errorf("provider %s not found", cfg.Provider)
 	}
 
+	fmt.Println("🌳 Setting up Git worktree...")
 	wtManager := worktree.NewManager(".", ".vendatta/worktrees")
 	wtPath, err := wtManager.Add(branch)
 	if err != nil {
@@ -118,16 +124,19 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 	}
 
 	// Generate agent configs
+	fmt.Println("🤖 Generating AI agent configurations...")
 	if err := cfg.GenerateAgentConfigs(absWtPath, merged); err != nil {
 		return fmt.Errorf("failed to generate agent configs: %w", err)
 	}
 
+	fmt.Printf("🐳 Creating %s session...\n", cfg.Provider)
 	sessionID := fmt.Sprintf("%s-%s", cfg.Name, branch)
 	session, err := p.Create(ctx, sessionID, absWtPath, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create session: %w", err)
 	}
 
+	fmt.Println("▶️  Starting session...")
 	if err := p.Start(ctx, session.ID); err != nil {
 		return fmt.Errorf("failed to start session: %w", err)
 	}
@@ -143,19 +152,22 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 
 	env := []string{}
 	if activeSession != nil {
+		fmt.Println("🌐 Service port mappings:")
 		for name, svc := range cfg.Services {
 			if svc.Port > 0 {
 				pStr := fmt.Sprintf("%d", svc.Port)
 				if publicPort, ok := activeSession.Services[pStr]; ok {
 					url := fmt.Sprintf("http://localhost:%d", publicPort)
-					env = append(env, fmt.Sprintf("OURSKY_SERVICE_%s_URL=%s", name, url))
+					envVar := fmt.Sprintf("OURSKY_SERVICE_%s_URL=%s", strings.ToUpper(name), url)
+					env = append(env, envVar)
+					fmt.Printf("  📍 %s → %s\n", strings.ToUpper(name), url)
 				}
 			}
 		}
 	}
 
 	if cfg.Hooks.Setup != "" {
-		fmt.Printf("Running setup hook: %s\n", cfg.Hooks.Setup)
+		fmt.Printf("🔧 Running setup hook: %s\n", cfg.Hooks.Setup)
 		err = p.Exec(ctx, session.ID, provider.ExecOptions{
 			Cmd:    []string{"/bin/bash", "/workspace/" + cfg.Hooks.Setup},
 			Env:    env,
@@ -164,9 +176,13 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 		if err != nil {
 			return fmt.Errorf("setup hook failed: %w", err)
 		}
+		fmt.Println("✅ Setup hook completed successfully")
 	}
 
-	fmt.Printf("Session %s is ready!\n", session.ID)
+	fmt.Printf("\n🎉 Session %s is ready!\n", session.ID)
+	fmt.Printf("📂 Worktree: %s\n", absWtPath)
+	fmt.Println("💡 Open this directory in your AI agent (Cursor, OpenCode, etc.)")
+	fmt.Println("🔍 Use 'vendatta list' to see active sessions")
 	return nil
 }
 
