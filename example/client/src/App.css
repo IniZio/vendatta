@@ -1,0 +1,53 @@
+.App {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+}
+
+.add-item, .items-list {
+  margin: 2rem 0;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.add-item form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 400px;
+}
+
+.add-item input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-item button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-item button:hover {
+  background-color: #0056b3;
+}
+
+.items-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.items-list li {
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.items-list li:last-child {
+  border-bottom: none;
+}

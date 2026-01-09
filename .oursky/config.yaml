@@ -1,0 +1,10 @@
+name: my-project
+provider: docker
+services:
+  web: 3000
+docker:
+  image: ubuntu:24.04
+  dind: true
+hooks:
+  setup: .oursky/hooks/setup.sh
+  dev: .oursky/hooks/dev.sh
