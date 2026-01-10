@@ -3,6 +3,7 @@ package ctrl
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,6 +70,37 @@ hooks:
 	setupSh := `#!/bin/bash
 # Install docker if dind is enabled
 echo "Setting up environment..."
+
+# Install Node.js if not present
+if ! command -v node &> /dev/null; then
+    echo "Installing Node.js..."
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    apt-get install -y nodejs
+fi
+
+# Install docker-compose if not present
+if ! command -v docker-compose &> /dev/null; then
+    echo "Installing docker-compose..."
+    apt-get update && apt-get install -y docker-compose
+fi
+
+# Start services in background
+
+echo "Starting API server..."
+cd /workspace/server && npm install && HOST=0.0.0.0 PORT=5000 npm run dev &
+API_PID=$!
+
+sleep 5
+
+echo "Starting web client..."
+cd /workspace/client && npm install && HOST=0.0.0.0 PORT=3000 npm run dev &
+WEB_PID=$!
+
+echo "Services starting... PIDs: DB($DB_PID), API($API_PID), WEB($WEB_PID)"
+echo "Setup complete. Services will be available shortly."
+
+# Keep container alive
+wait
 `
 	if err := os.WriteFile(".vendatta/hooks/setup.sh", []byte(setupSh), 0755); err != nil {
 		return err
@@ -83,6 +115,71 @@ echo "Setting up environment..."
 	}
 
 	return nil
+}
+
+// copyDir recursively copies a directory from src to dst
+func copyDir(src, dst string) error {
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(dst, srcInfo.Mode()); err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		// Skip worktrees directory to avoid infinite recursion
+		if entry.Name() == "worktrees" {
+			continue
+		}
+
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		if entry.IsDir() {
+			if err := copyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		} else {
+			if err := copyFile(srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// copyFile copies a single file from src to dst
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return err
+	}
+
+	srcInfo, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	return os.Chmod(dst, srcInfo.Mode())
 }
 
 func (c *BaseController) Dev(ctx context.Context, branch string) error {
@@ -116,6 +213,16 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 	wtPath, err := wtManager.Add(branch)
 	if err != nil {
 		return fmt.Errorf("failed to setup worktree: %w", err)
+	}
+
+	// Copy .vendatta config to worktree so hooks can execute
+	if err := copyDir(".vendatta", filepath.Join(wtPath, ".vendatta")); err != nil {
+		return fmt.Errorf("failed to copy vendatta config to worktree: %w", err)
+	}
+
+	// Copy .vendatta config to worktree so hooks can execute
+	if err := copyDir(".vendatta", filepath.Join(wtPath, ".vendatta")); err != nil {
+		return fmt.Errorf("failed to copy vendatta config to worktree: %w", err)
 	}
 
 	absWtPath, err := filepath.Abs(wtPath)
@@ -187,6 +294,16 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 				}
 			}
 		}
+	}
+
+	// Create .env file in worktree with service URLs
+	if len(env) > 0 {
+		envFilePath := filepath.Join(absWtPath, ".env")
+		envContent := strings.Join(env, "\n") + "\n"
+		if err := os.WriteFile(envFilePath, []byte(envContent), 0644); err != nil {
+			return fmt.Errorf("failed to create .env file: %w", err)
+		}
+		fmt.Printf("📄 Created .env file with service URLs\n")
 	}
 
 	if cfg.Hooks.Setup != "" {
