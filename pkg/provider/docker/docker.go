@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -55,11 +56,14 @@ func (p *DockerProvider) Create(ctx context.Context, sessionID string, workspace
 		"22/tcp": {{HostIP: "0.0.0.0", HostPort: "0"}},
 	}
 
-	for _, svc := range cfg.Services {
+	env := []string{}
+	for name, svc := range cfg.Services {
 		if svc.Port > 0 {
 			pStr := fmt.Sprintf("%d/tcp", svc.Port)
 			exposedPorts[nat.Port(pStr)] = struct{}{}
-			portBindings[nat.Port(pStr)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "0"}}
+			portBindings[nat.Port(pStr)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: fmt.Sprintf("%d", svc.Port)}}
+			url := fmt.Sprintf("http://localhost:%d", svc.Port)
+			env = append(env, fmt.Sprintf("OURSKY_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
 
@@ -86,6 +90,7 @@ func (p *DockerProvider) Create(ctx context.Context, sessionID string, workspace
 			"oursky.session.id": sessionID,
 		},
 		Cmd:          []string{"/bin/bash"},
+		Env:          env,
 		ExposedPorts: exposedPorts,
 	}, &container.HostConfig{
 		Mounts:       mounts,
@@ -94,22 +99,6 @@ func (p *DockerProvider) Create(ctx context.Context, sessionID string, workspace
 	}, nil, nil, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create container: %w", err)
-	}
-
-	json, err := p.cli.ContainerInspect(ctx, resp.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	env := []string{}
-	for name, svc := range cfg.Services {
-		if svc.Port > 0 {
-			pStr := fmt.Sprintf("%d/tcp", svc.Port)
-			if bindings, ok := json.NetworkSettings.Ports[nat.Port(pStr)]; ok && len(bindings) > 0 {
-				url := fmt.Sprintf("http://localhost:%s", bindings[0].HostPort)
-				env = append(env, fmt.Sprintf("OURSKY_SERVICE_%s_URL=%s", name, url))
-			}
-		}
 	}
 
 	return &provider.Session{
