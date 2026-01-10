@@ -116,7 +116,14 @@ func (m *Manager) loadTemplateFiles(dir string, target map[string]interface{}) e
 			return err
 		}
 
-		if d.IsDir() || (!strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml")) {
+		if d.IsDir() {
+			return nil
+		}
+
+		isYaml := strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".yml")
+		isMd := strings.HasSuffix(path, ".md")
+
+		if !isYaml && !isMd {
 			return nil
 		}
 
@@ -126,15 +133,43 @@ func (m *Manager) loadTemplateFiles(dir string, target map[string]interface{}) e
 		}
 
 		var templateData map[string]interface{}
-		if err := yaml.Unmarshal(content, &templateData); err != nil {
-			return fmt.Errorf("failed to parse %s: %w", path, err)
+		if isYaml {
+			if err := yaml.Unmarshal(content, &templateData); err != nil {
+				return fmt.Errorf("failed to parse %s: %w", path, err)
+			}
+		} else if isMd {
+			data, mdContent := parseMarkdown(content)
+			filename := strings.TrimSuffix(filepath.Base(path), ".md")
+
+			ruleData := make(map[string]interface{})
+			for k, v := range data {
+				ruleData[k] = v
+			}
+			ruleData["content"] = mdContent
+
+			templateData = map[string]interface{}{
+				filename: ruleData,
+			}
 		}
 
-		// Recursively merge with existing data (key is the filename without extension)
 		recursiveMerge(target, templateData)
 
 		return nil
 	})
+}
+
+func parseMarkdown(content []byte) (map[string]interface{}, string) {
+	str := string(content)
+	if !strings.HasPrefix(str, "---\n") {
+		return nil, str
+	}
+	parts := strings.SplitN(str[4:], "\n---\n", 2)
+	if len(parts) < 2 {
+		return nil, str
+	}
+	var data map[string]interface{}
+	_ = yaml.Unmarshal([]byte(parts[0]), &data)
+	return data, parts[1]
 }
 
 // recursiveMerge merges source into dest, following chezmoi's pattern:

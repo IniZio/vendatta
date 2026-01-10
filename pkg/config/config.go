@@ -128,16 +128,22 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		templatePath string
 		outputPath   string
 		gitignore    string
+		rulesFormat  string
+		rulesDir     string
 	}{
 		"cursor": {
 			templatePath: ".vendatta/agents/cursor/mcp.json.tpl",
 			outputPath:   ".cursor/mcp.json",
 			gitignore:    ".cursor/",
+			rulesFormat:  "mdc",
+			rulesDir:     ".cursor/rules",
 		},
 		"opencode": {
 			templatePath: ".vendatta/agents/opencode/opencode.json.tpl",
 			outputPath:   "opencode.json",
-			gitignore:    ".opencode/",
+			gitignore:    "AGENTS.md",
+			rulesFormat:  "agents.md",
+			rulesDir:     "",
 		},
 		"claude-desktop": {
 			templatePath: ".vendatta/agents/claude-desktop/claude_desktop_config.json.tpl",
@@ -195,6 +201,12 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			return fmt.Errorf("failed to write config for %s: %w", agent.Name, err)
 		}
 
+		if cfg.rulesFormat != "" {
+			if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, merged); err != nil {
+				return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
+			}
+		}
+
 		gitignorePatterns = append(gitignorePatterns, cfg.gitignore)
 	}
 
@@ -203,6 +215,70 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		return fmt.Errorf("failed to update .gitignore: %w", err)
 	}
 
+	return nil
+}
+
+func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merged *templates.TemplateData) error {
+	if merged == nil || len(merged.Rules) == 0 {
+		return nil
+	}
+
+	absRulesDir := filepath.Join(worktreePath, rulesDir)
+	if rulesDir != "" {
+		if err := os.MkdirAll(absRulesDir, 0755); err != nil {
+			return err
+		}
+	}
+
+	switch format {
+	case "mdc":
+		for name, data := range merged.Rules {
+			ruleMap, ok := data.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			content, _ := ruleMap["content"].(string)
+
+			var builder strings.Builder
+			builder.WriteString("---\n")
+			for k, v := range ruleMap {
+				if k == "content" {
+					continue
+				}
+				builder.WriteString(fmt.Sprintf("%s: %v\n", k, v))
+			}
+			builder.WriteString("---\n")
+			builder.WriteString(content)
+
+			outputPath := filepath.Join(absRulesDir, name+".mdc")
+			if err := os.WriteFile(outputPath, []byte(builder.String()), 0644); err != nil {
+				return err
+			}
+		}
+	case "agents.md":
+		var builder strings.Builder
+		builder.WriteString("# PROJECT KNOWLEDGE BASE\n\n")
+		builder.WriteString(fmt.Sprintf("**Generated:** %s\n", strings.ToUpper(c.Name)))
+		builder.WriteString("\n")
+		for name, data := range merged.Rules {
+			ruleMap, ok := data.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			content, _ := ruleMap["content"].(string)
+			title, _ := ruleMap["title"].(string)
+			if title == "" {
+				title = name
+			}
+			builder.WriteString(fmt.Sprintf("## %s\n\n", title))
+			builder.WriteString(content)
+			builder.WriteString("\n\n")
+		}
+		outputPath := filepath.Join(worktreePath, "AGENTS.md")
+		if err := os.WriteFile(outputPath, []byte(builder.String()), 0644); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

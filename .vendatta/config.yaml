@@ -1,0 +1,10 @@
+name: "vibegear-test"
+agents:
+  - name: "cursor"
+    enabled: true
+  - name: "opencode"
+    enabled: true
+mcp:
+  enabled: true
+  port: 3001
+  host: "localhost"

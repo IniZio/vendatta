@@ -6,10 +6,8 @@ oursky
 *.exe
 coverage.out
 coverage.html
-
 # Dependencies
 node_modules/
-
 # Vendatta artifacts
 .vendatta/worktrees/
 .cursor/
@@ -17,13 +15,12 @@ node_modules/
 claude_desktop_config.json
 claude_code_config.json
 opencode.json
-
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-
 # OS
 .DS_Store
 Thumbs.db
+AGENTS.md
