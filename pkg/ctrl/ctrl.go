@@ -137,6 +137,7 @@ wait
 		".vendatta/agents/opencode",
 		".vendatta/agents/claude-desktop",
 		".vendatta/agents/claude-code",
+		".vendatta/agents/codex",
 	}
 	for _, dir := range agentDirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
@@ -166,6 +167,50 @@ wait
 }
 `
 	if err := os.WriteFile(".vendatta/agents/opencode/opencode.json.tpl", []byte(opencodeTpl), 0644); err != nil {
+		return err
+	}
+
+	claudeCodeTpl := `{
+  "mcpServers": {
+    "claude-code": {
+      "command": "claudecode",
+      "args": ["--command-timeout", "300", "--allow-path", "{{.ProjectName}}"]
+    }
+  }
+}
+`
+	if err := os.WriteFile(".vendatta/agents/claude-code/claude_code_config.json.tpl", []byte(claudeCodeTpl), 0644); err != nil {
+		return err
+	}
+
+	codexTpl := `{
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": false,
+    "plaintext": false,
+    "markdown": true,
+    "javascript": true,
+    "python": true,
+    "typescript": true,
+    "go": true,
+    "rust": true,
+    "java": true,
+    "csharp": true
+  },
+  "github.copilot.advanced": {
+    "length": 4000,
+    "inlineSuggestCount": 5,
+    "top_p": 1,
+    "temperature": 0.8,
+    "listCount": 10,
+    "debug.showScores": false,
+    "indentationMode": {
+      "*": true
+    }
+  }
+}
+`
+	if err := os.WriteFile(".vendatta/agents/codex/settings.json.tpl", []byte(codexTpl), 0644); err != nil {
 		return err
 	}
 

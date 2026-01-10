@@ -11,13 +11,46 @@ Oursky uses a declarative configuration system based on YAML and JSON templates.
 name: "project-name"           # Required: Project identifier
 description: "Optional description"
 
+plugins:                       # Namespaced capabilities
+  - name: "vibegear/standard"  # Remote plugin from default registry
+  - name: "local/formal-v"    # Local project-specific plugin
+
 services: {}                   # Container services definition
 agents: []                     # Enabled AI agents
 mcp: {}                        # MCP server configuration
-docker: {}                     # Container runtime settings
-hooks: {}                      # Lifecycle scripts
-sync_targets: []              # Remote targets for .vendatta sync
 ```
+
+### **Plugins Configuration**
+
+Plugins allow you to extend Vendatta with namespaced rules, skills, and commands.
+
+#### **Basic Plugin Definition**
+```yaml
+plugins:
+  - name: "vibegear/standard"
+    url: "git@github.com:IniZio/vendatta-config.git"
+    branch: "main"
+  - name: "local/verify"
+    path: "./.vendatta/plugins/verification"
+```
+
+#### **Plugin Options**
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `name` | string | Yes | Unique identifier (e.g., owner/repo) |
+| `url` | string | No | Git repository URL for remote plugins |
+| `path` | string | No | Local filesystem path for project-specific plugins |
+| `branch` | string | No | Git branch for remote plugins (pinned in lockfile) |
+
+---
+
+### **Reproducible Locking (`vendatta.lock`)**
+Vendatta automatically generates a `vendatta.lock` file to ensure that your team is always using the exact same versions of all plugins.
+
+**Command Workflow:**
+1. `vendatta plugin add <url>`: Adds a plugin and updates `config.yaml`.
+2. `vendatta plugin update`: Updates all remote plugins to their latest versions and refreshes the lockfile.
+3. `vendatta workspace create`: Uses the lockfile to perform parallel, deterministic downloads.
 
 ### **Services Configuration**
 

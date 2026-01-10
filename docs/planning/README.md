@@ -13,6 +13,6 @@ Oursky uses a **Milestone > Project > Task** hierarchy.
 
 ## 📅 Milestones
 
-- [ ] **[M1: CLI MVP](./M1_MVP.md)** - 🚧 ACTIVE (Working Docker+Worktree + MCP)
-- [ ] **[M2: Alpha](./M2_ALPHA.md)** - 📅 PLANNED (LXC support, advanced networking)
+- [ ] **[M1: CLI MVP](./M1_MVP.md)** - ✅ COMPLETED (Working Docker+Worktree + MCP)
+- [ ] **[M2: Alpha](./M2_ALPHA.md)** - 🚧 ACTIVE (Namespaced Plugins, UV-style Locking, Remote Configs)
 - [ ] **[M3: Beta](./M3_BETA.md)** - 📅 PLANNED (QEMU, multi-machine coordination)

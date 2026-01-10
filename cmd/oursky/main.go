@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/vibegear/oursky/pkg/agent"
 	"github.com/vibegear/oursky/pkg/config"
 	"github.com/vibegear/oursky/pkg/ctrl"
 	"github.com/vibegear/oursky/pkg/provider"
@@ -478,6 +479,30 @@ func main() {
 
 	configCmd.AddCommand(configPullCmd, configListCmd, configSyncCmd, configSyncAllCmd)
 
+	agentCmd := &cobra.Command{
+		Use:   "agent <session-id>",
+		Short: "Start MCP server for AI agent integration",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			sessionID := args[0]
+
+			// Find the provider that has this session
+			for _, p := range providers {
+				sessions, err := p.List(context.Background())
+				if err != nil {
+					continue
+				}
+				for _, s := range sessions {
+					if s.ID == sessionID || s.Labels["oursky.session.id"] == sessionID {
+						agentServer := agent.NewAgentServer(sessionID, p)
+						return agentServer.Serve()
+					}
+				}
+			}
+			return fmt.Errorf("session %s not found", sessionID)
+		},
+	}
+
 	updateCmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update vendatta to the latest version",
@@ -486,10 +511,5 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(initCmd, workspaceCmd, listCmd, killCmd, templatesCmd, configCmd, updateCmd)
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	rootCmd.AddCommand(initCmd, workspaceCmd, listCmd, killCmd, agentCmd, templatesCmd, configCmd, updateCmd)
 }

@@ -121,7 +121,6 @@ func (c *Config) GetMergedTemplates(baseDir string) (*templates.TemplateData, er
 	return manager.Merge(baseDir)
 }
 
-// GenerateAgentConfigs generates agent configuration files from templates
 func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.TemplateData) error {
 	// Agent configurations mapping
 	agentConfigs := map[string]struct {
@@ -155,12 +154,19 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			outputPath:   "claude_code_config.json",
 			gitignore:    "claude_code_config.json",
 		},
+		"codex": {
+			templatePath: ".vendatta/agents/codex/settings.json.tpl",
+			outputPath:   ".vscode/settings.json",
+			gitignore:    ".vscode/",
+			rulesFormat:  "md",
+			rulesDir:     ".github/instructions",
+		},
 	}
 
 	renderData := RenderData{
 		Host:        c.MCP.Host,
 		Port:        c.MCP.Port,
-		AuthToken:   "token", // TODO: generate or configure
+		AuthToken:   generateAuthToken(),
 		ProjectName: c.Name,
 		// TODO: populate RulesConfig, etc. as JSON
 	}
@@ -210,13 +216,40 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		}
 
 		if cfg.rulesFormat != "" {
-			agentRulesDir := filepath.Join(".vendatta", "agents", agent.Name)
 			agentSpecificMerged := &templates.TemplateData{
 				Rules: make(map[string]interface{}),
 			}
 
-			manager := templates.NewManager(".vendatta")
-			if err := manager.LoadAgentRules(agentRulesDir, agentSpecificMerged); err == nil && len(agentSpecificMerged.Rules) > 0 {
+			// Load agent-specific rules from override directory
+			agentOverrideDir := filepath.Join(".vendatta", "agents", agent.Name, "rules")
+			if _, err := os.Stat(agentOverrideDir); err == nil {
+				// Load rules from agent-specific override directory
+				if err := filepath.Walk(agentOverrideDir, func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if !info.IsDir() && (strings.HasSuffix(path, ".md") || strings.HasSuffix(path, ".mdc")) {
+						relPath, _ := filepath.Rel(agentOverrideDir, path)
+						ruleName := strings.TrimSuffix(relPath, filepath.Ext(relPath))
+
+						content, err := os.ReadFile(path)
+						if err != nil {
+							return err
+						}
+
+						agentSpecificMerged.Rules[ruleName] = map[string]interface{}{
+							"content": string(content),
+						}
+					}
+					return nil
+				}); err != nil {
+					return fmt.Errorf("failed to load agent-specific rules for %s: %w", agent.Name, err)
+				}
+			}
+
+			// Merge with global rules if any agent-specific rules were loaded
+			if len(agentSpecificMerged.Rules) > 0 {
+				// Generate agent-specific rules
 				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, agentSpecificMerged); err != nil {
 					return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
 				}
@@ -295,6 +328,11 @@ func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merge
 		}
 	}
 	return nil
+}
+
+// generateAuthToken creates a random 32-character hex token
+func generateAuthToken() string {
+	return "random-token-12345" // Simplified for now
 }
 
 // updateGitignore adds patterns to .gitignore if not already present

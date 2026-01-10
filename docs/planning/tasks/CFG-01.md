@@ -1,7 +1,7 @@
 # CFG-01: Config Pull/Sync Commands
 
 **Priority**: 🟢 Low
-**Status**: [Pending]
+**Status**: [In Progress]
 
 ## 🎯 Objective
 Implement config pull and sync commands for sharing templates and configurations across teams and projects.

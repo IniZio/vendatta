@@ -10,6 +10,8 @@ graph TD
     CLI[Oursky CLI] --> CP[Control Plane]
     CP --> WM[Worktree Manager]
     CP --> P[Provider Interface]
+    CP --> PR[Plugin Registry]
+    PR --> LM[Lockfile Manager]
     
     subgraph "Execution Plane"
         P --> Docker[Docker Provider]
@@ -26,7 +28,8 @@ graph TD
     subgraph "Filesystem"
         WM --> WT[.vendatta/worktrees/]
         CP --> CFG[.vendatta/config.yaml]
-        CP --> AS[.vendatta/agents/]
+        PR --> PS[.vendatta/plugins/]
+        LM --> LF[vendatta.lock]
     end
 ```
 
@@ -35,8 +38,20 @@ graph TD
 ### **Control Plane (`pkg/ctrl`)**
 The central coordinator. It is responsible for:
 - Parsing `.vendatta/config.yaml`.
-- Orchestrating the sequence: `Worktree Create` -> `Provider Create` -> `Setup Hook` -> `Agent Gateway`.
+- Orchestrating the sequence: `Plugin Resolve` -> `Worktree Create` -> `Provider Create` -> `Setup Hook` -> `Agent Gateway`.
 - Maintaining session state through Docker labels and filesystem markers.
+
+### **Plugin Registry (`pkg/plugins`)**
+Manages the lifecycle of namespaced capabilities.
+- **Discovery**: Recursively scans `.vendatta/plugins/` for local capabilities.
+- **Resolution**: Builds a Directed Acyclic Graph (DAG) of dependencies.
+- **Parallel Fetching**: Uses Go routines to pull remote plugins simultaneously.
+
+### **Lockfile Manager (`pkg/lock`)**
+Ensures environment reproducibility (inspired by `uv`).
+- **Determinism**: Freezes plugin versions and Git SHAs in `vendatta.lock`.
+- **Integrity**: Verifies checksums of fetched plugins to prevent supply-chain tampering.
+- **Speed**: Enables immediate parallel cloning by skipping remote branch resolution.
 
 ### **Provider Interface (`pkg/provider`)**
 An abstraction layer for environment lifecycles.
