@@ -16,6 +16,8 @@ import (
 	"github.com/vibegear/oursky/pkg/agent"
 	"github.com/vibegear/oursky/pkg/config"
 	"github.com/vibegear/oursky/pkg/ctrl"
+	"github.com/vibegear/oursky/pkg/lock"
+	"github.com/vibegear/oursky/pkg/plugins"
 	"github.com/vibegear/oursky/pkg/provider"
 	"github.com/vibegear/oursky/pkg/provider/docker"
 	"github.com/vibegear/oursky/pkg/templates"
@@ -479,6 +481,114 @@ func main() {
 
 	configCmd.AddCommand(configPullCmd, configListCmd, configSyncCmd, configSyncAllCmd)
 
+	pluginCmd := &cobra.Command{
+		Use:   "plugin",
+		Short: "Manage Vendatta plugins",
+	}
+
+	pluginListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all available plugins",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			registry := plugins.NewRegistry()
+			if err := registry.DiscoverPlugins(".vendatta"); err != nil {
+				return fmt.Errorf("failed to discover plugins: %w", err)
+			}
+
+			plugins := registry.ListPlugins()
+			if len(plugins) == 0 {
+				fmt.Println("No plugins found")
+				return nil
+			}
+
+			fmt.Println("Available plugins:")
+			for name, plugin := range plugins {
+				fmt.Printf("  %s (%s v%s)\n", name, plugin.Name, plugin.Version)
+				if len(plugin.Dependencies) > 0 {
+					fmt.Printf("    Dependencies: %s\n", strings.Join(plugin.Dependencies, ", "))
+				}
+			}
+			return nil
+		},
+	}
+
+	pluginCheckCmd := &cobra.Command{
+		Use:   "check",
+		Short: "Check if lockfile is up to date with current plugins",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			registry := plugins.NewRegistry()
+			if err := registry.DiscoverPlugins(".vendatta"); err != nil {
+				return fmt.Errorf("failed to discover plugins: %w", err)
+			}
+
+			// Get plugins referenced by enabled agents
+			cfg, err := config.LoadConfig(".vendatta/config.yaml")
+			if err != nil {
+				return fmt.Errorf("failed to load config: %w", err)
+			}
+
+			var activePlugins []string
+			for _, agent := range cfg.Agents {
+				if agent.Enabled {
+					activePlugins = append(activePlugins, agent.Plugins...)
+				}
+			}
+
+			manager := lock.NewManager(".")
+			upToDate, err := manager.IsUpToDate(registry, activePlugins)
+			if err != nil {
+				return fmt.Errorf("failed to check lockfile status: %w", err)
+			}
+
+			if upToDate {
+				fmt.Println("Lockfile is up to date")
+				return nil
+			}
+
+			fmt.Println("Lockfile is out of date. Run 'vendatta plugin update' to update it.")
+			return nil
+		},
+	}
+
+	pluginUpdateCmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update lockfile with current plugin state",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			registry := plugins.NewRegistry()
+			if err := registry.DiscoverPlugins(".vendatta"); err != nil {
+				return fmt.Errorf("failed to discover plugins: %w", err)
+			}
+
+			// Get plugins referenced by enabled agents
+			cfg, err := config.LoadConfig(".vendatta/config.yaml")
+			if err != nil {
+				return fmt.Errorf("failed to load config: %w", err)
+			}
+
+			var activePlugins []string
+			for _, agent := range cfg.Agents {
+				if agent.Enabled {
+					activePlugins = append(activePlugins, agent.Plugins...)
+				}
+			}
+
+			manager := lock.NewManager(".")
+			lockfile, err := manager.GenerateLockfile(registry, activePlugins)
+			if err != nil {
+				return fmt.Errorf("failed to generate lockfile: %w", err)
+			}
+
+			if err := manager.SaveLockfile(lockfile); err != nil {
+				return fmt.Errorf("failed to save lockfile: %w", err)
+			}
+
+			fmt.Printf("Lockfile updated with %d plugins\n", len(lockfile.Plugins))
+			return nil
+		},
+	}
+
+	pluginCmd.AddCommand(pluginListCmd, pluginCheckCmd, pluginUpdateCmd)
+
 	agentCmd := &cobra.Command{
 		Use:   "agent <session-id>",
 		Short: "Start MCP server for AI agent integration",
@@ -511,5 +621,10 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(initCmd, workspaceCmd, listCmd, killCmd, agentCmd, templatesCmd, configCmd, updateCmd)
+	rootCmd.AddCommand(initCmd, workspaceCmd, listCmd, killCmd, agentCmd, templatesCmd, configCmd, pluginCmd, updateCmd)
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 }

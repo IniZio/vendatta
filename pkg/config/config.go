@@ -33,6 +33,7 @@ type Agent struct {
 	Rules    string   `yaml:"rules,omitempty"`
 	Skills   []string `yaml:"skills,omitempty"`
 	Commands []string `yaml:"commands,omitempty"`
+	Plugins  []string `yaml:"plugins,omitempty"` // Plugin namespaces to include
 }
 
 type TemplateRepo struct {
@@ -216,8 +217,20 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		}
 
 		if cfg.rulesFormat != "" {
-			agentSpecificMerged := &templates.TemplateData{
+			agentMerged := &templates.TemplateData{
 				Rules: make(map[string]interface{}),
+			}
+
+			// Merge rules from specified plugins
+			for _, pluginName := range agent.Plugins {
+				if merged == nil {
+					continue
+				}
+				for ruleName, ruleData := range merged.Rules {
+					// Namespace plugin rules to avoid collisions
+					namespacedName := pluginName + "/" + ruleName
+					agentMerged.Rules[namespacedName] = ruleData
+				}
 			}
 
 			// Load agent-specific rules from override directory
@@ -237,7 +250,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 							return err
 						}
 
-						agentSpecificMerged.Rules[ruleName] = map[string]interface{}{
+						agentMerged.Rules[ruleName] = map[string]interface{}{
 							"content": string(content),
 						}
 					}
@@ -247,10 +260,9 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 				}
 			}
 
-			// Merge with global rules if any agent-specific rules were loaded
-			if len(agentSpecificMerged.Rules) > 0 {
-				// Generate agent-specific rules
-				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, agentSpecificMerged); err != nil {
+			// Generate agent-specific rules if any were collected
+			if len(agentMerged.Rules) > 0 {
+				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, agentMerged); err != nil {
 					return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
 				}
 			}

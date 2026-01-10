@@ -35,6 +35,11 @@ func (m *Manager) Merge(baseDir string) (*TemplateData, error) {
 		return nil, fmt.Errorf("failed to load template repos: %w", err)
 	}
 
+	pluginsDir := filepath.Join(baseDir, "plugins")
+	if err := m.loadPluginTemplates(pluginsDir, data); err != nil {
+		return nil, fmt.Errorf("failed to load plugin templates: %w", err)
+	}
+
 	agentsDir := filepath.Join(baseDir, "agents")
 	if err := m.applyAgentOverrides(agentsDir, data); err != nil {
 		return nil, fmt.Errorf("failed to apply agent overrides: %w", err)
@@ -97,6 +102,29 @@ func (m *Manager) loadTemplateRepos(reposDir string, data *TemplateData) error {
 	}
 
 	return nil
+}
+
+func (m *Manager) loadPluginTemplates(pluginsDir string, data *TemplateData) error {
+	if _, err := os.Stat(pluginsDir); os.IsNotExist(err) {
+		return nil // No plugins directory
+	}
+
+	return filepath.WalkDir(pluginsDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !d.IsDir() || filepath.Base(path) != "templates" {
+			return nil
+		}
+
+		// This is a plugin templates directory
+		if err := m.loadTemplatesFromDir(path, data); err != nil {
+			return fmt.Errorf("failed to load templates from plugin %s: %w", path, err)
+		}
+
+		return nil
+	})
 }
 
 func (m *Manager) loadTemplateFiles(dir string, target map[string]interface{}) error {
