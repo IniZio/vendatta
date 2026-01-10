@@ -6,21 +6,26 @@ Project Oursky is a systems-level CLI tool. Testing must cover both high-level o
 ## 2. Test Tiers
 
 ### **Tier 1: Unit Tests (Fast, Hermetic)**
-- **Scope**: Configuration parsing, URL calculation, Rule aggregation.
-- **Mocking**: Use interfaces for `Provider` and `WorktreeManager`.
+- **Scope**: Configuration parsing, URL calculation, Rule aggregation, Controller logic.
+- **Mocking**: Use interfaces for `Provider` and `worktree.Manager`.
 - **Target**: `pkg/config`, `pkg/agent`, logic in `pkg/ctrl`.
+- **Coverage Goal**: 85%+ for all logic-heavy packages.
 
 ### **Tier 2: Integration Tests (Medium, Requires Environment)**
 - **Scope**: Real Docker container creation, Real Git Worktree commands.
 - **Environment**: Requires a local Docker daemon and Git installed.
 - **Target**: `pkg/provider/docker`, `pkg/worktree`.
+- **Note**: These tests may be skipped in environments where Docker/Git are not available.
 
 ### **Tier 3: E2E Verification (Slow, Full Flow)**
 - **Scope**: The entire `oursky init` -> `oursky dev` -> `oursky agent` lifecycle.
 - **Verification**: Use a test repository (fixture) and verify that:
-    - Files are created.
+    - Files are created correctly (worktrees, agent configs).
     - Environment variables are present in the container.
     - MCP tools return successful responses.
+    - Hook system executes scripts as expected.
+- **Coverage Goal**: 100% of critical user workflows.
+
 
 ## 3. Tooling
 - **Go Test**: Primary test runner.
