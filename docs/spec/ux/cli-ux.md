@@ -10,13 +10,43 @@
 
 | Command | Usage | Feedback Pattern |
 | :--- | :--- | :--- |
-| `init` | `oursky init` | Interactive prompts + Success checklist. |
-| `dev` | `oursky dev <branch>` | Progress bars for Image Pull & Worktree creation. |
-| `list` | `oursky list` | Tabular data with color-coded status (Active=Green). |
-| `agent` | `oursky agent <session-id>` | Starts MCP server for agent connections. |
-| `kill` | `oursky kill <id>` | Explicit confirmation before destructive actions. |
+| `init` | `vendatta init` | Interactive prompts + Success checklist. |
+| `workspace create <name>` | `vendatta workspace create <branch>` | Progress bars for worktree creation & config generation. |
+| `workspace up [name]` | `vendatta workspace up [branch]` | Starts container + runs hooks + port forwarding. Blocks for logs unless `-d`. |
+| `workspace shell [name]` | `vendatta workspace shell [branch]` | Opens interactive shell in workspace container. |
+| `workspace stop [name]` | `vendatta workspace stop [branch]` | Stops container but preserves state. |
+| `workspace down [name]` | `vendatta workspace down [branch]` | Stops and removes container/network. |
+| `workspace list` | `vendatta workspace list` | Tabular data with color-coded status (Active=Green, Stopped=Yellow). |
+| `workspace rm <name>` | `vendatta workspace rm <branch>` | Deletes worktree and associated resources. |
+| `config pull <url>` | `vendatta config pull <url>` [--branch=branch] | Pulls shared templates/capabilities from Git repo. |
+| `config sync <target>` | `vendatta config sync <target>` | Syncs .vendatta directory to configured remote target. |
+| `config sync-all` | `vendatta config sync-all` | Syncs .vendatta to all configured remote targets. |
+| `version update` | `vendatta version update` | Updates CLI binary to latest version. |
+| `internal mcp <id>` | `vendatta internal mcp <session-id>` | Hidden: MCP server for AI agent tool execution. |
 
-## 3. Feedback Elements
+## 3. Command Groups
+
+### **Workspace Commands**
+Primary commands for managing isolated development environments:
+- `workspace create <name>` - Creates and configures a new workspace
+- `workspace up [name]` - Starts the workspace and runs services
+- `workspace shell [name]` - Opens interactive shell in workspace
+- `workspace stop [name]` - Stops workspace services
+- `workspace down [name]` - Stops and cleans up workspace
+- `workspace list` - Shows all active workspaces
+- `workspace rm <name>` - Permanently removes workspace
+
+### **Config Commands**
+Commands for managing shared configurations and templates:
+- `config pull <url>` - Pulls templates from remote Git repositories
+- `config sync <target>` - Syncs local config to remote targets
+- `config sync-all` - Syncs to all configured remote targets
+
+### **Utility Commands**
+- `version update` - Updates the CLI to latest version
+- `init` - Initializes project with basic configuration
+
+## 4. Feedback Elements
 
 ### **Progress Indicators**
 For long-running tasks like `Image Pull` or `Worktree Setup`:

@@ -210,11 +210,11 @@ Each agent gets customized configuration:
 4. **Use**: Open worktree in your preferred AI agent
 5. **Iterate**: Modify templates and regenerate as needed
 
-## 6. The "Oursky" Workflow
-1.  **Onboard**: Run `vendatta init`. Define services, agents, and MCP settings.
-2.  **Configure**: CLI generates agent configs (Cursor `.cursor/mcp.json`, OpenCode `opencode.json`, etc.) from templates.
-3.  **Dev**: Run `vendatta dev feature-x`. Clean worktree + container + MCP server start.
-4.  **Code**: Open worktree in any AI agent. Automatic MCP connection with full capabilities.
-5.  **Collaborate**: Multiple agents can work simultaneously with isolated environments.
-6.  **Sync**: For single-remote workflows, use standard `git pull`. For syncing .vendatta configs to multiple remotes, use `vendatta remote sync-all`.
-7.  **Clean**: Run `vendatta kill`. All resources and generated configs are wiped.
+## 6. The Workspace-Centric Workflow
+1.  **Onboard**: Run `vendatta init`. Define services and capabilities.
+2.  **Create**: Run `vendatta workspace create feature-x`. Creates branch, worktree, and generates agent configs.
+3.  **Develop**: Run `vendatta workspace up feature-x`. Starts isolated container with port forwarding and lifecycle hooks.
+4.  **Code**: Open worktree in any AI agent. Agents connect via their generated configs to MCP server.
+5.  **Collaborate**: Multiple workspaces can run simultaneously with complete isolation.
+6.  **Sync**: Use `vendatta config sync` for sharing configurations. Standard `git` for code.
+7.  **Clean**: Use `workspace down` to stop, `workspace rm` to delete workspace entirely.

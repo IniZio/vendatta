@@ -16,7 +16,7 @@ docker:
   dind: true  # Enables Docker-in-Docker
 
 agent:
-  role: full-stack # Base role for rule selection
+  enabled: true
 
 hooks:
   setup: .vendatta/hooks/setup.sh
@@ -26,16 +26,25 @@ hooks:
 ## 2. Lifecycle States
 
 ### **`init`**
-Scaffolds the `.vendatta` directory. Creates the base rules and a default provider configuration.
+Scaffolds the `.vendatta` directory. Creates the base configuration and templates.
 
-### **`provision` (`oursky dev`)**
-1.  **Worktree**: A new git worktree is created for the target branch.
-2.  **Container**: The Provider creates a container, bind-mounting the worktree and the docker socket.
-3.  **Ports**: Host ports are allocated and URLs calculated.
-4.  **Setup**: The `setup.sh` hook is executed with `OURSKY_SERVICE_*` variables injected.
+### **`workspace create <name>`**
+1.  **Branch**: Creates or switches to the specified git branch.
+2.  **Worktree**: Creates a git worktree in `.vendatta/worktrees/<name>/` (if `-w` flag used).
+3.  **Agent Configs**: Generates AI agent configurations (Cursor, OpenCode, etc.) from templates.
+4.  **Hooks**: Runs `.vendatta/hooks/create.sh` if it exists.
 
-### **`run`**
-The `dev.sh` hook is executed. This is intended for long-running processes like `npm run dev`.
+### **`workspace up [name]`**
+1.  **Container**: Starts the Docker container with worktree bind-mounted.
+2.  **Port Forwarding**: Maps service ports and injects `OURSKY_SERVICE_*` environment variables.
+3.  **Hooks**: Executes `.vendatta/hooks/up.sh` if it exists.
+4.  **Blocking**: Streams logs and maintains session until Ctrl+C (or detached with `-d`).
 
-### **`teardown`**
-Triggered by `oursky kill`. Cleans up the container and optionally the worktree.
+### **`workspace stop [name]`**
+Stops the container but preserves state and resources.
+
+### **`workspace down [name]`**
+Stops and removes the container, networks, and temporary resources.
+
+### **`workspace rm <name>`**
+Deletes the worktree directory and all associated workspace resources.

@@ -118,40 +118,49 @@ docker:
 
 ### **Hooks Configuration**
 
-#### **Lifecycle Scripts**
-```yaml
-hooks:
-  setup: ".vendatta/hooks/setup.sh"  # Run after container creation
-  dev: ".vendatta/hooks/dev.sh"      # Run before dev session starts
-  teardown: ".vendatta/hooks/teardown.sh"  # Run before cleanup
-```
+#### **Convention-Based Lifecycle Scripts**
+Hooks are now convention-based and located in `.vendatta/hooks/`:
+
+**Base Project Hooks:**
+- `.vendatta/hooks/create.sh` - Executed during `workspace create` (optional)
+- `.vendatta/hooks/up.sh` - Executed during `workspace up` (optional)
+- `.vendatta/hooks/stop.sh` - Executed during `workspace stop` (optional)
+- `.vendatta/hooks/down.sh` - Executed during `workspace down` (optional)
+
+**Execution:** Scripts must be executable (chmod +x) if present.
 
 ### **Sync Targets Configuration**
 
 #### **Remote Sync Targets**
 ```yaml
 sync_targets:
-  - name: "upstream"              # Remote name
-    url: "https://github.com/example/upstream.git"  # Repository URL
-  - name: "configs"
-    url: "https://github.com/example/configs.git"
+  - name: "team-configs"          # Remote name
+    url: "https://github.com/team/vendatta-configs.git"  # Repository URL
+  - name: "company-templates"
+    url: "https://github.com/company/ai-templates.git"
 ```
 
 #### **Remote Options**
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `name` | string | Yes | Git remote name |
-| `url` | string | Yes | Repository URL |
+| `name` | string | Yes | Git remote name for identification |
+| `url` | string | Yes | Repository URL to sync with |
 
 #### **Usage**
-Configured sync targets push only the `.vendatta` directory to the specified remote. Sync individually or all at once:
-```bash
-# Sync specific target
-vendatta remote sync <target-name>
+Sync your `.vendatta` directory to remote repositories for sharing configurations:
 
-# Sync all configured targets
-vendatta remote sync-all
+```bash
+# Pull shared templates from a remote repository
+vendatta config pull https://github.com/company/ai-templates.git --branch=main
+
+# Sync local config to a specific remote target
+vendatta config sync team-configs
+
+# Sync to all configured remote targets
+vendatta config sync-all
 ```
+
+The sync process creates a temporary branch with only the `.vendatta` directory and pushes it to the remote repository.
 
 ## 3. Template System
 
