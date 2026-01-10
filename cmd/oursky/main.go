@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/vibegear/oursky/pkg/agent"
 	"github.com/vibegear/oursky/pkg/config"
 	"github.com/vibegear/oursky/pkg/ctrl"
 	"github.com/vibegear/oursky/pkg/provider"
@@ -249,14 +248,78 @@ func main() {
 		},
 	}
 
-	devCmd := &cobra.Command{
-		Use:   "dev [branch]",
-		Short: "Start a development session for a branch",
+	workspaceCmd := &cobra.Command{
+		Use:   "workspace",
+		Short: "Manage isolated development workspaces",
+	}
+
+	workspaceCreateCmd := &cobra.Command{
+		Use:   "create <name>",
+		Short: "Create a new workspace with agent configs",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return controller.Dev(context.Background(), args[0])
+			return controller.WorkspaceCreate(context.Background(), args[0])
 		},
 	}
+
+	workspaceUpCmd := &cobra.Command{
+		Use:   "up [name]",
+		Short: "Start workspace services (auto-detects workspace if in worktree)",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			name := ""
+			if len(args) > 0 {
+				name = args[0]
+			}
+			return controller.WorkspaceUp(context.Background(), name)
+		},
+	}
+
+	workspaceDownCmd := &cobra.Command{
+		Use:   "down [name]",
+		Short: "Stop workspace services (auto-detects workspace if in worktree)",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			name := ""
+			if len(args) > 0 {
+				name = args[0]
+			}
+			return controller.WorkspaceDown(context.Background(), name)
+		},
+	}
+
+	workspaceShellCmd := &cobra.Command{
+		Use:   "shell [name]",
+		Short: "Open interactive shell in workspace (auto-detects workspace if in worktree)",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			name := ""
+			if len(args) > 0 {
+				name = args[0]
+			}
+			return controller.WorkspaceShell(context.Background(), name)
+		},
+	}
+
+	workspaceListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all workspaces",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return controller.WorkspaceList(context.Background())
+		},
+	}
+
+	workspaceRmCmd := &cobra.Command{
+		Use:   "rm <name>",
+		Short: "Remove workspace entirely",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return controller.WorkspaceRm(context.Background(), args[0])
+		},
+	}
+
+	// Add subcommands to workspace command group
+	workspaceCmd.AddCommand(workspaceCreateCmd, workspaceUpCmd, workspaceDownCmd, workspaceShellCmd, workspaceListCmd, workspaceRmCmd)
 
 	listCmd := &cobra.Command{
 		Use:   "list",
@@ -279,33 +342,6 @@ func main() {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return controller.Kill(context.Background(), args[0])
-		},
-	}
-
-	agentCmd := &cobra.Command{
-		Use:   "agent [session-id]",
-		Short: "Start MCP agent gateway for a session",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			sessions, _ := controller.List(context.Background())
-			var targetSession *provider.Session
-			for _, s := range sessions {
-				if s.ID == args[0] || s.Labels["oursky.session.id"] == args[0] {
-					targetSession = &s
-					break
-				}
-			}
-			if targetSession == nil {
-				return fmt.Errorf("session %s not found", args[0])
-			}
-
-			p, ok := controller.Providers[targetSession.Provider]
-			if !ok {
-				return fmt.Errorf("provider %s not found", targetSession.Provider)
-			}
-
-			s := agent.NewAgentServer(targetSession.ID, p)
-			return s.Serve()
 		},
 	}
 
@@ -375,12 +411,55 @@ func main() {
 
 	templatesCmd.AddCommand(templatesPullCmd, templatesListCmd, templatesMergeCmd)
 
-	remoteCmd := &cobra.Command{
-		Use:   "remote",
-		Short: "Manage Git remotes",
+	configCmd := &cobra.Command{
+		Use:   "config",
+		Short: "Manage Vendatta configuration and templates",
 	}
 
-	syncCmd := &cobra.Command{
+	configPullCmd := &cobra.Command{
+		Use:   "pull <url>",
+		Short: "Pull templates from a remote Git repository",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			manager := templates.NewManager(".vendatta")
+			repo := templates.TemplateRepo{
+				URL: args[0],
+			}
+
+			// Check if branch flag is provided
+			if branch, _ := cmd.Flags().GetString("branch"); branch != "" {
+				repo.Branch = branch
+			}
+
+			return manager.PullRepo(repo)
+		},
+	}
+	configPullCmd.Flags().String("branch", "", "Branch to pull from")
+
+	configListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List pulled template repositories",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			manager := templates.NewManager(".vendatta")
+			repos, err := manager.ListRepos()
+			if err != nil {
+				return err
+			}
+
+			if len(repos) == 0 {
+				fmt.Println("No template repositories pulled")
+				return nil
+			}
+
+			fmt.Println("Pulled template repositories:")
+			for _, repo := range repos {
+				fmt.Printf("  - %s\n", repo)
+			}
+			return nil
+		},
+	}
+
+	configSyncCmd := &cobra.Command{
 		Use:   "sync [target-name]",
 		Short: "Sync .vendatta directory to a configured remote target",
 		Args:  cobra.ExactArgs(1),
@@ -389,7 +468,7 @@ func main() {
 		},
 	}
 
-	syncAllCmd := &cobra.Command{
+	configSyncAllCmd := &cobra.Command{
 		Use:   "sync-all",
 		Short: "Sync all configured remotes from .vendatta/config.yaml",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -397,7 +476,7 @@ func main() {
 		},
 	}
 
-	remoteCmd.AddCommand(syncCmd, syncAllCmd)
+	configCmd.AddCommand(configPullCmd, configListCmd, configSyncCmd, configSyncAllCmd)
 
 	updateCmd := &cobra.Command{
 		Use:   "update",
@@ -407,7 +486,7 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(initCmd, devCmd, listCmd, killCmd, agentCmd, templatesCmd, remoteCmd, updateCmd)
+	rootCmd.AddCommand(initCmd, workspaceCmd, listCmd, killCmd, templatesCmd, configCmd, updateCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
