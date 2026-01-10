@@ -41,12 +41,6 @@ func (m *Manager) Merge(baseDir string) (*TemplateData, error) {
 		return nil, fmt.Errorf("failed to load template repos: %w", err)
 	}
 
-	// 3. Load agent overrides
-	agentsDir := filepath.Join(baseDir, "agents")
-	if err := m.loadTemplatesFromDir(agentsDir, data); err != nil {
-		return nil, fmt.Errorf("failed to load agent templates: %w", err)
-	}
-
 	return data, nil
 }
 

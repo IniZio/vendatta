@@ -5,13 +5,6 @@ globs: ["**/*"]
 alwaysApply: true
 ---
 
-# PROJECT KNOWLEDGE BASE
-
-**Generated:** VIBEGEAR-TEST
-
-## project
-
-
 ## OVERVIEW
 Vendatta (internal codename `oursky`) is a Go-based orchestration tool that manages isolated development environments. It uses Git worktrees for filesystem isolation and Docker/LXC for execution isolation, providing a standardized MCP (Model Context Protocol) gateway for AI agents.
 

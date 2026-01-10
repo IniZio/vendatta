@@ -142,8 +142,8 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			templatePath: ".vendatta/agents/opencode/opencode.json.tpl",
 			outputPath:   "opencode.json",
 			gitignore:    "AGENTS.md",
-			rulesFormat:  "agents.md",
-			rulesDir:     "",
+			rulesFormat:  "md",
+			rulesDir:     ".opencode/rules",
 		},
 		"claude-desktop": {
 			templatePath: ".vendatta/agents/claude-desktop/claude_desktop_config.json.tpl",
@@ -166,6 +166,14 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 	}
 
 	var gitignorePatterns []string
+
+	if merged != nil && len(merged.Rules) > 0 {
+		if err := c.generateAgentRules(worktreePath, "agents.md", "", merged); err != nil {
+			return fmt.Errorf("failed to generate AGENTS.md: %w", err)
+		}
+		gitignorePatterns = append(gitignorePatterns, "AGENTS.md")
+	}
+
 	for _, agent := range c.Agents {
 		if !agent.Enabled {
 			continue
@@ -203,19 +211,13 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 
 		if cfg.rulesFormat != "" {
 			agentRulesDir := filepath.Join(".vendatta", "agents", agent.Name)
-			agentMerged := *merged
-			agentMerged.Rules = make(map[string]interface{})
-			for k, v := range merged.Rules {
-				agentMerged.Rules[k] = v
+			agentSpecificMerged := &templates.TemplateData{
+				Rules: make(map[string]interface{}),
 			}
 
 			manager := templates.NewManager(".vendatta")
-			if err := manager.LoadAgentRules(agentRulesDir, &agentMerged); err == nil {
-				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, &agentMerged); err != nil {
-					return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
-				}
-			} else {
-				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, merged); err != nil {
+			if err := manager.LoadAgentRules(agentRulesDir, agentSpecificMerged); err == nil && len(agentSpecificMerged.Rules) > 0 {
+				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, agentSpecificMerged); err != nil {
 					return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
 				}
 			}
@@ -245,7 +247,11 @@ func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merge
 	}
 
 	switch format {
-	case "mdc":
+	case "mdc", "md":
+		extension := "." + format
+		if format == "md" {
+			extension = ".md"
+		}
 		for name, data := range merged.Rules {
 			ruleMap, ok := data.(map[string]interface{})
 			if !ok {
@@ -264,7 +270,7 @@ func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merge
 			builder.WriteString("---\n")
 			builder.WriteString(content)
 
-			outputPath := filepath.Join(absRulesDir, name+".mdc")
+			outputPath := filepath.Join(absRulesDir, name+extension)
 			if err := os.WriteFile(outputPath, []byte(builder.String()), 0644); err != nil {
 				return err
 			}
@@ -274,17 +280,12 @@ func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merge
 		builder.WriteString("# PROJECT KNOWLEDGE BASE\n\n")
 		builder.WriteString(fmt.Sprintf("**Generated:** %s\n", strings.ToUpper(c.Name)))
 		builder.WriteString("\n")
-		for name, data := range merged.Rules {
+		for _, data := range merged.Rules {
 			ruleMap, ok := data.(map[string]interface{})
 			if !ok {
 				continue
 			}
 			content, _ := ruleMap["content"].(string)
-			title, _ := ruleMap["title"].(string)
-			if title == "" {
-				title = name
-			}
-			builder.WriteString(fmt.Sprintf("## %s\n\n", title))
 			builder.WriteString(content)
 			builder.WriteString("\n\n")
 		}
