@@ -14,7 +14,7 @@ Vendatta eliminates the "it works on my machine" problem by providing isolated, 
 
 ### Try It Now
 
-Get started in 2 simple steps:
+Get started in 3 simple steps:
 
 ```bash
 # 1. Install Vendatta
@@ -26,11 +26,12 @@ curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | b
 # 2. Initialize in your project
 vendatta init
 
-# 3. Start an isolated development session
-vendatta dev my-feature
+# 3. Create and start your workspace
+vendatta workspace create my-feature
+vendatta workspace up my-feature
 ```
 
-That's it! Vendatta creates an isolated environment for your `my-feature` branch with automatic AI agent configuration.
+That's it! Vendatta creates an isolated workspace for your `my-feature` branch with automatic AI agent configuration.
 
 #### Alternative: Build from Source
 
@@ -52,10 +53,10 @@ vendatta update
 ### Understanding What Happened
 
 - **Step 1**: Built a single Go binary that manages everything
-- **Step 2**: Created a `.vendatta/` directory with basic configuration templates
-- **Step 3**: Generated a Git worktree at `.vendatta/worktrees/my-feature/` and started any configured services
+- **Step 2**: Created a `.vendatta/` directory with basic configuration and hook templates
+- **Step 3**: Created a workspace with branch, worktree, agent configs, and started the isolated environment
 
-Your AI agents (Cursor, OpenCode, etc.) are now automatically configured to work with this isolated environment.
+Your AI agents (Cursor, OpenCode, etc.) are now automatically configured to work with this isolated workspace.
 
 ### Configure for Your Project
 
@@ -81,7 +82,7 @@ agents:
     enabled: true
 ```
 
-Run `./vendatta dev my-feature` again to apply your configuration.
+Run `vendatta workspace create my-feature && vendatta workspace up my-feature` to create and start your workspace.
 
 ## Configuration Reference
 
@@ -89,12 +90,19 @@ Run `./vendatta dev my-feature` again to apply your configuration.
 ```
 .vendatta/
 ├── config.yaml          # Main project configuration
+├── hooks/               # Lifecycle scripts (convention-based)
+│   ├── create.sh        # Runs during workspace creation
+│   ├── up.sh            # Runs during workspace startup
+│   ├── stop.sh          # Runs during workspace stop
+│   └── down.sh          # Runs during workspace teardown
 ├── templates/           # Shared AI capabilities
 │   ├── skills/          # Reusable AI skills
 │   ├── commands/        # Development commands
 │   └── rules/           # Coding guidelines
-├── agents/              # Agent-specific overrides
-└── worktrees/           # Auto-generated environments
+├── agents/              # Agent-specific file overrides
+│   └── cursor/
+│       └── rules/       # Override/suppress specific rules
+└── worktrees/           # Auto-generated environments (gitignored)
 ```
 
 ### Main Configuration
@@ -185,14 +193,15 @@ mcp:
 
 ```bash
 export MCP_PORT=3001
-./vendatta dev my-branch
+vendatta workspace create my-branch
+vendatta workspace up my-branch
 ```
 
 ### Service Discovery & Port Access
 
 Vendatta automatically discovers running services and provides environment variables for easy access:
 
-**Available in worktrees**: When you run `./vendatta dev branch-name`, your worktree environment gets these variables:
+**Available in worktrees**: When you run `vendatta workspace up branch-name`, your workspace environment gets these variables:
 
 - `OURSKY_SERVICE_DB_URL` - Database connection URL
 - `OURSKY_SERVICE_API_URL` - API service URL
@@ -222,7 +231,7 @@ This eliminates manual port management and ensures your services can communicate
 
 1. **Set up your project**:
    ```bash
-   ./vendatta init
+   vendatta init
    ```
 
 2. **Configure services** (edit `.vendatta/config.yaml`):
@@ -242,9 +251,10 @@ This eliminates manual port management and ensures your services can communicate
        enabled: true
    ```
 
-3. **Start development**:
+3. **Create and start your workspace**:
    ```bash
-   ./vendatta dev new-feature
+   vendatta workspace create new-feature
+   vendatta workspace up new-feature
    ```
 
 4. **Code with AI assistance**:
@@ -264,13 +274,13 @@ For existing projects, pull shared configurations and templates:
 vendatta init
 
 # Pull agent templates from a remote repository
-vendatta templates pull https://github.com/IniZio/dotvendatta
+vendatta config pull https://github.com/IniZio/dotvendatta
 
 # List pulled template repositories
-vendatta templates list
+vendatta config list
 
 # Merge templates into your configuration
-vendatta templates merge
+# (automatic during workspace creation)
 ```
 
 ### 2. Configure Your Development Environment
@@ -306,18 +316,18 @@ sync_targets:
 ### 3. Start Development Session
 
 ```bash
-# Start isolated development environment
-vendatta dev feature-branch
+# Create and start isolated development workspace
+vendatta workspace create feature-branch
+vendatta workspace up feature-branch
 ```
 
-The command starts the session in the background and exits once setup is complete. Vendatta will show progress as it:
-- Initializes template remotes
+The `up` command starts the session and blocks for logs. Vendatta will show progress as it:
 - Merges AI agent templates
 - Sets up Git worktree (at `.vendatta/worktrees/<branch>/`)
 - Generates agent configurations in the worktree
 - Creates and starts the container session
 - Maps service ports (services start automatically in the container)
-- Runs setup hooks (if configured)
+- Runs lifecycle hooks from `.vendatta/hooks/`
 
 Example output:
 ```
@@ -339,8 +349,8 @@ Example output:
 🎉 Session my-project-feature-branch is ready!
 📂 Worktree: /path/to/project/.vendatta/worktrees/feature-branch
 💡 Open this directory in your AI agent (Cursor, OpenCode, etc.)
-🔍 Use 'vendatta list' to see running sessions
-🛑 Use 'vendatta kill my-project-feature-branch' to stop the session
+🔍 Use 'vendatta workspace list' to see running workspaces
+🛑 Use 'vendatta workspace down my-project-feature-branch' to stop the workspace
 ⏳ Services may take a moment to fully start - check URLs when ready
 ```
 
@@ -349,10 +359,10 @@ Example output:
 Once running, Vendatta automatically maps service ports. Check available services:
 
 ```bash
-# See all running sessions
-vendatta list
+# See all running workspaces
+vendatta workspace list
 
-# Check environment variables for service URLs
+# Check environment variables for service URLs (inside workspace)
 env | grep OURSKY_SERVICE
 # Output:
 # OURSKY_SERVICE_DB_URL=postgresql://localhost:5432
@@ -382,20 +392,23 @@ Push your `.vendatta` configs to remote targets:
 
 ```bash
 # Sync to a specific target
-vendatta remote sync backup
+vendatta config sync backup
 
 # Sync to all configured targets
-vendatta remote sync-all
+vendatta config sync-all
 ```
 
 ### 8. Clean Up
 
 ```bash
-# Stop a specific session
-vendatta kill <session-id>
+# Stop a specific workspace
+vendatta workspace stop <name>
 
-# List all sessions before cleanup
-vendatta list
+# Remove workspace entirely
+vendatta workspace rm <name>
+
+# List all workspaces before cleanup
+vendatta workspace list
 ```
 
 ### Checking Service Status
@@ -419,7 +432,7 @@ curl http://localhost:<port>/health
 - **Ports not accessible**: Services may still be starting up - wait a moment
 - **Container issues**: Check `docker ps` for running containers
 - **Agents not connecting**: Verify MCP port (default 3001) is available and configs are generated
-- **Git conflicts**: Pull latest changes before `vendatta dev`
+- **Git conflicts**: Pull latest changes before `vendatta workspace create`
 - **Permission issues**: Ensure Docker is accessible and user has proper permissions
 
 ---
