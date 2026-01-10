@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/IniZio/vendatta/main/schema/config.schema.json",
+  "title": "Vendatta Configuration Schema",
+  "description": "Schema for .vendatta/config.yaml configuration files",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Project name used for workspace identification",
+      "minLength": 1
+    },
+    "provider": {
+      "type": "string",
+      "description": "Container provider to use (docker, lxc)",
+      "enum": ["docker", "lxc"],
+      "default": "docker"
+    },
+    "services": {
+      "type": "object",
+      "description": "Services to run in the workspace",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_-]*$": {
+          "$ref": "#/definitions/service"
+        }
+      },
+      "additionalProperties": false
+    },
+    "remotes": {
+      "type": "array",
+      "description": "Remote template repositories to pull from",
+      "items": {
+        "$ref": "#/definitions/templateRepo"
+      }
+    },
+    "sync_targets": {
+      "type": "array",
+      "description": "Remote repositories to sync .vendatta directory to",
+      "items": {
+        "$ref": "#/definitions/remote"
+      }
+    },
+    "agents": {
+      "type": "array",
+      "description": "AI agents to configure",
+      "items": {
+        "$ref": "#/definitions/agent"
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "description": "Model Context Protocol server configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable MCP server",
+          "default": true
+        },
+        "port": {
+          "type": "integer",
+          "description": "MCP server port",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 3001
+        },
+        "host": {
+          "type": "string",
+          "description": "MCP server host",
+          "default": "localhost"
+        }
+      },
+      "additionalProperties": false
+    },
+    "docker": {
+      "type": "object",
+      "description": "Docker provider configuration",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "Docker image to use",
+          "default": "ubuntu:22.04"
+        },
+        "ports": {
+          "type": "array",
+          "description": "Port mappings",
+          "items": {
+            "type": "string",
+            "pattern": "^\\d+(?::\\d+)?$"
+          }
+        },
+        "dind": {
+          "type": "boolean",
+          "description": "Enable Docker-in-Docker",
+          "default": true
+        }
+      },
+      "additionalProperties": false,
+      "required": ["image"]
+    },
+    "lxc": {
+      "type": "object",
+      "description": "LXC provider configuration",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "LXC image to use"
+        }
+      },
+      "additionalProperties": false
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Lifecycle hook scripts",
+      "properties": {
+        "setup": {
+          "type": "string",
+          "description": "Setup hook script content"
+        },
+        "dev": {
+          "type": "string",
+          "description": "Development hook script content"
+        },
+        "teardown": {
+          "type": "string",
+          "description": "Teardown hook script content"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["name", "services"],
+  "additionalProperties": false,
+  "definitions": {
+    "service": {
+      "type": "object",
+      "description": "Individual service configuration",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command to run the service",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "description": "Port the service runs on (legacy support)",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "healthcheck": {
+          "$ref": "#/definitions/healthcheck"
+        },
+        "depends_on": {
+          "type": "array",
+          "description": "Services this service depends on",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+          },
+          "uniqueItems": true
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables for the service",
+          "patternProperties": {
+            "^[A-Z][A-Z0-9_]*$": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "healthcheck": {
+      "type": "object",
+      "description": "Service health check configuration",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Health check URL",
+          "format": "uri"
+        },
+        "interval": {
+          "type": "string",
+          "description": "Health check interval",
+          "pattern": "^\\d+(ms|s|m|h)$",
+          "default": "30s"
+        },
+        "timeout": {
+          "type": "string",
+          "description": "Health check timeout",
+          "pattern": "^\\d+(ms|s|m|h)$",
+          "default": "10s"
+        },
+        "retries": {
+          "type": "integer",
+          "description": "Number of retries before marking unhealthy",
+          "minimum": 1,
+          "default": 3
+        }
+      },
+      "required": ["url"],
+      "additionalProperties": false
+    },
+    "agent": {
+      "type": "object",
+      "description": "AI agent configuration",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Agent name",
+          "enum": ["cursor", "opencode", "claude-desktop", "claude-code"]
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this agent",
+          "default": false
+        },
+        "rules": {
+          "type": "string",
+          "description": "Custom rules file path"
+        },
+        "skills": {
+          "type": "array",
+          "description": "Skills to enable for this agent",
+          "items": {
+            "type": "string"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "description": "Commands to enable for this agent",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "templateRepo": {
+      "type": "object",
+      "description": "Remote template repository",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Git repository URL",
+          "format": "uri"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Branch to pull from",
+          "default": "main"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path within repo containing templates"
+        }
+      },
+      "required": ["url"],
+      "additionalProperties": false
+    },
+    "remote": {
+      "type": "object",
+      "description": "Sync target remote repository",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Remote name",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+        },
+        "url": {
+          "type": "string",
+          "description": "Git repository URL",
+          "format": "uri"
+        }
+      },
+      "required": ["name", "url"],
+      "additionalProperties": false
+    }
+  }
+}
