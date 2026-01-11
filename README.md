@@ -90,6 +90,8 @@ Run `vendatta workspace create my-feature && vendatta workspace up my-feature` t
 ```
 .vendatta/
 ├── config.yaml          # Main project configuration
+├── schema/              # Auto-generated JSON schemas
+│   └── config.schema.json # Schema for config.yaml validation
 ├── hooks/               # Lifecycle scripts (convention-based)
 │   ├── create.sh        # Runs during workspace creation
 │   ├── up.sh            # Runs during workspace startup
@@ -104,6 +106,24 @@ Run `vendatta workspace create my-feature && vendatta workspace up my-feature` t
 │       └── rules/       # Override/suppress specific rules
 └── worktrees/           # Auto-generated environments (gitignored)
 ```
+
+### Schema Validation & IDE Support
+
+Vendatta provides full JSON schema validation for `config.yaml` with IDE autocompletion:
+
+```bash
+# Generate or update the JSON schema
+vendatta config generate-schema
+
+# Validate your current config.yaml
+vendatta config validate
+```
+
+The schema enables:
+- **Autocomplete** in VSCode, Cursor, and other editors
+- **Validation** with helpful error messages
+- **Documentation** tooltips for all configuration options
+- **Type safety** for complex configurations
 
 ### Main Configuration
 
