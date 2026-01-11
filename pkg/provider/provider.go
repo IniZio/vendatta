@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"io"
 )
 
 type Session struct {
@@ -15,10 +16,12 @@ type Session struct {
 }
 
 type ExecOptions struct {
-	Cmd    []string
-	Env    []string
-	Stdout bool
-	Stderr bool
+	Cmd          []string
+	Env          []string
+	Stdout       bool
+	Stderr       bool
+	StdoutWriter io.Writer
+	StderrWriter io.Writer
 }
 
 type Provider interface {
