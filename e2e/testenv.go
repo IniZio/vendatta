@@ -90,7 +90,7 @@ func (env *TestEnvironment) BuildVendattaBinary(t *testing.T) string {
 		return env.binaryPath
 	}
 
-	// Find the vendatta source directory by walking up from the test executable
+	// Find the vendatta source directory by walking up from test executable
 	// until we find a directory containing go.mod
 	repoRoot := findRepoRoot(t)
 
@@ -103,7 +103,7 @@ func (env *TestEnvironment) BuildVendattaBinary(t *testing.T) string {
 	return binaryPath
 }
 
-// findRepoRoot finds the repository root by looking for go.mod
+// findRepoRoot finds repository root by looking for go.mod
 func findRepoRoot(t *testing.T) string {
 	dir, err := os.Getwd()
 	require.NoError(t, err)
@@ -123,12 +123,21 @@ func findRepoRoot(t *testing.T) string {
 
 // RunVendattaCommand runs a vendatta command and returns the output
 func (env *TestEnvironment) RunVendattaCommand(t *testing.T, binaryPath, projectDir string, args ...string) string {
-	output, err := env.RunVendattaCommandWithError(binaryPath, projectDir, args...)
+	cmd := exec.Command(binaryPath, args...)
+	cmd.Dir = projectDir
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	output := stdout.String() + stderr.String()
+
 	if err != nil {
 		t.Logf("Command failed: %s %v in %s", binaryPath, args, projectDir)
 		t.Logf("Output: %s", output)
+		require.NoError(t, err)
 	}
-	require.NoError(t, err)
 	return output
 }
 
@@ -143,6 +152,7 @@ func (env *TestEnvironment) RunVendattaCommandWithError(binaryPath, projectDir s
 
 	err := cmd.Run()
 	output := stdout.String() + stderr.String()
+
 	return output, err
 }
 
@@ -177,11 +187,11 @@ func (env *TestEnvironment) VerifyServiceDown(t *testing.T, url string, timeout 
 	for time.Now().Before(deadline) {
 		resp, err := client.Get(url)
 		if err != nil {
-			return // Service is down
+			return
 		}
 		resp.Body.Close()
 		if resp.StatusCode >= 500 {
-			return // Service error means it's down
+			return
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -192,5 +202,5 @@ func (env *TestEnvironment) VerifyServiceDown(t *testing.T, url string, timeout 
 // VerifyFileExists checks if a file exists
 func (env *TestEnvironment) VerifyFileExists(t *testing.T, path string) {
 	_, err := os.Stat(path)
-	assert.NoError(t, err, "File should exist: %s", path)
+	require.NoError(t, err, "File should exist: %s", path)
 }
