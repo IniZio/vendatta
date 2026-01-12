@@ -1,13 +1,13 @@
-# Technical Architecture: Project Oursky
+# Technical Architecture: Project Vendatta
 
 ## 1. Overview
-Oursky is a developer-centric, single-binary dev environment manager. It abstracts complex infrastructure (Docker, LXC, Worktrees) into a simple CLI interface, providing isolated, reproducible, and agent-friendly codespaces.
+Vendatta is a developer-centric, single-binary dev environment manager. It abstracts complex infrastructure (Docker, LXC, Worktrees) into a simple CLI interface, providing isolated, reproducible, and agent-friendly codespaces.
 
 ## 2. Component Diagram
 
 ```mermaid
 graph TD
-    CLI[Oursky CLI] --> CP[Control Plane]
+    CLI[Vendatta CLI] --> CP[Control Plane]
     CP --> WM[Worktree Manager]
     CP --> P[Provider Interface]
     CP --> PR[Plugin Registry]
@@ -69,9 +69,9 @@ Implements the **Model Context Protocol (MCP)**.
 - **Interoperability**: Designed to be the standard interface for Cursor-agent, OpenCode, and Claude.
 
 ## 4. Environment Injection & Networking
-Oursky solves the API discovery problem by injecting environment variables:
+Vendatta solves the API discovery problem by injecting environment variables:
 - **Port Discovery**: Host-mapped ports are discovered dynamically.
-- **Injection**: Variables like `OURSKY_SERVICE_[NAME]_URL` are passed to the container, allowing seamless CORS and endpoint configuration.
+- **Injection**: Variables like `VENDATTA_SERVICE_[NAME]_URL` are passed to the container, allowing seamless CORS and endpoint configuration.
 
 ## 5. Agent Scaffold
 The `.vendatta/agents/` directory acts as the **Single Source of Truth** for agent behavior.
@@ -80,7 +80,7 @@ The `.vendatta/agents/` directory acts as the **Single Source of Truth** for age
 - **Sync**: CLI command `sync-agents` generates agent-specific configurations (e.g., `.cursorrules`).
 
 ## 6. Remote Repository Management
-Oursky provides native CLI commands for advanced multi-remote Git operations:
+Vendatta provides native CLI commands for advanced multi-remote Git operations:
 - **Remote Sync**: `vendatta remote sync <target>` syncs `.vendatta` directory to a configured remote target.
 - **Config-Driven Sync**: `vendatta remote sync-all` syncs `.vendatta` to all targets defined in `.vendatta/config.yaml` under `sync_targets`.
 - **Implementation**: Uses Go `exec.Command` for Git operations with comprehensive error handling.

@@ -1,26 +1,15 @@
 name: "vibegear-test"
-provider: docker
+
+extends:
+  - inizio/vendatta-config-inizio
+
+plugins:
+  - golang
+
 services:
   test:
     command: "echo 'Test service running'"
     port: 8080
-remotes:
-  - url: "https://github.com/IniZio/vendatta-config"
-    branch: "main"
-agents:
-  - name: "cursor"
-    enabled: true
-    plugins: ["core", "golang", "docker"]
-  - name: "opencode"
-    enabled: true
-    plugins: ["core", "golang", "docker"]
-  - name: "claude-desktop"
-    enabled: true
-    plugins: ["core", "golang", "docker"]
-mcp:
-  enabled: true
-  port: 3001
-  host: "localhost"
+
 docker:
   image: ubuntu:22.04
-  dind: true

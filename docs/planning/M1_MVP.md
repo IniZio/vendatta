@@ -5,8 +5,8 @@
 ## 🎯 Success Criteria
 - [x] `vendatta workspace create <name>` creates isolated workspace with agent configs
 - [x] `vendatta workspace up <name>` starts services with port forwarding and optional hooks
-- [x] Service discovery injects `OURSKY_SERVICE_*_URL` environment variables correctly
-- [x] Agent configurations support file-based overrides and suppression
+- [x] Service discovery injects `VENDATTA_SERVICE_*_URL` environment variables correctly
+- [x] Agent configurations generated for supported AI agents
 - [x] Optional lifecycle hooks execute from `.vendatta/hooks/` directory
 - [ ] Full E2E test suite with 90%+ coverage and CI integration
 - [ ] JSON schema validation for config.yaml
@@ -57,7 +57,7 @@ vendatta workspace up feature-x
 
 # Test 3: Service discovery
 vendatta workspace up feature-x
-# Verify: OURSKY_SERVICE_WEB_URL=localhost:3000 in container env
+# Verify: VENDATTA_SERVICE_WEB_URL=localhost:3000 in container env
 ```
 
 ---
@@ -67,7 +67,7 @@ vendatta workspace up feature-x
 
 **Unit Tests:**
 - ✅ Port auto-detection from service commands (docker-compose, npm, etc.)
-- ✅ Environment variable generation follows `OURSKY_SERVICE_{NAME}_URL` pattern
+- ✅ Environment variable generation follows `VENDATTA_SERVICE_{NAME}_URL` pattern
 - ✅ Protocol guessing from service nature (postgres → postgresql://, web → http://)
 - ✅ Multiple services generate multiple environment variables
 
@@ -93,10 +93,10 @@ vendatta workspace up discovery-test
 
 # Verify environment variables available before services start
 vendatta workspace shell discovery-test
-env | grep OURSKY_SERVICE
-# Expected: OURSKY_SERVICE_WEB_URL=http://localhost:3000
-#          OURSKY_SERVICE_API_URL=http://localhost:8080
-#          OURSKY_SERVICE_DB_URL=postgresql://localhost:5432
+env | grep VENDATTA_SERVICE
+# Expected: VENDATTA_SERVICE_WEB_URL=http://localhost:3000
+#          VENDATTA_SERVICE_API_URL=http://localhost:8080
+#          VENDATTA_SERVICE_DB_URL=postgresql://localhost:5432
 ```
 
 ---
@@ -141,27 +141,26 @@ vendatta workspace up hooks-demo
 
 ---
 
-### **TP-AGT-02: Agent Config Override Testing**
-**Objective**: Verify file-based agent configuration following official documentation
+### **TP-AGT-02: Agent Config Generation Testing**
+**Objective**: Verify AI agent configuration generation for supported agents
 
 **Unit Tests:**
 - ✅ Base templates loaded from `.vendatta/templates/`
-- ✅ Override files replace base templates per official agent specs
+- ✅ Agent-specific configurations generated correctly
+- ✅ Override files replace base templates per agent specs
 - ✅ Empty files suppress template generation
-- ✅ Agent-specific directories processed correctly
 
 **Integration Tests:**
-- ✅ Config generation creates correct files per official formats
-- ✅ Cursor configuration connects to MCP server correctly
-- ✅ OpenCode configuration loads rules/skills properly
-- ✅ Override precedence: project > remote > base
+- ✅ Config generation creates correct files per agent formats
+- ✅ Template merging works with project overrides
+- ✅ Agent directories processed correctly
 
 **E2E Scenarios:**
 ```bash
-# Test config generation per official specs
+# Test config generation for agents
 vendatta workspace create config-test
 
-# Create Cursor override following official .cursorrules format
+# Create agent override
 mkdir -p .vendatta/agents/cursor
 cat > .vendatta/agents/cursor/.cursorrules << EOF
 # Custom Cursor Rules
@@ -169,12 +168,13 @@ cat > .vendatta/agents/cursor/.cursorrules << EOF
 - Prefer functional components over class components
 EOF
 
-# Create suppression
-touch .vendatta/agents/opencode/rules/legacy.md  # Empty file
+# Create suppression for specific rules
+touch .vendatta/agents/opencode/rules/legacy.md  # Empty file suppresses
 
 vendatta workspace create config-test
-# Verify: .cursorrules exists with correct format
-# Verify: OpenCode legacy.md suppressed
+# Verify: Agent configs generated in worktree
+# Verify: Overrides applied correctly
+# Verify: Suppressions work
 ```
 
 ---
@@ -316,7 +316,7 @@ fmt:
 - **Git Conflicts**: Clear instructions for manual resolution
 
 **Hook Environment Variables:**
-- **Service Discovery**: `OURSKY_SERVICE_{NAME}_URL` (protocol guessed from service type)
+- **Service Discovery**: `VENDATTA_SERVICE_{NAME}_URL` (protocol guessed from service type)
 - **Workspace Context**: `WORKSPACE_NAME`, `WORKTREE_PATH`
 - **Container Info**: `CONTAINER_ID` (when available)
 - **Host Info**: `HOST_USER`, `HOST_CWD`

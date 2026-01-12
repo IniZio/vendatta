@@ -74,7 +74,7 @@ check_prerequisites() {
 # Build vendatta binary
 build_vendatta() {
     log_info "Building vendatta binary..."
-    if ! go build -o vendatta cmd/oursky/main.go; then
+    if ! go build -o vendatta cmd/vendatta/main.go; then
         log_error "Failed to build vendatta binary"
         exit 1
     fi

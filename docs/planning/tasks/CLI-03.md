@@ -37,7 +37,7 @@ vendatta workspace rm <name>         # Remove workspace
 
 ### **Service Discovery Integration**
 - Collect port mappings during container startup
-- Inject `OURSKY_SERVICE_*_URL` environment variables
+- Inject `VENDATTA_SERVICE_*_URL` environment variables
 - Make variables available in hooks and container shell
 
 ## 🧪 Testing Requirements

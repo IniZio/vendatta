@@ -13,8 +13,8 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/vibegear/oursky/pkg/config"
-	"github.com/vibegear/oursky/pkg/provider"
+	"github.com/vibegear/vendatta/pkg/config"
+	"github.com/vibegear/vendatta/pkg/provider"
 )
 
 type DockerProvider struct {
@@ -63,7 +63,7 @@ func (p *DockerProvider) Create(ctx context.Context, sessionID string, workspace
 			exposedPorts[nat.Port(pStr)] = struct{}{}
 			portBindings[nat.Port(pStr)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: fmt.Sprintf("%d", svc.Port)}}
 			url := fmt.Sprintf("http://localhost:%d", svc.Port)
-			env = append(env, fmt.Sprintf("OURSKY_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
+			env = append(env, fmt.Sprintf("VENDATTA_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
 
@@ -84,10 +84,11 @@ func (p *DockerProvider) Create(ctx context.Context, sessionID string, workspace
 	}
 
 	resp, err := p.cli.ContainerCreate(ctx, &container.Config{
-		Image: imgName,
-		Tty:   true,
+		Image:      imgName,
+		Tty:        true,
+		WorkingDir: "/workspace",
 		Labels: map[string]string{
-			"oursky.session.id": sessionID,
+			"vendatta.session.id": sessionID,
 		},
 		Cmd:          []string{"/bin/bash"},
 		Env:          env,
@@ -106,7 +107,7 @@ func (p *DockerProvider) Create(ctx context.Context, sessionID string, workspace
 		Provider: p.Name(),
 		Status:   "created",
 		Labels: map[string]string{
-			"oursky.session.id": sessionID,
+			"vendatta.session.id": sessionID,
 		},
 	}, nil
 }
@@ -127,6 +128,7 @@ func (p *DockerProvider) Exec(ctx context.Context, sessionID string, opts provid
 	execConfig := types.ExecConfig{
 		Cmd:          opts.Cmd,
 		Env:          opts.Env,
+		WorkingDir:   "/workspace",
 		AttachStdout: opts.Stdout,
 		AttachStderr: opts.Stderr,
 	}
@@ -157,7 +159,7 @@ func (p *DockerProvider) List(ctx context.Context) ([]provider.Session, error) {
 
 	var sessions []provider.Session
 	for _, c := range containers {
-		if id, ok := c.Labels["oursky.session.id"]; ok {
+		if id, ok := c.Labels["vendatta.session.id"]; ok {
 			var sshPort int
 			services := make(map[string]int)
 			for _, p := range c.Ports {
@@ -174,7 +176,7 @@ func (p *DockerProvider) List(ctx context.Context) ([]provider.Session, error) {
 				Status:   c.Status,
 				SSHPort:  sshPort,
 				Services: services,
-				Labels:   map[string]string{"oursky.session.id": id},
+				Labels:   map[string]string{"vendatta.session.id": id},
 			})
 		}
 	}

@@ -36,7 +36,7 @@ detect_platform() {
             ;;
     esac
 
-    BINARY_NAME="oursky-${OS}-${ARCH}"
+    BINARY_NAME="vendatta-${OS}-${ARCH}"
     if [ "$OS" = "windows" ]; then
         BINARY_NAME="${BINARY_NAME}.exe"
     fi
@@ -59,21 +59,21 @@ install_binary() {
     echo "Downloading $BINARY_NAME from $DOWNLOAD_URL"
 
     if command -v curl >/dev/null 2>&1; then
-        curl -L -o "/tmp/oursky" "$DOWNLOAD_URL"
+        curl -L -o "/tmp/vendatta" "$DOWNLOAD_URL"
     elif command -v wget >/dev/null 2>&1; then
-        wget -O "/tmp/oursky" "$DOWNLOAD_URL"
+        wget -O "/tmp/vendatta" "$DOWNLOAD_URL"
     else
         echo "Neither curl nor wget found. Please install one of them."
         exit 1
     fi
 
-    chmod +x "/tmp/oursky"
+    chmod +x "/tmp/vendatta"
 
     mkdir -p "$INSTALL_DIR"
-    mv "/tmp/oursky" "$INSTALL_DIR/oursky"
+    mv "/tmp/vendatta" "$INSTALL_DIR/vendatta"
 
-    echo "Vendatta installed successfully to $INSTALL_DIR/oursky"
-    echo "Run 'oursky --help' to get started"
+    echo "Vendatta installed successfully to $INSTALL_DIR/vendatta"
+    echo "Run 'vendatta --help' to get started"
 }
 
 main() {

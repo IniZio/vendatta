@@ -1,4 +1,4 @@
-# CLI UX Specification: Project Oursky
+# CLI UX Specification: Project Vendatta
 
 ## 1. Design Philosophy
 - **Speed**: Commands should provide immediate feedback (sub-second for information, clear progress for IO).
@@ -83,7 +83,7 @@ Solution: Add this directory to Docker Desktop > Settings > Resources > File Sha
 - Shared templates ensure consistency across agents
 
 ### **MCP Gateway**
-- `oursky agent <session-id>` starts the MCP server for the session
+- `vendatta agent <session-id>` starts the MCP server for the session
 - Robust connection handling with automatic recovery
 - Secure tool execution within isolated environments
 

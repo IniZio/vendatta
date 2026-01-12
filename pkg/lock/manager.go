@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/vibegear/oursky/pkg/plugins"
+	"github.com/vibegear/vendatta/pkg/plugins"
 )
 
 // LockEntry represents a locked plugin version

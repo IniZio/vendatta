@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/vibegear/oursky/pkg/templates"
+	"github.com/vibegear/vendatta/pkg/templates"
 )
 
 type Service struct {
@@ -34,7 +35,7 @@ type Agent struct {
 	Rules    string   `yaml:"rules,omitempty"`
 	Skills   []string `yaml:"skills,omitempty"`
 	Commands []string `yaml:"commands,omitempty"`
-	Plugins  []string `yaml:"plugins,omitempty"` // Plugin namespaces to include
+	Plugins  []string `yaml:"plugins,omitempty"`
 }
 
 type TemplateRepo struct {
@@ -43,19 +44,28 @@ type TemplateRepo struct {
 	Path   string `yaml:"path,omitempty"` // Path within repo to templates
 }
 
+type PluginManifest struct {
+	Name        string `yaml:"name"`
+	Version     string `yaml:"version,omitempty"`
+	Description string `yaml:"description,omitempty"`
+	Conditions  []struct {
+		File string `yaml:"file"`
+	} `yaml:"conditions,omitempty"`
+}
+
 type Remote struct {
 	Name string `yaml:"name"`
 	URL  string `yaml:"url"`
 }
 
 type Config struct {
-	Name        string             `yaml:"name"`
-	Provider    string             `yaml:"provider,omitempty"`
-	Services    map[string]Service `yaml:"services"`
-	Remotes     []TemplateRepo     `yaml:"remotes,omitempty"`
-	SyncTargets []Remote           `yaml:"sync_targets,omitempty"`
-	Agents      []Agent            `yaml:"agents,omitempty"`
-	Docker      struct {
+	Name     string             `yaml:"name"`
+	Provider string             `yaml:"provider,omitempty"`
+	Services map[string]Service `yaml:"services"`
+	Extends  []interface{}      `yaml:"extends,omitempty"`
+	Plugins  []interface{}      `yaml:"plugins,omitempty"`
+
+	Docker struct {
 		Image string   `yaml:"image"`
 		Ports []string `yaml:"ports,omitempty"`
 		DinD  bool     `yaml:"dind,omitempty"`
@@ -80,26 +90,45 @@ func LoadConfig(path string) (*Config, error) {
 	return &cfg, err
 }
 
-// InitializeRemotes pulls all template repositories defined in config
-func (c *Config) InitializeRemotes(baseDir string) error {
-	if len(c.Remotes) == 0 {
-		return nil
+func detectInstalledAgents() []string {
+	var agents []string
+	if _, err := exec.LookPath("cursor"); err == nil {
+		agents = append(agents, "cursor")
+	} else if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".cursor")); err == nil {
+		agents = append(agents, "cursor")
 	}
 
-	manager := templates.NewManager(baseDir)
-
-	for _, repo := range c.Remotes {
-		if err := manager.PullRepo(templates.TemplateRepo{
-			URL:    repo.URL,
-			Branch: repo.Branch,
-			Path:   repo.Path,
-		}); err != nil {
-			return fmt.Errorf("failed to pull template repo %s: %w", repo.URL, err)
-		}
+	if _, err := exec.LookPath("opencode"); err == nil {
+		agents = append(agents, "opencode")
 	}
 
-	return nil
+	if _, err := exec.LookPath("claude"); err == nil {
+		agents = append(agents, "claude-desktop")
+		agents = append(agents, "claude-code")
+	}
+
+	return agents
 }
+
+// TODO: Implement plugin initialization
+// InitializePlugins pulls all plugin repositories defined in config
+// func (c *Config) InitializePlugins(baseDir string) error {
+// 	if len(c.Plugins) == 0 {
+// 		return nil
+// 	}
+//
+// 	for _, repo := range c.Plugins {
+// 		if err := manager.PullRepo(templates.TemplateRepo{
+// 			URL:    repo.URL,
+// 			Branch: repo.Branch,
+// 			Path:   repo.Path,
+// 		}); err != nil {
+// 			return fmt.Errorf("failed to pull template repo %s: %w", repo.URL, err)
+// 		}
+// 	}
+//
+// 	return nil
+// }
 
 // RenderData holds data for template rendering
 type RenderData struct {
@@ -112,8 +141,42 @@ type RenderData struct {
 
 // GetMergedTemplates returns merged template data from all sources
 func (c *Config) GetMergedTemplates(baseDir string) (*templates.TemplateData, error) {
-	manager := templates.NewManager(baseDir)
-	return manager.Merge(baseDir)
+	vendattaDir := filepath.Join(baseDir, ".vendatta")
+	manager := templates.NewManager(vendattaDir)
+
+	var enabledPlugins []string
+	for _, p := range c.Plugins {
+		if name, ok := p.(string); ok {
+			if c.isPluginEnabled(baseDir, name) {
+				enabledPlugins = append(enabledPlugins, name)
+			}
+		}
+	}
+
+	var extends []string
+	for _, e := range c.Extends {
+		if name, ok := e.(string); ok {
+			extends = append(extends, name)
+		}
+	}
+
+	return manager.Merge(vendattaDir, enabledPlugins, extends)
+}
+
+func (c *Config) isPluginEnabled(baseDir, name string) bool {
+	switch name {
+	case "golang":
+		return fileExists(filepath.Join(baseDir, "go.mod")) || fileExists(filepath.Join(baseDir, "go.sum"))
+	case "node":
+		return fileExists(filepath.Join(baseDir, "package.json"))
+	default:
+		return true
+	}
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.TemplateData) error {
@@ -125,13 +188,6 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		rulesFormat  string
 		rulesDir     string
 	}{
-		"cursor": {
-			templatePath: ".vendatta/agents/cursor/mcp.json.tpl",
-			outputPath:   ".cursor/mcp.json",
-			gitignore:    ".cursor/",
-			rulesFormat:  "mdc",
-			rulesDir:     ".cursor/rules",
-		},
 		"opencode": {
 			templatePath: ".vendatta/agents/opencode/opencode.json.tpl",
 			outputPath:   "opencode.json",
@@ -156,6 +212,13 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			rulesFormat:  "md",
 			rulesDir:     ".github/instructions",
 		},
+		"cursor": {
+			templatePath: ".vendatta/agents/cursor/mcp.json.tpl",
+			outputPath:   ".cursor/mcp.json",
+			gitignore:    ".cursor/",
+			rulesFormat:  "mdc",
+			rulesDir:     ".cursor/rules",
+		},
 	}
 
 	// Collect merged data from specified plugins
@@ -163,11 +226,10 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 	finalSkills := make(map[string]interface{})
 	finalCommands := make(map[string]interface{})
 
-	// Always include "base" and "override" plugins
 	relevantPlugins := []string{"base", "override"}
-	for _, agent := range c.Agents {
-		if agent.Enabled {
-			relevantPlugins = append(relevantPlugins, agent.Plugins...)
+	for _, plugin := range c.Plugins {
+		if name, ok := plugin.(string); ok {
+			relevantPlugins = append(relevantPlugins, name)
 		}
 	}
 
@@ -176,12 +238,6 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			if plugin, ok := merged.Plugins[pluginName]; ok {
 				for k, v := range plugin.Rules {
 					finalRules[k] = v
-				}
-				for k, v := range plugin.Skills {
-					finalSkills[k] = v
-				}
-				for k, v := range plugin.Commands {
-					finalCommands[k] = v
 				}
 			}
 		}
@@ -217,12 +273,9 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		gitignorePatterns = append(gitignorePatterns, "AGENTS.md")
 	}
 
-	for _, agent := range c.Agents {
-		if !agent.Enabled {
-			continue
-		}
-
-		cfg, ok := agentConfigs[agent.Name]
+	detectedAgents := detectInstalledAgents()
+	for _, agentName := range detectedAgents {
+		cfg, ok := agentConfigs[agentName]
 		if !ok {
 			continue
 		}
@@ -234,12 +287,12 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 
 		tmpl, err := template.New("template").Parse(string(templateContent))
 		if err != nil {
-			return fmt.Errorf("failed to parse template for %s: %w", agent.Name, err)
+			return fmt.Errorf("failed to parse template for %s: %w", agentName, err)
 		}
 
 		var result strings.Builder
 		if err := tmpl.Execute(&result, renderData); err != nil {
-			return fmt.Errorf("failed to execute template for %s: %w", agent.Name, err)
+			return fmt.Errorf("failed to execute template for %s: %w", agentName, err)
 		}
 		rendered := result.String()
 
@@ -249,14 +302,14 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		}
 
 		if err := os.WriteFile(outputPath, []byte(rendered), 0644); err != nil {
-			return fmt.Errorf("failed to write config for %s: %w", agent.Name, err)
+			return fmt.Errorf("failed to write config for %s: %w", agentName, err)
 		}
 
 		if cfg.rulesFormat != "" {
 			agentRules := make(map[string]interface{})
 
-			// Merge rules from specified plugins for this specific agent
-			agentPluginNames := append([]string{"base", "override"}, agent.Plugins...)
+			// Merge rules from relevant plugins
+			agentPluginNames := relevantPlugins
 			for _, pluginName := range agentPluginNames {
 				if merged == nil {
 					continue
@@ -271,7 +324,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			}
 
 			// Load agent-specific rules from override directory
-			agentOverrideDir := filepath.Join(".vendatta", "agents", agent.Name, "rules")
+			agentOverrideDir := filepath.Join(".vendatta", "agents", agentName, "rules")
 			if _, err := os.Stat(agentOverrideDir); err == nil {
 				if err := filepath.Walk(agentOverrideDir, func(path string, info os.FileInfo, err error) error {
 					if err != nil {
@@ -292,7 +345,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 					}
 					return nil
 				}); err != nil {
-					return fmt.Errorf("failed to load agent-specific rules for %s: %w", agent.Name, err)
+					return fmt.Errorf("failed to load agent-specific rules for %s: %w", agentName, err)
 				}
 			}
 
@@ -306,7 +359,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 					},
 				}
 				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, tempAgentMerged); err != nil {
-					return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
+					return fmt.Errorf("failed to generate rules for %s: %w", agentName, err)
 				}
 			}
 		}

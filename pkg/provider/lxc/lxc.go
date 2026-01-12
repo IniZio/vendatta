@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/vibegear/oursky/pkg/provider"
+	"github.com/vibegear/vendatta/pkg/provider"
 )
 
 type LXCProvider struct {
@@ -27,7 +27,7 @@ func (p *LXCProvider) Name() string {
 }
 
 func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePath string, config interface{}) (*provider.Session, error) {
-	containerName := fmt.Sprintf("oursky-%s", sessionID)
+	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 
 	// Launch LXC container
 	cmd := exec.CommandContext(ctx, "lxc", "launch", "ubuntu:22.04", containerName)
@@ -46,7 +46,7 @@ func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePat
 		Provider: p.name,
 		Status:   "running",
 		Labels: map[string]string{
-			"oursky.session.id": sessionID,
+			"vendatta.session.id": sessionID,
 		},
 	}
 
@@ -54,19 +54,19 @@ func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePat
 }
 
 func (p *LXCProvider) Start(ctx context.Context, sessionID string) error {
-	containerName := fmt.Sprintf("oursky-%s", sessionID)
+	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 	cmd := exec.CommandContext(ctx, "lxc", "start", containerName)
 	return cmd.Run()
 }
 
 func (p *LXCProvider) Stop(ctx context.Context, sessionID string) error {
-	containerName := fmt.Sprintf("oursky-%s", sessionID)
+	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 	cmd := exec.CommandContext(ctx, "lxc", "stop", containerName)
 	return cmd.Run()
 }
 
 func (p *LXCProvider) Destroy(ctx context.Context, sessionID string) error {
-	containerName := fmt.Sprintf("oursky-%s", sessionID)
+	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 
 	// Stop first if running
 	p.Stop(ctx, sessionID)
@@ -91,8 +91,8 @@ func (p *LXCProvider) List(ctx context.Context) ([]provider.Session, error) {
 			continue
 		}
 		parts := strings.Split(line, ",")
-		if len(parts) >= 2 && strings.HasPrefix(parts[0], "oursky-") {
-			sessionID := strings.TrimPrefix(parts[0], "oursky-")
+		if len(parts) >= 2 && strings.HasPrefix(parts[0], "vendatta-") {
+			sessionID := strings.TrimPrefix(parts[0], "vendatta-")
 			status := strings.ToLower(parts[1])
 
 			sessions = append(sessions, provider.Session{
@@ -100,7 +100,7 @@ func (p *LXCProvider) List(ctx context.Context) ([]provider.Session, error) {
 				Provider: p.name,
 				Status:   status,
 				Labels: map[string]string{
-					"oursky.session.id": sessionID,
+					"vendatta.session.id": sessionID,
 				},
 			})
 		}
@@ -110,7 +110,7 @@ func (p *LXCProvider) List(ctx context.Context) ([]provider.Session, error) {
 }
 
 func (p *LXCProvider) Exec(ctx context.Context, sessionID string, opts provider.ExecOptions) error {
-	containerName := fmt.Sprintf("oursky-%s", sessionID)
+	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 
 	args := []string{"exec", containerName, "--"}
 	args = append(args, opts.Cmd...)

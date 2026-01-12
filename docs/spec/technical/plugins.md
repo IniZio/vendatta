@@ -1,6 +1,68 @@
-# Technical Guide: DAG Resolver & Parallel Fetcher
+# Plugin System Architecture
 
-## 1. Topological DAG Resolver
+## 1. Overview
+
+Vendatta's plugin system follows ESLint's model: load plugins as sources of capabilities, then enable/disable specific rules, skills, and commands. This provides fine-grained control while maintaining composability.
+
+## 2. Plugin Loading & Resolution
+
+### **Plugin Sources**
+Plugins can be loaded from:
+- **Remote Git repositories**: `url` field with optional `branch`
+- **Local directories**: `path` field for project-specific plugins
+- **Default registry**: Short names like `"vibegear/standard"` resolve to known repositories
+
+### **Namespace Resolution**
+Each plugin gets a namespace based on its `name` field. Capabilities within plugins are prefixed with this namespace:
+- Plugin `"vibegear/standard"` provides `vibegear/standard/code-quality`
+- Plugin `"company/templates"` provides `company/templates/security`
+
+## 3. Automatic Enablement
+
+When you load plugins, all their capabilities are automatically enabled. This provides a "batteries included" experience:
+
+```yaml
+# Load plugin sources - all capabilities automatically enabled
+plugins:
+  - name: "vibegear/standard"
+    url: "https://github.com/IniZio/vendatta-config.git"
+  - name: "company/internal"
+    path: "./.vendatta/plugins/internal"
+```
+
+For customization, use local overrides in `.vendatta/templates/` to modify or remove specific capabilities.
+
+## 4. Local Overrides
+
+Local templates in `.vendatta/templates/` can override or extend plugin capabilities:
+
+```
+.vendatta/templates/
+├── rules/
+│   └── custom-quality.md    # Overrides vibegear/standard/code-quality
+├── skills/
+│   └── local-web-search.yaml # Adds local/web-search
+└── commands/
+    └── custom-build.yaml    # Overrides vibegear/standard/build
+```
+
+## 4. Local Overrides
+
+Local templates in `.vendatta/templates/` can override or disable plugin capabilities:
+
+```
+.vendatta/templates/
+├── rules/
+│   └── custom-quality.md    # Override vibegear/standard/code-quality
+├── skills/
+│   └── local-web-search.yaml # Add custom web search
+└── commands/
+    └── custom-build.yaml    # Override vibegear/standard/build
+```
+
+To disable a capability entirely, create an empty or minimal override file that effectively removes it.
+
+## 5. Topological DAG Resolver
 To resolve plugin dependencies, we implement a **Topological Sort** using a Depth-First Search (DFS) algorithm with state tracking for cycle detection.
 
 ### **Cycle Detection Algorithm**

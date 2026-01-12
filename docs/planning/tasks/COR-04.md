@@ -42,7 +42,7 @@ if upHook := filepath.Join(".vendatta", "hooks", "up.sh"); fileExists(upHook) {
 ```
 
 ### **Hook Environment**
-Hooks receive all `OURSKY_SERVICE_*_URL` environment variables plus:
+Hooks receive all `VENDATTA_SERVICE_*_URL` environment variables plus:
 - `WORKSPACE_NAME`: Name of the current workspace
 - `WORKTREE_PATH`: Absolute path to the worktree
 - `CONTAINER_ID`: Docker container ID (when available)
@@ -73,7 +73,7 @@ vendatta workspace create hooks-demo
 cat > .vendatta/hooks/up.sh << 'EOF'
 #!/bin/bash
 echo "Custom startup for $WORKSPACE_NAME"
-echo "Web URL: $OURSKY_SERVICE_WEB_URL"
+echo "Web URL: $VENDATTA_SERVICE_WEB_URL"
 docker-compose up -d  # Custom logic
 npm run dev &         # Custom dev server
 EOF

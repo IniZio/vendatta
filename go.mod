@@ -1,4 +1,4 @@
-module github.com/vibegear/oursky
+module github.com/vibegear/vendatta
 
 go 1.24.0
 

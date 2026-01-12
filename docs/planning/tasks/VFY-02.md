@@ -121,9 +121,9 @@ services:
     te.StartWorkspace("discovery-test")
 
     // Verify environment variables
-    output := te.ExecInContainer("env | grep OURSKY_SERVICE")
-    assert.Contains(t, output, "OURSKY_SERVICE_WEB_URL=http://localhost:3000")
-    assert.Contains(t, output, "OURSKY_SERVICE_API_URL=http://localhost:8080")
+    output := te.ExecInContainer("env | grep VENDATTA_SERVICE")
+    assert.Contains(t, output, "VENDATTA_SERVICE_WEB_URL=http://localhost:3000")
+    assert.Contains(t, output, "VENDATTA_SERVICE_API_URL=http://localhost:8080")
 }
 ```
 
@@ -160,7 +160,7 @@ echo "Create hook executed: $WORKSPACE_NAME" >> /tmp/hook.log
 `)
     te.WriteExecutableFile(".vendatta/hooks/up.sh", `
 #!/bin/bash
-echo "Up hook executed: $OURSKY_SERVICE_WEB_URL" >> /tmp/hook.log
+echo "Up hook executed: $VENDATTA_SERVICE_WEB_URL" >> /tmp/hook.log
 `)
 
     // Execute lifecycle

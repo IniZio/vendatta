@@ -17,21 +17,17 @@ This document outlines the comprehensive test plan for Vendatta's end-to-end (e2
 
 ### Partially Implemented Flows ⚠️
 - **Service Management**: Services defined in config but startup automation incomplete
-- **Agent Configuration**: Templates generated but MCP server not started
+- **Agent Configuration**: Templates generated for supported agents
 
 ### Missing Flows ❌
 - **Config Management**:
   - `vendatta config pull <url>`: Pull remote templates
   - `vendatta config list`: List pulled remotes
   - `vendatta config sync [target]`: Sync configs to remote
-  - `vendatta config sync-all`: Sync to all configured targets
-  - `vendatta config generate-schema`: Generate JSON schema
   - `vendatta config validate`: Validate config against schema
 - **Plugin System**:
   - `vendatta plugin list`: List available plugins
   - `vendatta plugin check`: Validate plugin dependencies
-- **Agent Management**:
-  - `vendatta agent <session-id>`: Start MCP server for session
 
 ## Test Scenarios
 
@@ -71,7 +67,7 @@ This document outlines the comprehensive test plan for Vendatta's end-to-end (e2
 1. Create workspace with services
 2. Start workspace
 3. Verify services running on mapped ports
-4. Check environment variables (OURSKY_SERVICE_*)
+4. Check environment variables (VENDATTA_SERVICE_*)
 **Expected**: Services accessible, ports mapped correctly
 
 ### 5. Agent Configuration
@@ -130,6 +126,39 @@ This document outlines the comprehensive test plan for Vendatta's end-to-end (e2
 - Detached HEAD handling
 **Expected**: Git operations work seamlessly
 
+## Test Coverage Measurement
+
+### Unit Test Coverage
+Use standard Go coverage tools:
+```bash
+go test -cover ./...
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
+
+**Target**: 80%+ code coverage for all packages
+
+### E2E Test Coverage
+E2E tests measure **scenario coverage** rather than code coverage:
+
+- **User Journey Coverage**: Percentage of end-to-end user workflows tested
+- **Configuration Coverage**: Different config combinations tested
+- **Error Scenario Coverage**: Edge cases and failure modes tested
+- **Integration Coverage**: External system interactions (Docker, Git, etc.)
+
+**Current Coverage**:
+- ✅ Basic workspace lifecycle: 100%
+- ✅ Multi-workspace scenarios: 80%
+- ⚠️ Service integration: 50% (startup automation incomplete)
+- ❌ Config remote management: 0%
+- ❌ Plugin system: 0%
+
+**Coverage Goals**:
+- 100% of implemented CLI commands
+- 90% of configuration options
+- 80% of error scenarios
+- All major user workflows
+
 ## Test Environment Requirements
 
 ### System Dependencies
@@ -144,23 +173,7 @@ This document outlines the comprehensive test plan for Vendatta's end-to-end (e2
 - Plugin manifests
 - Different agent configurations
 
-## Implementation Notes
-
-### Current Issues
-1. **MCP Server**: Implemented but not started in workspace lifecycle
-2. **Service Startup**: Services defined but startup hook incomplete
-3. **Plugin Commands**: CLI commands missing despite test expectations
-4. **Config Remotes**: Git-based config resolution not implemented
-5. **LXC Provider**: Marked as under development
-
-### Recommendations
-1. **Remove MCP**: If not actively used, remove to reduce complexity
-2. **Complete Service Integration**: Fix up.sh generation and service startup
-3. **Implement Missing Commands**: Add config and plugin CLI commands
-4. **Add Config Remote Support**: Implement git-based template pulling
-5. **Improve Error Handling**: Better validation and user feedback
-
-### Test Automation
+## Test Automation
 - All tests should be runnable with `go test ./e2e`
 - Tests should clean up resources (containers, worktrees)
 - Parallel execution where possible

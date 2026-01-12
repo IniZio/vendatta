@@ -35,7 +35,7 @@ func NewTestEnvironment(t *testing.T) *TestEnvironment {
 // Cleanup removes the test environment
 func (env *TestEnvironment) Cleanup() {
 	// Clean up docker containers
-	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=oursky.session.id")
+	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=vendatta.session.id")
 	if output, err := cmd.Output(); err == nil {
 		containerIDs := strings.Fields(string(output))
 		for _, id := range containerIDs {
@@ -91,7 +91,7 @@ func (env *TestEnvironment) BuildVendattaBinary(t *testing.T) string {
 	}
 
 	binaryPath := filepath.Join(env.tempDir, "vendatta")
-	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/oursky/main.go")
+	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/vendatta/main.go")
 	cmd.Dir = ".."
 	require.NoError(t, cmd.Run())
 
@@ -126,7 +126,7 @@ func (env *TestEnvironment) RunVendattaCommandWithError(binaryPath, projectDir s
 
 // VerifyServiceHealth checks if a service is healthy
 func (env *TestEnvironment) VerifyServiceHealth(t *testing.T, url string, timeout time.Duration) {
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{DisableKeepAlives: true}}
 
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
@@ -135,7 +135,10 @@ func (env *TestEnvironment) VerifyServiceHealth(t *testing.T, url string, timeou
 			resp.Body.Close()
 			return
 		}
-		if resp != nil {
+		if err != nil {
+			t.Logf("Error connecting to %s: %v", url, err)
+		} else {
+			t.Logf("Service at %s returned status %d", url, resp.StatusCode)
 			resp.Body.Close()
 		}
 		time.Sleep(500 * time.Millisecond)

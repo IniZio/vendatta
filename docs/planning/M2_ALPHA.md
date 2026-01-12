@@ -93,7 +93,7 @@
 **Integration Tests:**
 - ✅ **Full Workspace Lifecycle**: End-to-end test of create/up/down/rm with all providers
 - ✅ **Multi-Service Discovery**: Verify port mapping and environment variables
-- ✅ **Agent Config Generation**: Test MCP gateway and agent-specific configs
+- ✅ **Agent Config Generation**: Test agent-specific configuration generation
 
 **E2E Scenarios:**
 ```bash

@@ -1,23 +1,9 @@
-# Technical Specification: Agent Gateway & Config Generation
+# Technical Specification: Agent Configuration Generation
 
 ## 1. Overview
-The Agent Gateway is a Model Context Protocol (MCP) server built into the `oursky` binary, providing a bridge between AI agents (Cursor, OpenCode, Claude) and isolated development environments. The system includes comprehensive agent configuration generation from templates.
+The Agent Configuration system generates appropriate configuration files for AI agents (Cursor, OpenCode, Claude) to work seamlessly with isolated development environments. Configurations are generated from templates with support for project-specific overrides and plugin-based extensions.
 
-## 2. MCP Protocol Details
-- **Transport**: JSON-RPC over Standard Input/Output (STDIO)
-- **Session Context**: Started per session: `./oursky agent [session-id]`
-- **Server Location**: Configurable via `.vendatta/config.yaml` (default: localhost:3001)
-
-## 3. Capabilities
-
-### **Core Tool: `exec`**
-Executes commands in the session's isolated environment.
-- **Input**: `cmd` (string) - Command to execute
-- **Execution**: Routed via `Provider.Exec` with proper isolation
-- **Output**: Combined stdout/stderr with exit codes
-
-### **Dynamic Tool Loading**
-Automatically registers skills from shared templates as MCP tools based on agent configuration.
+## 2. Configuration Generation Process
 
 ## 4. Agent Configuration Generation System
 
@@ -65,28 +51,19 @@ Automatically registers skills from shared templates as MCP tools based on agent
 ### **Supported Agents**
 
 #### **Cursor**
-- **Template**: `.vendatta/agents/cursor/mcp.json.tpl`
-- **Output**: `.cursor/mcp.json`
-- **Format**: JSON with mcpServers object
-- **Transport**: HTTP to MCP gateway
+- **Configuration**: Agent-specific rules and settings
+- **Output**: `.cursor/` directory with rules and configurations
+- **Format**: Markdown rules files (.mdc) and configuration files
 
 #### **OpenCode**
-- **Templates**:
-  - `opencode.json.tpl` → `opencode.json`
-  - Shared rules → `.opencode/rules/`
-  - Shared skills → `.opencode/skills/`
-  - Shared commands → `.opencode/commands/`
-- **Features**: MCP integration, custom rules, skills, commands
+- **Configuration**: Project-specific settings and capabilities
+- **Output**: `opencode.json` and `.opencode/` directory
+- **Features**: Custom rules, skills, and command definitions
 
-#### **Claude Desktop**
-- **Template**: `claude_desktop_config.json.tpl`
-- **Output**: `claude_desktop_config.json` (user's config directory)
-- **Format**: JSON with mcpServers using `mcp-remote`
-
-#### **Claude Code**
-- **Template**: `claude_code_config.json.tpl`
-- **Output**: `claude_code_config.json` (project or global)
-- **Format**: Similar to Desktop but for CLI usage
+#### **Claude Desktop/Code**
+- **Configuration**: MCP-compatible configuration files
+- **Output**: `claude_desktop_config.json` or `claude_code_config.json`
+- **Format**: JSON configuration for Claude agent integration
 
 ## 5. Shared Templates (Open Standards)
 
@@ -106,23 +83,16 @@ YAML with steps, environment variables, and metadata.
 name: my-project
 agents:
   - name: opencode
-    rules: base
     enabled: true
   - name: cursor
-    rules: base
     enabled: true
-
-mcp:
-  enabled: true
-  port: 3001
-  host: localhost
 ```
 
-Generated configs connect all agents to the MCP gateway with appropriate authentication and capabilities.
+Generated configurations provide each agent with appropriate settings and capabilities for the development environment.
 
-## 8. Implementation Status
+## 7. Implementation Status
 - ✅ Template merging from multiple sources (base, remotes, agents)
-- ✅ Agent config file generation during `dev` command
+- ✅ Agent config file generation during workspace creation
 - ✅ Support for Cursor, OpenCode, Claude Desktop/Code
-- ✅ Populate RulesConfig, SkillsConfig, CommandsConfig as JSON
-- 🚧 TODO: Implement authentication token generation
+- ✅ Plugin-based rule and skill extensions
+- ✅ Override and suppression mechanisms

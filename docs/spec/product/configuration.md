@@ -1,8 +1,8 @@
-# Configuration Reference: Project Oursky
+# Configuration Reference: Project Vendatta
 
 ## 1. Overview
 
-Oursky uses a declarative configuration system based on YAML and JSON templates. This reference covers all available configuration options and how to use them effectively.
+Vendatta uses a declarative configuration system based on YAML and JSON templates. This reference covers all available configuration options and how to use them effectively.
 
 ## 2. Main Configuration (`config.yaml`)
 
@@ -11,36 +11,56 @@ Oursky uses a declarative configuration system based on YAML and JSON templates.
 name: "project-name"           # Required: Project identifier
 description: "Optional description"
 
-plugins:                       # Namespaced capabilities
-  - name: "vibegear/standard"  # Remote plugin from default registry
-  - name: "local/formal-v"    # Local project-specific plugin
+extends:                       # Base configurations to extend
+  - inizio/vendatta-config-inizio
+
+plugins:                       # Conditional plugins to load
+  - golang                     # Only if go.mod exists
+  - node                       # Only if package.json exists
 
 services: {}                   # Container services definition
-agents: []                     # Enabled AI agents
-mcp: {}                        # MCP server configuration
 ```
+
+### **Extends Configuration**
+
+Extends allow you to inherit base configurations from remote repositories, similar to ESLint's extends.
+
+#### **Extend Sources**
+```yaml
+extends:
+  - inizio/vendatta-config-inizio     # Base config from remote repo
+  - company/base-config               # Company-wide base config
+```
+
+Extends are loaded first and provide the foundation rules, skills, and commands.
 
 ### **Plugins Configuration**
 
-Plugins allow you to extend Vendatta with namespaced rules, skills, and commands.
+Plugins add conditional capabilities based on project structure. Plugins are only loaded if their conditions are met (e.g., presence of specific files).
 
-#### **Basic Plugin Definition**
+#### **Plugin Examples**
 ```yaml
 plugins:
-  - name: "vibegear/standard"
-    url: "git@github.com:IniZio/vendatta-config.git"
-    branch: "main"
-  - name: "local/verify"
-    path: "./.vendatta/plugins/verification"
+  - golang          # Loads if go.mod or go.sum exists
+  - node            # Loads if package.json exists
+  - python          # Loads if requirements.txt or pyproject.toml exists
 ```
 
-#### **Plugin Options**
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `name` | string | Yes | Unique identifier (e.g., owner/repo) |
-| `url` | string | No | Git repository URL for remote plugins |
-| `path` | string | No | Local filesystem path for project-specific plugins |
-| `branch` | string | No | Git branch for remote plugins (pinned in lockfile) |
+Plugins are loaded after extends and add project-specific capabilities.
+
+#### **Structured Capability Organization**
+Plugin capabilities are organized in structured directories:
+
+```
+.cursor/rules/[plugin-name]/
+.opencode/rules/[plugin-name]/
+.opencode/skills/[plugin-name]/
+.opencode/commands/[plugin-name]/
+```
+
+When you load plugins, all their capabilities are automatically enabled and organized by plugin. This provides a "batteries included" experience where adding a plugin gives you a complete set of capabilities.
+
+For customization, use local overrides in `.vendatta/templates/` to modify or remove specific capabilities.
 
 ---
 
@@ -99,43 +119,43 @@ services:
     depends_on: ["api"]
 ```
 
-### **Agents Configuration**
 
-#### **Agent Definition**
-```yaml
-agents:
-  - name: "cursor"              # Agent identifier
-    enabled: true               # Enable/disable this agent
-  - name: "opencode"
-    enabled: true
-  - name: "claude-desktop"
-    enabled: false
-```
-
-#### **Supported Agents**
-| Agent | Description | Generated Config |
-|-------|-------------|------------------|
-| `cursor` | VS Code extension with MCP | `.cursor/mcp.json` |
-| `opencode` | Standalone AI assistant | `opencode.json` + `.opencode/` |
-| `claude-desktop` | Anthropic desktop app | `claude_desktop_config.json` |
-| `claude-code` | Anthropic CLI tool | `claude_code_config.json` |
 
 ### **MCP Configuration**
 
-#### **Basic MCP Setup**
+MCP (Model Context Protocol) servers are automatically configured and started when AI agents are enabled. The MCP server provides secure tool execution and environment access for AI agents.
+
+**Default Configuration:**
+- **Port**: 3001
+- **Host**: localhost
+- **Auto-enabled**: When any agents are detected/enabled
+
+No manual MCP configuration is required - Vendatta handles this automatically.
+
+### **User-Specific Configuration (`$XDG_CONFIG_HOME/vendatta/config.yaml`)**
+
+Vendatta auto-generates a default user configuration at `$XDG_CONFIG_HOME/vendatta/config.yaml` (typically `~/.config/vendatta/config.yaml`). This file contains your personal preferences and is never committed to version control.
+
+AI agents are automatically detected from installed CLIs - no manual configuration required.
+
 ```yaml
-mcp:
-  enabled: true                 # Enable MCP server
-  port: 3001                    # Server port
-  host: "localhost"             # Server host
+# Preferred container provider
+provider: "docker"
 ```
 
-#### **MCP Options**
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `enabled` | boolean | `true` | Toggle MCP functionality |
-| `port` | int | `3001` | TCP port for MCP server |
-| `host` | string | `"localhost"` | Host address to bind to |
+#### **Auto-Detection**
+Vendatta scans your system for installed AI agents:
+- **Cursor**: Detects VS Code with Cursor extension
+- **OpenCode**: Detects OpenCode installation
+- **Claude Desktop/Code**: Detects Anthropic CLI tools
+
+#### **Supported Agents**
+| Agent | Detection Method | Generated Config |
+|-------|------------------|------------------|
+| `cursor` | VS Code + Cursor extension | `.cursor/mcp.json` |
+| `opencode` | `opencode` CLI available | `opencode.json` + `.opencode/` |
+| `claude-desktop` | `claude` desktop app | `claude_desktop_config.json` |
+| `claude-code` | `claude` CLI tool | `claude_code_config.json` |
 
 ### **Docker Configuration**
 
@@ -143,11 +163,12 @@ mcp:
 ```yaml
 docker:
   image: "ubuntu:22.04"         # Base container image
-  dind: true                    # Enable Docker-in-Docker
   privileged: false             # Run in privileged mode
   memory: "2g"                  # Memory limit
   cpu: "1.0"                    # CPU limit (cores)
 ```
+
+**Docker-in-Docker**: Automatically enabled when `Dockerfile` or `docker-compose.yml` files are detected in the project. No manual configuration required.
 
 ### **Hooks Configuration**
 
@@ -162,38 +183,7 @@ Hooks are now convention-based and located in `.vendatta/hooks/`:
 
 **Execution:** Scripts must be executable (chmod +x) if present.
 
-### **Sync Targets Configuration**
 
-#### **Remote Sync Targets**
-```yaml
-sync_targets:
-  - name: "team-configs"          # Remote name
-    url: "https://github.com/team/vendatta-configs.git"  # Repository URL
-  - name: "company-templates"
-    url: "https://github.com/company/ai-templates.git"
-```
-
-#### **Remote Options**
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `name` | string | Yes | Git remote name for identification |
-| `url` | string | Yes | Repository URL to sync with |
-
-#### **Usage**
-Sync your `.vendatta` directory to remote repositories for sharing configurations:
-
-```bash
-# Pull shared templates from a remote repository
-vendatta config pull https://github.com/company/ai-templates.git --branch=main
-
-# Sync local config to a specific remote target
-vendatta config sync team-configs
-
-# Sync to all configured remote targets
-vendatta config sync-all
-```
-
-The sync process creates a temporary branch with only the `.vendatta` directory and pushes it to the remote repository.
 
 ## 3. Template System
 
@@ -301,8 +291,10 @@ priority: "high"
 
 ## 4. Agent-Specific Configuration
 
+Agent configurations are generated based on your `$XDG_CONFIG_HOME/vendatta/config.yaml` settings and the enabled capabilities from `config.yaml`. Each supported agent gets customized configuration files.
+
 ### **Cursor Configuration**
-Generated: `.cursor/mcp.json`
+Generated: `.cursor/mcp.json` (when cursor is enabled in `config.local.yaml`)
 
 ```json
 {
@@ -312,6 +304,43 @@ Generated: `.cursor/mcp.json`
       "url": "http://localhost:3001",
       "headers": {
         "Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+### **OpenCode Configuration**
+Generated: `opencode.json` + `.opencode/` directory (when opencode is enabled)
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-sonnet-4-5",
+  "mcp": {
+    "project-name": {
+      "type": "remote",
+      "url": "http://localhost:3001",
+      "enabled": true
+    }
+  },
+  "rules": ["code-quality", "collaboration"],
+  "skills": ["web-search", "file-ops"],
+  "commands": ["build", "deploy"]
+}
+```
+
+### **Claude Desktop/Code Configuration**
+Generated: `claude_desktop_config.json` / `claude_code_config.json` (when enabled)
+
+```json
+{
+  "mcpServers": {
+    "project-name": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "http://localhost:3001"],
+      "env": {
+        "MCP_AUTH_TOKEN": "YOUR_TOKEN"
       }
     }
   }
@@ -357,7 +386,7 @@ Generated: `claude_desktop_config.json` / `claude_code_config.json`
 
 ## 5. Environment Variables
 
-Oursky supports environment variable substitution in configuration:
+Vendatta supports environment variable substitution in configuration:
 
 ### **In config.yaml**
 ```yaml
@@ -425,12 +454,7 @@ mcp:
 ```
 
 #### **Agent Config Not Generated**
-```yaml
-# Ensure agent is enabled
-agents:
-  - name: "cursor"
-    enabled: true
-```
+Ensure the AI agent CLI is installed and available in PATH. Vendatta auto-detects supported agents.
 
 #### **Container Won't Start**
 ```yaml

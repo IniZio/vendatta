@@ -51,7 +51,7 @@ Scaffolds the `.vendatta` directory. Creates the base configuration and template
 
 ### **`workspace up [name]`**
 1.  **Container**: Starts the Docker container with worktree bind-mounted.
-2.  **Port Forwarding**: Maps service ports and injects `OURSKY_SERVICE_*` environment variables.
+2.  **Port Forwarding**: Maps service ports and injects `VENDATTA_SERVICE_*` environment variables.
 3.  **Hooks**: Executes `.vendatta/hooks/up.sh` if it exists.
 4.  **Blocking**: Streams logs and maintains session until Ctrl+C (or detached with `-d`).
 

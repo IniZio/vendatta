@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vibegear/oursky/pkg/plugins"
+	"github.com/vibegear/vendatta/pkg/plugins"
 )
 
 func TestManager_GenerateLockfile(t *testing.T) {

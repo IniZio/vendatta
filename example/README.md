@@ -1,6 +1,6 @@
-# Oursky Example Project
+# Vendatta Example Project
 
-This directory contains a complete working example of an Oursky-configured project. It demonstrates a full-stack web application with database, API, and frontend services, plus AI agent integration.
+This directory contains a complete working example of an Vendatta-configured project. It demonstrates a full-stack web application with database, API, and frontend services, plus AI agent integration.
 
 ## What's Included
 
@@ -21,15 +21,15 @@ This directory contains a complete working example of an Oursky-configured proje
 
 ## Quick Start
 
-1. **Initialize Oursky**:
+1. **Initialize Vendatta**:
    ```bash
    cd example
-   ../oursky init
+   ../vendatta init
    ```
 
 2. **Start development environment**:
    ```bash
-   ../oursky dev example-branch
+   ../vendatta dev example-branch
    ```
 
 3. **Open in your AI agent**:
@@ -111,6 +111,6 @@ Check generated configs in `.vendatta/worktrees/<branch>/`
 
 ## Learn More
 
-- [Main README](../../README.md) - General Oursky documentation
+- [Main README](../../README.md) - General Vendatta documentation
 - [Configuration Reference](../../docs/spec/product/configuration.md) - Detailed config options
 - [Technical Specs](../../docs/spec/technical/) - Architecture details

@@ -18,24 +18,28 @@ func TestMerge(t *testing.T) {
 	baseDir := tempDir
 	os.MkdirAll(filepath.Join(baseDir, "templates/skills"), 0755)
 	os.MkdirAll(filepath.Join(baseDir, "templates/rules"), 0755)
-	os.MkdirAll(filepath.Join(baseDir, "template-repos/repo1/templates/skills"), 0755)
+	os.MkdirAll(filepath.Join(baseDir, "remotes/repo1/templates/skills"), 0755)
 
 	os.WriteFile(filepath.Join(baseDir, "templates/skills/skill1.yaml"), []byte("name: skill1\nversion: \"1.0\""), 0644)
 	os.WriteFile(filepath.Join(baseDir, "templates/rules/rule1.md"), []byte("---\ntitle: rule1\n---\nRule 1 Content"), 0644)
-	os.WriteFile(filepath.Join(baseDir, "template-repos/repo1/templates/skills/skill1.yaml"), []byte("version: \"2.0\"\nnew_field: value"), 0644)
+	os.WriteFile(filepath.Join(baseDir, "remotes/repo1/templates/skills/skill1.yaml"), []byte("version: \"2.0\"\nnew_field: value"), 0644)
 
 	m := NewManager(baseDir)
-	data, err := m.Merge(baseDir)
+	data, err := m.Merge(baseDir, nil, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, data)
 
-	skill1 := data.Skills["skill1"].(map[string]interface{})
-	assert.Equal(t, "skill1", skill1["name"])
-	assert.Equal(t, "2.0", skill1["version"])
-	assert.Equal(t, "value", skill1["new_field"])
+	basePlugin := data.Plugins["base"]
+	assert.NotNil(t, basePlugin)
 
-	rule1 := data.Rules["rule1"].(map[string]interface{})
+	skill1 := basePlugin.Skills["skill1"].(map[string]interface{})
+	assert.Equal(t, "skill1", skill1["name"])
+	assert.Equal(t, "1.0", skill1["version"])
+	// new_field from remote should not be present since base takes precedence
+	assert.NotContains(t, skill1, "new_field")
+
+	rule1 := basePlugin.Rules["rule1"].(map[string]interface{})
 	assert.Equal(t, "rule1", rule1["title"])
 	assert.Equal(t, "Rule 1 Content", rule1["content"])
 }

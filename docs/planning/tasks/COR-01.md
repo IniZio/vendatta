@@ -14,9 +14,9 @@ Coordinate the lifecycle of a dev environment: Worktree creation, Container prov
     - Sequence: `Load Config` -> `Add Worktree` -> `Provider Create` -> `Provider Start` -> `Exec Setup Hook`.
 3.  **Env Injection**:
     - Discover ports from active provider session.
-    - Inject `OURSKY_SERVICE_[NAME]_URL` into the `Exec` context for hooks.
+    - Inject `VENDATTA_SERVICE_[NAME]_URL` into the `Exec` context for hooks.
 
 ## 🧪 Proof of Work
-- Running `oursky dev branch-name` creates the worktree directory.
+- Running `vendatta dev branch-name` creates the worktree directory.
 - `setup.sh` hook runs successfully inside the container.
 - Environment variables are present in the hook's execution context.

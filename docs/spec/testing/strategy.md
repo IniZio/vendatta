@@ -1,7 +1,7 @@
-# Testing Strategy: Project Oursky
+# Testing Strategy: Project Vendatta
 
 ## 1. Overview
-Project Oursky is a systems-level CLI tool. Testing must cover both high-level orchestration logic and low-level provider interactions (Docker, Git).
+Project Vendatta is a systems-level CLI tool. Testing must cover both high-level orchestration logic and low-level provider interactions (Docker, Git).
 
 ## 2. Test Tiers
 
@@ -18,7 +18,7 @@ Project Oursky is a systems-level CLI tool. Testing must cover both high-level o
 - **Note**: These tests may be skipped in environments where Docker/Git are not available.
 
 ### **Tier 3: E2E Verification (Slow, Full Flow)**
-- **Scope**: The entire `oursky init` -> `oursky dev` -> `oursky agent` lifecycle.
+- **Scope**: The entire `vendatta init` -> `vendatta dev` -> `vendatta agent` lifecycle.
 - **Verification**: Use a test repository (fixture) and verify that:
     - Files are created correctly (worktrees, agent configs).
     - Environment variables are present in the container.

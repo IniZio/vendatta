@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vibegear/oursky/pkg/templates"
+	"github.com/vibegear/vendatta/pkg/templates"
 	"gopkg.in/yaml.v3"
 )
 
@@ -36,9 +36,6 @@ agents:
 				Services: map[string]Service{
 					"web": {Command: "npm run dev"},
 					"api": {Command: "go run main.go"},
-				},
-				Agents: []Agent{
-					{Name: "cursor", Enabled: true},
 				},
 			},
 			wantErr: false,
@@ -79,7 +76,6 @@ agents:
 				assert.Equal(t, tt.expected.Name, config.Name)
 				assert.Equal(t, tt.expected.Provider, config.Provider)
 				assert.Equal(t, len(tt.expected.Services), len(config.Services))
-				assert.Equal(t, len(tt.expected.Agents), len(config.Agents))
 			}
 		})
 	}
@@ -122,9 +118,6 @@ func TestConfig_GenerateAgentConfigs(t *testing.T) {
 
 	config := &Config{
 		Name: "test-project",
-		Agents: []Agent{
-			{Name: "cursor", Enabled: true},
-		},
 	}
 
 	// Mock merged templates (empty for this test)
@@ -183,10 +176,6 @@ func TestConfigYAMLMarshalling(t *testing.T) {
 				},
 			},
 		},
-		Agents: []Agent{
-			{Name: "cursor", Enabled: true},
-			{Name: "opencode", Enabled: false},
-		},
 	}
 
 	// Test marshalling
@@ -197,8 +186,7 @@ func TestConfigYAMLMarshalling(t *testing.T) {
 	yamlStr := string(data)
 	assert.Contains(t, yamlStr, "test-project")
 	assert.Contains(t, yamlStr, "npm run dev")
-	assert.Contains(t, yamlStr, "cursor")
-	assert.Contains(t, yamlStr, "3001")
+	assert.Contains(t, yamlStr, "3000")
 
 	// Test unmarshalling
 	var unmarshalled Config
@@ -208,5 +196,4 @@ func TestConfigYAMLMarshalling(t *testing.T) {
 	assert.Equal(t, config.Name, unmarshalled.Name)
 	assert.Equal(t, config.Provider, unmarshalled.Provider)
 	assert.Equal(t, len(config.Services), len(unmarshalled.Services))
-	assert.Equal(t, len(config.Agents), len(unmarshalled.Agents))
 }

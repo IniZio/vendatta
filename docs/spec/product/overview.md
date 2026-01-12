@@ -1,9 +1,9 @@
-# Product Overview: Project Oursky
+# Product Overview: Project Vendatta
 
 > 📖 **Configuration Guide**: For detailed configuration options, see [Configuration Reference](./configuration.md)
 
 ## 1. Vision
-Oursky is a developer-centric, local-first development environment manager. It aims to eliminate the "it works on my machine" problem by providing high-isolation, reproducible codespaces that are natively compatible with modern AI agents (Cursor, OpenCode).
+Vendatta is a developer-centric, local-first development environment manager. It aims to eliminate the "it works on my machine" problem by providing high-isolation, reproducible codespaces that are natively compatible with modern AI agents (Cursor, OpenCode).
 
 ## 2. Problem Statement
 - **Environment Drift**: Developers struggle with conflicting node/python versions across projects.
@@ -14,10 +14,10 @@ Oursky is a developer-centric, local-first development environment manager. It a
 ## 3. Core Value Propositions
 
 ### **High Isolation (LXC/Docker + Worktrees)**
-Unlike standard `docker-compose` which shares the host filesystem, Oursky uses **Git Worktrees** to provide a unique, branch-specific filesystem for every session. This prevents file-locking and allows parallel work on multiple branches without pollution.
+Unlike standard `docker-compose` which shares the host filesystem, Vendatta uses **Git Worktrees** to provide a unique, branch-specific filesystem for every session. This prevents file-locking and allows parallel work on multiple branches without pollution.
 
 ### **BYOA (Bring Your Own Agent)**
-Oursky provides a comprehensive **agent configuration generation system** with standardized **Model Context Protocol (MCP)** gateway. Any agent (Cursor, OpenCode, Claude Desktop/Code) automatically gets configured to connect to isolated environments with:
+Vendatta provides a comprehensive **agent configuration generation system** with standardized **Model Context Protocol (MCP)** gateway. Any agent (Cursor, OpenCode, Claude Desktop/Code) automatically gets configured to connect to isolated environments with:
 - **Environment-aware Tools**: MCP `exec` tool for secure command execution
 - **Shared Standard Capabilities**: Reusable skills, commands, and rules following open standards
 - **Dynamic Configuration**: Templates generate agent-specific configs with project context
@@ -28,7 +28,7 @@ Zero-setup installation. A single Go binary manages everything from worktree cre
 
 ## 4. Target Personas
 
-| Persona | Needs | Oursky Solution |
+| Persona | Needs | Vendatta Solution |
 | :--- | :--- | :--- |
 | **Senior Dev** | Complex orchestration, fast branch switching. | Automated Worktree + DinD orchestration. |
 | **Agent User** | Secure tool execution for AI. | Built-in MCP Server with session boundaries. |
@@ -37,30 +37,38 @@ Zero-setup installation. A single Go binary manages everything from worktree cre
 ## 5. Configuration Guide
 
 ### **Understanding the `.vendatta/` Structure**
-Oursky uses a simple, intuitive configuration system centered around the `.vendatta/` directory:
+Vendatta uses a simple, intuitive configuration system centered around the `.vendatta/` directory:
 
 ```
 .vendatta/
-├── config.yaml          # Main project configuration
-├── templates/           # Shared capabilities (skills, commands, rules)
-│   ├── skills/          # Reusable AI skills
-│   ├── commands/        # Standardized command definitions
-│   └── rules/           # Development guidelines & rules
-├── agents/              # Agent-specific configuration templates
-│   ├── cursor/          # Cursor IDE settings
-│   ├── opencode/        # OpenCode AI settings
-│   ├── claude-desktop/  # Claude Desktop settings
-│   └── claude-code/     # Claude Code CLI settings
+├── config.yaml          # Main project configuration (plugins, enabled capabilities, services)
+├── templates/           # Local capability overrides
+│   ├── skills/          # Override or add AI skills
+│   ├── commands/        # Override or add command definitions
+│   └── rules/           # Override or add development guidelines
+├── plugins/             # Local plugin development
 └── worktrees/           # Generated isolated environments (auto-managed)
+
+# User config (auto-generated at XDG_CONFIG_HOME)
+~/.config/vendatta/config.yaml  # Auto-detected agents and preferences
 ```
 
 ### **Main Configuration (`config.yaml`)**
-The heart of your Oursky setup. Here's what you can configure:
+The heart of your Vendatta setup. Here's what you can configure:
 
 ```yaml
 # Project identity
 name: "my-awesome-project"
 description: "Full-stack web application"
+
+# Plugin sources to load
+plugins:
+  - name: "vibegear/standard"
+    url: "https://github.com/IniZio/vendatta-config.git"
+  - name: "company/templates"
+    url: "https://github.com/company/ai-templates.git"
+
+# All capabilities from loaded plugins are automatically enabled
 
 # Container & services
 services:
@@ -80,18 +88,6 @@ services:
       url: "http://localhost:3000"
     depends_on: ["api"]
 
-# AI agents to enable
-agents:
-  - name: "cursor"
-    enabled: true
-  - name: "opencode"
-    enabled: true
-
-# Remote sync targets
-sync_targets:
-  - name: "upstream"
-    url: "https://github.com/example/upstream.git"
-
 # MCP server configuration
 mcp:
   enabled: true
@@ -107,6 +103,17 @@ docker:
 hooks:
   setup: ".vendatta/hooks/setup.sh"
   dev: ".vendatta/hooks/dev.sh"
+```
+
+### **User-Specific Configuration (`$XDG_CONFIG_HOME/vendatta/config.yaml`)**
+Auto-generated based on detected AI agent installations:
+
+```yaml
+# Auto-detected enabled agents
+agents: ["cursor", "opencode"]
+
+# Preferred container provider
+provider: "docker"
 ```
 
 #### **Services Configuration**
