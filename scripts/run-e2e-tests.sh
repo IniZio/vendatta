@@ -74,7 +74,7 @@ check_prerequisites() {
 # Build vendatta binary
 build_vendatta() {
     log_info "Building vendatta binary..."
-    if ! go build -o vendatta cmd/vendatta/main.go; then
+    if ! go build -o vendatta ./cmd/vendatta; then
         log_error "Failed to build vendatta binary"
         exit 1
     fi
@@ -89,7 +89,7 @@ run_test() {
     log_info "Running test: $test_name"
     TESTS_RUN=$((TESTS_RUN + 1))
 
-    if go test -v "./internal/testfixtures/" -run "$test_name" -timeout "$test_timeout" 2>&1; then
+    if go test -v "./e2e/" -run "$test_name" -timeout "$test_timeout" 2>&1; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
         log_success "Test $test_name passed"
         return 0

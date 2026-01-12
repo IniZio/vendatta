@@ -6,13 +6,13 @@ alwaysApply: true
 ---
 
 ## OVERVIEW
-Vendatta (internal codename `oursky`) is a Go-based orchestration tool that manages isolated development environments. It uses Git worktrees for filesystem isolation and Docker/LXC for execution isolation, providing a standardized MCP (Model Context Protocol) gateway for AI agents.
+Vendatta (internal codename `vendatta`) is a Go-based orchestration tool that manages isolated development environments. It uses Git worktrees for filesystem isolation and Docker/LXC for execution isolation, providing a standardized MCP (Model Context Protocol) gateway for AI agents.
 
 ## STRUCTURE
 ```
 vibegear/
 ├── cmd/
-│   └── oursky/        # CLI entry point (main.go)
+│   └── vendatta/        # CLI entry point (main.go)
 ├── pkg/
 │   ├── config/        # YAML/JSON config parsing & Agent rule generation
 │   ├── ctrl/          # Core orchestration logic (Controller)
@@ -32,7 +32,7 @@ vibegear/
 | Modify Lifecycle | `pkg/ctrl/ctrl.go` | `WorkspaceCreate`, `WorkspaceUp`, `WorkspaceDown` |
 | New Provider | `pkg/provider/` | Implement `Provider` interface |
 | Rule Merging | `pkg/templates/` | `merge.go` recursive merging logic |
-| CLI Commands | `cmd/oursky/main.go` | Root command and subcommands |
+| CLI Commands | `cmd/vendatta/main.go` | Root command and subcommands |
 
 ## TDD (Test-Driven Development)
 **MANDATORY for all logic changes.** Follow RED-GREEN-REFACTOR:
@@ -67,8 +67,8 @@ vibegear/
 ## COMMANDS
 ```bash
 go test ./...                               # Run all tests
-go build -o bin/oursky ./cmd/oursky         # Build binary
-go run cmd/oursky/main.go workspace create  # Test workspace creation
+go build -o bin/vendatta ./cmd/vendatta         # Build binary
+go run cmd/vendatta/main.go workspace create  # Test workspace creation
 ```
 
 ## CI PIPELINE

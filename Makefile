@@ -23,7 +23,7 @@ help: ## Show this help message
 
 # Development
 build: ## Build vendatta binary
-	go build -o bin/vendatta cmd/vendatta/main.go
+	go build -o bin/vendatta ./cmd/vendatta
 
 install: build ## Install vendatta to ~/.local/bin
 	cp bin/vendatta ~/.local/bin/vendatta
@@ -75,11 +75,11 @@ ci-check: fmt-check lint test-all ## Run all CI checks
 
 ci-build: ## Build for multiple platforms
 	mkdir -p dist
-	GOOS=linux GOARCH=amd64 go build -o dist/vendatta-linux-amd64 cmd/vendatta/main.go
-	GOOS=linux GOARCH=arm64 go build -o dist/vendatta-linux-arm64 cmd/vendatta/main.go
-	GOOS=darwin GOARCH=amd64 go build -o dist/vendatta-darwin-amd64 cmd/vendatta/main.go
-	GOOS=darwin GOARCH=arm64 go build -o dist/vendatta-darwin-arm64 cmd/vendatta/main.go
-	GOOS=windows GOARCH=amd64 go build -o dist/vendatta-windows-amd64.exe cmd/vendatta/main.go
+	GOOS=linux GOARCH=amd64 go build -o dist/vendatta-linux-amd64 ./cmd/vendatta
+	GOOS=linux GOARCH=arm64 go build -o dist/vendatta-linux-arm64 ./cmd/vendatta
+	GOOS=darwin GOARCH=amd64 go build -o dist/vendatta-darwin-amd64 ./cmd/vendatta
+	GOOS=darwin GOARCH=arm64 go build -o dist/vendatta-darwin-arm64 ./cmd/vendatta
+	GOOS=windows GOARCH=amd64 go build -o dist/vendatta-windows-amd64.exe ./cmd/vendatta
 
 ci-docker: docker-build docker-push ## Build and push Docker image
 

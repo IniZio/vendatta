@@ -9,7 +9,6 @@ linters:
     - goimports
     - misspell
     - revive
-    - shadow
   settings:
     govet:
       shadow: true

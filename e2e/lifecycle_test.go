@@ -1,13 +1,13 @@
 package e2e
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/vibegear/vendatta/e2e/testenv"
 )
 
 func TestWorkspaceLifecycle(t *testing.T) {
@@ -15,7 +15,7 @@ func TestWorkspaceLifecycle(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	env := testenv.NewTestEnvironment(t)
+	env := NewTestEnvironment(t)
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
@@ -78,7 +78,7 @@ func TestWorkspaceList(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	env := testenv.NewTestEnvironment(t)
+	env := NewTestEnvironment(t)
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
@@ -102,7 +102,7 @@ services:
 	output := env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "list")
 
 	for _, ws := range []string{"ws1", "ws2", "ws3"} {
-		if !env.ContainsString(output, ws) {
+		if !strings.Contains(output, ws) {
 			t.Errorf("Expected workspace %s in list output", ws)
 		}
 	}
@@ -117,7 +117,7 @@ func TestPluginSystem(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	env := testenv.NewTestEnvironment(t)
+	env := NewTestEnvironment(t)
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
@@ -158,7 +158,7 @@ func TestLXCProvider(t *testing.T) {
 		t.Skip("Skipping LXC test - set LXC_TEST=1 to run")
 	}
 
-	env := testenv.NewTestEnvironment(t)
+	env := NewTestEnvironment(t)
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
@@ -195,7 +195,7 @@ func TestDockerProvider(t *testing.T) {
 		t.Skip("Skipping Docker test in short mode")
 	}
 
-	env := testenv.NewTestEnvironment(t)
+	env := NewTestEnvironment(t)
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
@@ -230,7 +230,7 @@ func TestErrorHandling(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	env := testenv.NewTestEnvironment(t)
+	env := NewTestEnvironment(t)
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
@@ -255,12 +255,12 @@ wait
 	t.Log("Testing invalid workspace name...")
 	output, err := env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "create", "invalid/name")
 	require.Error(t, err)
-	require.StringContains(t, output, "invalid")
+	require.Contains(t, output, "invalid")
 
 	t.Log("Testing stop of non-existent workspace...")
 	output, err = env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "down", "nonexistent")
 	require.Error(t, err)
-	require.StringContains(t, output, "not found")
+	require.Contains(t, output, "not found")
 
 	t.Log("Testing duplicate workspace creation...")
 	_, err = env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "create", "test-ws")
@@ -272,7 +272,7 @@ func TestPerformanceBenchmarks(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	env := testenv.NewTestEnvironment(t)
+	env := NewTestEnvironment(t)
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{

@@ -1,8 +1,6 @@
 # Build artifacts
 bin/
 dist/
-vendatta
-oursky
 *.exe
 coverage.out
 coverage.html
