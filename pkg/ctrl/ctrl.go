@@ -16,6 +16,7 @@ import (
 	"github.com/vibegear/vendatta/pkg/config"
 	"github.com/vibegear/vendatta/pkg/lock"
 	"github.com/vibegear/vendatta/pkg/provider"
+	"github.com/vibegear/vendatta/pkg/templates"
 	"github.com/vibegear/vendatta/pkg/worktree"
 )
 
@@ -744,7 +745,11 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) er
 			src := filepath.Join(templateDir, entry.Name())
 			dst := filepath.Join(localDir, entry.Name())
 			if data, err := os.ReadFile(src); err == nil {
-				os.WriteFile(dst, data, 0644)
+				manager := templates.NewManager(".")
+				rendered, err := manager.RenderTemplate(string(data), cfg)
+				if err == nil {
+					os.WriteFile(dst, []byte(rendered), 0644)
+				}
 			}
 		}
 	}
@@ -861,7 +866,11 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCodeWorktree(cfg *config.Co
 			src := filepath.Join(projectPluginDir, entry.Name())
 			dst := filepath.Join(worktreePluginDir, entry.Name())
 			if data, err := os.ReadFile(src); err == nil {
-				os.WriteFile(dst, data, 0644)
+				manager := templates.NewManager(".")
+				rendered, err := manager.RenderTemplate(string(data), cfg)
+				if err == nil {
+					os.WriteFile(dst, []byte(rendered), 0644)
+				}
 			}
 		}
 	}
