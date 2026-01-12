@@ -532,6 +532,50 @@ func (c *BaseController) Apply(ctx context.Context) error {
 
 	fmt.Printf("🤖 Detected agents: %v\n", agents)
 
+	merged, err := cfg.GetMergedTemplates(".")
+	if err != nil {
+		return fmt.Errorf("failed to merge templates: %w", err)
+	}
+
+	if err := cfg.GenerateAgentConfigs(".", merged); err != nil {
+		return fmt.Errorf("failed to generate agent configs: %w", err)
+	}
+
+	// Generate additional agent-specific configurations
+	for _, agent := range agents {
+		switch agent {
+		case "opencode":
+			c.copyPluginCapabilitiesToOpenCode(cfg)
+		}
+	}
+	for _, agent := range agents {
+		switch agent {
+		case "cursor":
+			if err := c.generateCursorConfig(cfg); err != nil {
+				fmt.Printf("❌ Failed to update Cursor config: %v\n", err)
+			} else {
+				fmt.Println("✅ Updated Cursor configuration")
+			}
+		case "opencode":
+			if err := c.generateOpenCodeConfig(cfg); err != nil {
+				fmt.Printf("❌ Failed to update OpenCode config: %v\n", err)
+			} else {
+				fmt.Println("✅ Updated OpenCode agent config")
+			}
+		case "claude-desktop":
+			if err := c.generateClaudeDesktopConfig(cfg); err != nil {
+				fmt.Printf("❌ Failed to update Claude Desktop config: %v\n", err)
+			} else {
+				fmt.Println("✅ Refreshed Claude Desktop settings")
+			}
+		case "claude-code":
+			if err := c.generateClaudeCodeConfig(cfg); err != nil {
+				fmt.Printf("❌ Failed to update Claude Code config: %v\n", err)
+			} else {
+				fmt.Println("✅ Refreshed Claude Code settings")
+			}
+		}
+	}
 	for _, agent := range agents {
 		switch agent {
 		case "cursor":
@@ -648,9 +692,7 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-
 	c.copyPluginCapabilitiesToOpenCode(cfg)
-
 	os.WriteFile("opencode.json", data, 0644)
 
 	worktreesDir := ".vendatta/worktrees"
@@ -674,15 +716,39 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 }
 
 func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) error {
-	for _, plugin := range cfg.Plugins {
-		repo, ok := plugin.(config.TemplateRepo)
-		if !ok {
+	// Copy capabilities from project templates to .opencode directory
+	dirMappings := map[string]string{
+		filepath.Join(".opencode", "rules", "vibegear"):    ".vendatta/templates/rules",
+		filepath.Join(".opencode", "skills", "vibegear"):   ".vendatta/templates/skills",
+		filepath.Join(".opencode", "commands", "vibegear"): ".vendatta/templates/commands",
+	}
+
+	for localDir, templateDir := range dirMappings {
+		if err := os.MkdirAll(localDir, 0755); err != nil {
 			continue
 		}
-		if err := c.downloadPluginCapabilities(repo, ".opencode"); err != nil {
+
+		if _, err := os.Stat(templateDir); os.IsNotExist(err) {
 			continue
+		}
+
+		entries, err := os.ReadDir(templateDir)
+		if err != nil {
+			continue
+		}
+
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+				continue
+			}
+			src := filepath.Join(templateDir, entry.Name())
+			dst := filepath.Join(localDir, entry.Name())
+			if data, err := os.ReadFile(src); err == nil {
+				os.WriteFile(dst, data, 0644)
+			}
 		}
 	}
+
 	return nil
 }
 
