@@ -26,7 +26,7 @@ func (p *LXCProvider) Name() string {
 	return p.name
 }
 
-func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePath string, config interface{}) (*provider.Session, error) {
+func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePath string, _ interface{}) (*provider.Session, error) {
 	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 
 	cmd := exec.CommandContext(ctx, "lxc", "init", "ubuntu:22.04", containerName, "--config", "limits.memory=512MB")
@@ -39,7 +39,7 @@ func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePat
 	mountCmd := exec.CommandContext(ctx, "lxc", "config", "device", "add", containerName, "worktree", "disk", fmt.Sprintf("source=%s", workspacePath), "path=/workspace")
 	mountOutput, mountErr := mountCmd.CombinedOutput()
 	if mountErr != nil {
-		p.Destroy(ctx, sessionID)
+		_ = p.Destroy(ctx, sessionID)
 		return nil, fmt.Errorf("failed to mount worktree: %w: %s", mountErr, string(mountOutput))
 	}
 

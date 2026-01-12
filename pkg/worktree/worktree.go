@@ -58,7 +58,7 @@ func (m *gitManager) Add(branch string) (string, error) {
 			return "", fmt.Errorf("failed to create branch %s: %w, output: %s", branch, err, string(output))
 		}
 		if currentBranch != "" && currentBranch != branch {
-			m.switchToBranch(currentBranch)
+			_ = m.switchToBranch(currentBranch)
 		}
 	}
 
@@ -98,7 +98,7 @@ func (m *gitManager) Remove(branch string) error {
 
 	cmd := exec.Command("git", "worktree", "remove", branch)
 	cmd.Dir = m.RepoPath
-	cmd.Run()
+	_ = cmd.Run()
 
 	return os.RemoveAll(wtPath)
 }

@@ -38,7 +38,7 @@ func (env *TestEnvironment) Cleanup() {
 	if output, err := cmd.Output(); err == nil {
 		containerIDs := strings.Fields(string(output))
 		for _, id := range containerIDs {
-			exec.Command("docker", "rm", "-f", id).Run()
+			_ = exec.Command("docker", "rm", "-f", id).Run()
 		}
 	}
 

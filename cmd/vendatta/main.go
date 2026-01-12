@@ -25,7 +25,7 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new vendatta project",
 	Long:  `Initialize a new vendatta project by creating the .vendatta directory and default configuration files.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		ctx := context.Background()
 		controller := createController()
 		return controller.Init(ctx)
@@ -43,7 +43,7 @@ var workspaceCreateCmd = &cobra.Command{
 	Short: "Create a new workspace",
 	Long:  `Create a new workspace with the specified name. This will set up a Git worktree and generate AI agent configurations.`,
 	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		ctx := context.Background()
 		controller := createController()
 		return controller.WorkspaceCreate(ctx, args[0])
@@ -55,7 +55,7 @@ var workspaceUpCmd = &cobra.Command{
 	Short: "Start a workspace",
 	Long:  `Start the specified workspace or auto-detect if no name is provided. This will create and start the isolated environment.`,
 	Args:  cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		ctx := context.Background()
 		controller := createController()
 		name := ""
@@ -71,7 +71,7 @@ var workspaceDownCmd = &cobra.Command{
 	Short: "Stop a workspace",
 	Long:  `Stop the specified workspace or auto-detect if no name is provided.`,
 	Args:  cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		ctx := context.Background()
 		controller := createController()
 		name := ""
@@ -86,7 +86,7 @@ var workspaceListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all workspaces",
 	Long:  `List all workspaces, showing their status and provider information.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		ctx := context.Background()
 		controller := createController()
 		return controller.WorkspaceList(ctx)
@@ -98,7 +98,7 @@ var workspaceRmCmd = &cobra.Command{
 	Short: "Remove a workspace",
 	Long:  `Remove the specified workspace, stopping it first if it's running.`,
 	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		ctx := context.Background()
 		controller := createController()
 		return controller.WorkspaceRm(ctx, args[0])
@@ -110,7 +110,7 @@ var workspaceShellCmd = &cobra.Command{
 	Short: "Open shell in workspace",
 	Long:  `Open an interactive shell in the specified workspace or auto-detect if no name is provided.`,
 	Args:  cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		ctx := context.Background()
 		controller := createController()
 		name := ""
@@ -125,7 +125,7 @@ var applyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply latest configuration to agent configs",
 	Long:  `Apply the latest vendatta configuration to all enabled AI agent configuration files (Cursor, OpenCode, Claude, etc.).`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		ctx := context.Background()
 		controller := createController()
 		return controller.Apply(ctx)
@@ -142,7 +142,7 @@ var pluginUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update all plugins to latest versions",
 	Long:  `Update all loaded plugins to their latest versions and refresh the lockfile.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		ctx := context.Background()
 		controller := createController()
 		return controller.PluginUpdate(ctx)
@@ -153,7 +153,7 @@ var pluginListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all loaded plugins",
 	Long:  `List all currently loaded plugins with their versions and status.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		ctx := context.Background()
 		controller := createController()
 		return controller.PluginList(ctx)

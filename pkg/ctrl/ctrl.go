@@ -62,7 +62,7 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 	return c.WorkspaceCreate(ctx, branch)
 }
 
-func (c *BaseController) WorkspaceCreate(ctx context.Context, name string) error {
+func (c *BaseController) WorkspaceCreate(_ context.Context, name string) error {
 	if name == "" || strings.Contains(name, "/") || strings.Contains(name, "..") {
 		return fmt.Errorf("invalid workspace name: %s", name)
 	}
@@ -265,7 +265,7 @@ func (c *BaseController) WorkspaceList(ctx context.Context) error {
 	return nil
 }
 
-func (c *BaseController) WorkspaceRm(ctx context.Context, name string) error {
+func (c *BaseController) WorkspaceRm(_ context.Context, name string) error {
 	fmt.Printf("🗑️ Removing workspace '%s'...\n", name)
 
 	if err := c.WorktreeManager.Remove(name); err != nil {
@@ -276,7 +276,7 @@ func (c *BaseController) WorkspaceRm(ctx context.Context, name string) error {
 	return nil
 }
 
-func (c *BaseController) Init(ctx context.Context) error {
+func (c *BaseController) Init(_ context.Context) error {
 	dirs := []string{
 		".vendatta/hooks",
 		".vendatta/worktrees",
@@ -546,7 +546,7 @@ func (c *BaseController) Apply(ctx context.Context) error {
 	for _, agent := range agents {
 		switch agent {
 		case "opencode":
-			c.copyPluginCapabilitiesToOpenCode(cfg)
+			_ = c.copyPluginCapabilitiesToOpenCode(cfg)
 		}
 	}
 	for _, agent := range agents {
@@ -605,7 +605,7 @@ func detectInstalledAgents() []string {
 func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
 	cursorDir := ".cursor"
 	if err := os.MkdirAll(cursorDir, 0755); err == nil {
-		c.createCursorRules(cursorDir)
+		_ = c.createCursorRules(cursorDir)
 	}
 
 	worktreesDir := ".vendatta/worktrees"
@@ -625,7 +625,7 @@ func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
 			continue
 		}
 
-		c.createCursorRules(cursorDir)
+		_ = c.createCursorRules(cursorDir)
 	}
 
 	return nil
@@ -644,7 +644,7 @@ func (c *BaseController) createCursorRules(cursorDir string) error {
 
 	for filename, content := range rules {
 		rulePath := filepath.Join(rulesDir, filename)
-		os.WriteFile(rulePath, []byte(content), 0644)
+		_ = os.WriteFile(rulePath, []byte(content), 0644)
 	}
 
 	return nil
@@ -665,8 +665,8 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	c.copyPluginCapabilitiesToOpenCode(cfg)
-	os.WriteFile("opencode.json", data, 0644)
+	_ = c.copyPluginCapabilitiesToOpenCode(cfg)
+	_ = os.WriteFile("opencode.json", data, 0644)
 
 	worktreesDir := ".vendatta/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
@@ -680,9 +680,9 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 		}
 
 		worktreePath := filepath.Join(worktreesDir, entry.Name())
-		c.copyPluginCapabilitiesToOpenCodeWorktree(cfg, worktreePath)
+		_ = c.copyPluginCapabilitiesToOpenCodeWorktree(cfg, worktreePath)
 		configPath := filepath.Join(worktreePath, "opencode.json")
-		os.WriteFile(configPath, data, 0644)
+		_ = os.WriteFile(configPath, data, 0644)
 	}
 
 	return nil
@@ -725,7 +725,7 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) er
 				manager := templates.NewManager(".")
 				rendered, err := manager.RenderTemplate(string(data), renderData)
 				if err == nil {
-					os.WriteFile(dst, []byte(rendered), 0644)
+					_ = os.WriteFile(dst, []byte(rendered), 0644)
 				}
 			}
 		}
@@ -774,6 +774,7 @@ func (c *BaseController) fetchPluginFiles(repoURL, repoPath, branch string) ([]G
 	owner := parts[len(parts)-2]
 	repo := parts[len(parts)-1]
 
+	//nolint:ineffassign // Placeholder for future branch functionality
 	if branch == "" {
 		branch = "main"
 	}
@@ -812,7 +813,7 @@ func (c *BaseController) createPlaceholderFiles(pluginDir, baseDir string) {
 	for _, file := range files {
 		filePath := filepath.Join(pluginDir, file)
 		content := fmt.Sprintf("# %s Capability\n\nThis is a placeholder file.\nPlugin files could not be downloaded.\n", strings.TrimSuffix(file, ".md"))
-		os.WriteFile(filePath, []byte(content), 0644)
+		_ = os.WriteFile(filePath, []byte(content), 0644)
 	}
 }
 
@@ -851,7 +852,7 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCodeWorktree(cfg *config.Co
 				manager := templates.NewManager(".")
 				rendered, err := manager.RenderTemplate(string(data), renderData)
 				if err == nil {
-					os.WriteFile(dst, []byte(rendered), 0644)
+					_ = os.WriteFile(dst, []byte(rendered), 0644)
 				}
 			}
 		}
@@ -870,7 +871,7 @@ func (c *BaseController) generateClaudeDesktopConfig(cfg *config.Config) error {
 		return err
 	}
 
-	os.WriteFile("claude_desktop_config.json", data, 0644)
+	_ = os.WriteFile("claude_desktop_config.json", data, 0644)
 
 	worktreesDir := ".vendatta/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
@@ -885,7 +886,7 @@ func (c *BaseController) generateClaudeDesktopConfig(cfg *config.Config) error {
 
 		worktreePath := filepath.Join(worktreesDir, entry.Name())
 		configPath := filepath.Join(worktreePath, "claude_desktop_config.json")
-		os.WriteFile(configPath, data, 0644)
+		_ = os.WriteFile(configPath, data, 0644)
 	}
 
 	return nil
@@ -901,7 +902,7 @@ func (c *BaseController) generateClaudeCodeConfig(cfg *config.Config) error {
 		return err
 	}
 
-	os.WriteFile("claude_code_config.json", data, 0644)
+	_ = os.WriteFile("claude_code_config.json", data, 0644)
 
 	worktreesDir := ".vendatta/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
@@ -916,7 +917,7 @@ func (c *BaseController) generateClaudeCodeConfig(cfg *config.Config) error {
 
 		worktreePath := filepath.Join(worktreesDir, entry.Name())
 		configPath := filepath.Join(worktreePath, "claude_code_config.json")
-		os.WriteFile(configPath, data, 0644)
+		_ = os.WriteFile(configPath, data, 0644)
 	}
 
 	return nil
@@ -1123,7 +1124,7 @@ func detectPortFromCommand(command string) int {
 	matches := re.FindStringSubmatch(command)
 	if len(matches) > 1 {
 		var port int
-		fmt.Sscanf(matches[1], "%d", &port)
+		_, _ = fmt.Sscanf(matches[1], "%d", &port)
 		if port > 0 {
 			return port
 		}
@@ -1233,7 +1234,7 @@ func (c *BaseController) runHook(ctx context.Context, hookPath string, cfg *conf
 			envLines = append(envLines, fmt.Sprintf("VENDATTA_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
-	os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644)
+	_ = os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644)
 
 	absHookPath, _ := filepath.Abs(hookPath)
 
@@ -1260,7 +1261,7 @@ func (c *BaseController) handleBranchConflicts(branch string) error {
 		if err := cmd.Run(); err != nil {
 			return err
 		}
-		defer exec.Command("git", "stash", "pop").Run()
+		defer func() { _ = exec.Command("git", "stash", "pop").Run() }()
 	}
 	return nil
 }
@@ -1283,7 +1284,7 @@ func (c *BaseController) setupWorkspaceEnvironment(ctx context.Context, session 
 			envLines = append(envLines, fmt.Sprintf("VENDATTA_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
-	os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644)
+	_ = os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644)
 
 	if cfg.Hooks.Setup != "" {
 

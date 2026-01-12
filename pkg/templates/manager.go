@@ -33,10 +33,9 @@ func (m *Manager) PullRepo(repo TemplateRepo) error {
 	if _, err := os.Stat(repoDir); os.IsNotExist(err) {
 		// Clone new repo
 		return m.cloneRepo(repo, repoDir)
-	} else {
-		// Update existing repo
-		return m.updateRepo(repo, repoDir)
 	}
+	// Update existing repo
+	return m.updateRepo(repo, repoDir)
 }
 
 func (m *Manager) cloneRepo(repo TemplateRepo, repoDir string) error {

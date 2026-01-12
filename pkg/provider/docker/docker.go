@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -48,7 +47,7 @@ func (p *DockerProvider) Create(ctx context.Context, sessionID string, workspace
 	if err != nil {
 		return nil, fmt.Errorf("failed to pull image: %w", err)
 	}
-	io.Copy(io.Discard, reader)
+	_, _ = io.Copy(io.Discard, reader)
 	reader.Close()
 
 	exposedPorts := map[nat.Port]struct{}{"22/tcp": {}}
@@ -125,7 +124,7 @@ func (p *DockerProvider) Destroy(ctx context.Context, sessionID string) error {
 }
 
 func (p *DockerProvider) Exec(ctx context.Context, sessionID string, opts provider.ExecOptions) error {
-	execConfig := types.ExecConfig{
+	execConfig := container.ExecOptions{
 		Cmd:          opts.Cmd,
 		Env:          opts.Env,
 		WorkingDir:   "/workspace",
@@ -138,14 +137,14 @@ func (p *DockerProvider) Exec(ctx context.Context, sessionID string, opts provid
 		return err
 	}
 
-	resp, err := p.cli.ContainerExecAttach(ctx, idResp.ID, types.ExecStartCheck{})
+	resp, err := p.cli.ContainerExecAttach(ctx, idResp.ID, container.ExecAttachOptions{})
 	if err != nil {
 		return err
 	}
 	defer resp.Close()
 
 	if opts.Stdout {
-		io.Copy(os.Stdout, resp.Reader)
+		_, _ = io.Copy(os.Stdout, resp.Reader)
 	}
 
 	return nil

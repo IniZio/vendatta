@@ -3,12 +3,13 @@ package templates
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"gopkg.in/yaml.v3"
 )
 
 // TemplateData represents the merged template data
@@ -31,7 +32,7 @@ type PluginManifest struct {
 	} `yaml:"conditions,omitempty"`
 }
 
-func (m *Manager) Merge(baseDir string, enabledPlugins []string, extends []string) (*TemplateData, error) {
+func (m *Manager) Merge(baseDir string, _ []string, extends []string) (*TemplateData, error) {
 	data := &TemplateData{
 		Plugins: make(map[string]*PluginData),
 	}
@@ -69,7 +70,7 @@ func (m *Manager) Merge(baseDir string, enabledPlugins []string, extends []strin
 	return data, nil
 }
 
-func (m *Manager) loadExtends(baseDir string, extends []string, data *TemplateData) error {
+func (m *Manager) loadExtends(_ string, extends []string, data *TemplateData) error {
 	for _, extend := range extends {
 		parts := strings.Split(extend, "/")
 		if len(parts) != 2 {
@@ -81,12 +82,12 @@ func (m *Manager) loadExtends(baseDir string, extends []string, data *TemplateDa
 }
 
 // Stub implementations for missing methods - TODO: implement properly
-func (m *Manager) loadTemplateRepos(templateReposDir string, data *TemplateData) error {
+func (m *Manager) loadTemplateRepos(_ string, data *TemplateData) error {
 	// Stub implementation
 	return nil
 }
 
-func (m *Manager) loadPluginTemplates(pluginsDir, projectRoot string, data *TemplateData) error {
+func (m *Manager) loadPluginTemplates(_, _ string, data *TemplateData) error {
 	// Stub implementation
 	return nil
 }
