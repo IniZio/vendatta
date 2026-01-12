@@ -577,34 +577,6 @@ func (c *BaseController) Apply(ctx context.Context) error {
 			}
 		}
 	}
-	for _, agent := range agents {
-		switch agent {
-		case "cursor":
-			if err := c.generateCursorConfig(cfg); err != nil {
-				fmt.Printf("❌ Failed to update Cursor config: %v\n", err)
-			} else {
-				fmt.Println("✅ Updated Cursor configuration")
-			}
-		case "opencode":
-			if err := c.generateOpenCodeConfig(cfg); err != nil {
-				fmt.Printf("❌ Failed to update OpenCode config: %v\n", err)
-			} else {
-				fmt.Println("✅ Updated OpenCode agent config")
-			}
-		case "claude-desktop":
-			if err := c.generateClaudeDesktopConfig(cfg); err != nil {
-				fmt.Printf("❌ Failed to update Claude Desktop config: %v\n", err)
-			} else {
-				fmt.Println("✅ Refreshed Claude Desktop settings")
-			}
-		case "claude-code":
-			if err := c.generateClaudeCodeConfig(cfg); err != nil {
-				fmt.Printf("❌ Failed to update Claude Code config: %v\n", err)
-			} else {
-				fmt.Println("✅ Refreshed Claude Code settings")
-			}
-		}
-	}
 
 	fmt.Println("✅ All agent configurations synchronized")
 	return nil
@@ -724,6 +696,11 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) er
 		filepath.Join(".opencode", "commands", "vibegear"): ".vendatta/templates/commands",
 	}
 
+	// Create render data for template variables
+	renderData := config.RenderData{
+		ProjectName: cfg.Name,
+	}
+
 	for localDir, templateDir := range dirMappings {
 		if err := os.MkdirAll(localDir, 0755); err != nil {
 			continue
@@ -746,7 +723,7 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) er
 			dst := filepath.Join(localDir, entry.Name())
 			if data, err := os.ReadFile(src); err == nil {
 				manager := templates.NewManager(".")
-				rendered, err := manager.RenderTemplate(string(data), cfg)
+				rendered, err := manager.RenderTemplate(string(data), renderData)
 				if err == nil {
 					os.WriteFile(dst, []byte(rendered), 0644)
 				}
@@ -847,6 +824,11 @@ type GitHubFile struct {
 func (c *BaseController) copyPluginCapabilitiesToOpenCodeWorktree(cfg *config.Config, worktreePath string) error {
 	baseDirs := []string{"rules", "skills", "commands"}
 
+	// Create render data for template variables
+	renderData := config.RenderData{
+		ProjectName: cfg.Name,
+	}
+
 	for _, baseDir := range baseDirs {
 		worktreePluginDir := filepath.Join(worktreePath, ".opencode", baseDir, "vibegear")
 		if err := os.MkdirAll(worktreePluginDir, 0755); err != nil {
@@ -867,7 +849,7 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCodeWorktree(cfg *config.Co
 			dst := filepath.Join(worktreePluginDir, entry.Name())
 			if data, err := os.ReadFile(src); err == nil {
 				manager := templates.NewManager(".")
-				rendered, err := manager.RenderTemplate(string(data), cfg)
+				rendered, err := manager.RenderTemplate(string(data), renderData)
 				if err == nil {
 					os.WriteFile(dst, []byte(rendered), 0644)
 				}
