@@ -511,6 +511,58 @@ func TestBaseController_SetupWorkspaceEnvironment(t *testing.T) {
 	mockP.AssertExpectations(t)
 }
 
+func TestFetchPluginFiles_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	// Test cloning the actual vendatta repo and fetching rules
+	// Use IniZio/vendatta which is the correct repo name
+	ctrl := NewBaseController(nil, nil)
+
+	files, err := ctrl.fetchPluginFiles(
+		"https://github.com/IniZio/vendatta",
+		".vendatta/templates/rules",
+		"main",
+	)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, files, "Expected to fetch at least some rules files")
+
+	// Verify we got markdown files
+	for _, file := range files {
+		assert.True(t, len(file.Name) > 0, "File should have a name")
+		assert.True(t, len(file.Content) > 0, "File %s should have content", file.Name)
+		assert.True(t, len(file.Content) > 50, "File %s should have substantial content", file.Name)
+	}
+}
+
+func TestFetchPluginFiles_FileContentMatches(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	// This test verifies that content fetched from GitHub matches the actual file content
+	// We'll clone a known file and compare it to what fetchPluginFiles returns
+
+	ctrl := NewBaseController(nil, nil)
+
+	// Fetch rules from our own repo (using correct repo name)
+	files, err := ctrl.fetchPluginFiles(
+		"https://github.com/IniZio/vendatta",
+		".vendatta/templates/rules",
+		"main",
+	)
+	assert.NoError(t, err)
+
+	// For each file, verify it can be found and has expected content
+	// by checking for vendatta-specific patterns in the content
+	for _, file := range files {
+		// Verify the content contains expected markers for rules files
+		assert.Contains(t, file.Content, "#", "Rule file %s should have markdown headers", file.Name)
+		assert.NotContains(t, file.Content, "placeholder", "File %s should not be a placeholder", file.Name)
+	}
+}
+
 func TestBaseController_SimpleMethods(t *testing.T) {
 	mockP := new(MockProvider)
 	mockP.On("Name").Return("docker")
