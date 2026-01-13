@@ -106,17 +106,23 @@ run_e2e_tests() {
     log_info "Starting E2E test suite..."
 
     # Basic functionality tests
-    run_test "TestVendattaInit" "5m" || true
-    run_test "TestVendattaDevBasic" "10m" || true
+    run_test "TestWorkspaceLifecycle" "15m" || true
+    run_test "TestWorkspaceList" "10m" || true
 
-    # Service discovery tests
-    run_test "TestVendattaServiceDiscovery" "15m" || true
+    # Plugin and provider tests
+    run_test "TestPluginSystem" "10m" || true
+    run_test "TestDockerProvider" "10m" || true
 
-    # Session management tests
-    run_test "TestVendattaSessionManagement" "20m" || true
+    # LXC provider tests (only if LXC_TEST is set)
+    if [ "$LXC_TEST" = "1" ]; then
+        run_test "TestLXCProvider" "15m" || true
+    else
+        log_info "Skipping LXC tests - set LXC_TEST=1 to run"
+    fi
 
-    # Worktree isolation tests
-    run_test "TestVendattaWorktreeIsolation" "15m" || true
+    # Error handling and performance tests
+    run_test "TestErrorHandling" "10m" || true
+    run_test "TestPerformanceBenchmarks" "5m" || true
 
     log_info "E2E test suite completed"
 }

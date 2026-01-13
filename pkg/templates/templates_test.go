@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,4 +53,79 @@ func TestRenderTemplate(t *testing.T) {
 	result, err := m.RenderTemplate(tmpl, data)
 	assert.NoError(t, err)
 	assert.Equal(t, "Hello World!", result)
+}
+
+func TestGetRepoDir(t *testing.T) {
+	m := NewManager("/base")
+	repoDir := m.GetRepoDir("my-repo")
+	assert.Equal(t, "/base/remotes/my-repo", repoDir)
+}
+
+func TestPullWithoutUpdate(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "templates-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	m := NewManager(tempDir)
+
+	// Test that GetRepoDir works correctly
+	repoDir := m.GetRepoDir("my-repo")
+	assert.Equal(t, filepath.Join(tempDir, "remotes", "my-repo"), repoDir)
+
+	// Test PullWithoutUpdate with non-existent repo (will fail on clone, which is expected)
+	// This verifies the method structure is correct
+	repo := TemplateRepo{
+		URL:    "https://github.com/owner/repo",
+		Branch: "main",
+	}
+
+	// Verify the repo directory path is computed correctly before any clone attempt
+	expectedRepoDir := filepath.Join(tempDir, "remotes", "repo")
+	assert.Equal(t, expectedRepoDir, m.GetRepoDir("repo"))
+
+	// Test that existing directories are detected (simulate cached repo)
+	os.MkdirAll(expectedRepoDir, 0755)
+	err = m.PullWithoutUpdate(repo)
+	assert.NoError(t, err) // Should succeed because repo already exists
+}
+
+func TestGetRepoSHA(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "templates-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	m := NewManager(tempDir)
+
+	// Test with non-existent repo
+	repo := TemplateRepo{URL: "https://github.com/owner/nonexistent"}
+	_, err = m.GetRepoSHA(repo)
+	assert.Error(t, err)
+
+	// Create a fake git repo for testing
+	repoDir := m.GetRepoDir("test-repo")
+	os.MkdirAll(repoDir, 0755)
+
+	// Initialize a bare git repo to get a valid SHA
+	r, err := git.PlainInit(repoDir, false)
+	assert.NoError(t, err)
+
+	// Create a commit
+	wt, err := r.Worktree()
+	assert.NoError(t, err)
+
+	os.WriteFile(filepath.Join(repoDir, "test.txt"), []byte("test"), 0644)
+	_, err = wt.Add("test.txt")
+	assert.NoError(t, err)
+
+	_, err = wt.Commit("Initial commit", &git.CommitOptions{})
+	assert.NoError(t, err)
+
+	// Now test GetRepoSHA
+	sha, err := m.GetRepoSHA(TemplateRepo{URL: "https://github.com/owner/test-repo"})
+	assert.NoError(t, err)
+	assert.Len(t, sha, 40) // SHA length
 }

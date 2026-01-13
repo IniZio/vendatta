@@ -2,6 +2,8 @@
 
 ## 1. Overview
 
+> **Note:** This document describes the **plugin system**. For **extends** (remote template inheritance), see [Configuration Reference](../product/configuration.md).
+
 Vendatta's plugin system follows ESLint's model: load plugins as sources of capabilities, then enable/disable specific rules, skills, and commands. This provides fine-grained control while maintaining composability.
 
 ## 2. Plugin Loading & Resolution

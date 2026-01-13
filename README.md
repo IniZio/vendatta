@@ -157,6 +157,7 @@ provider: "docker"  # Preferred container provider
 **Configuration Management:**
 ```bash
 vendatta apply          # Apply latest config to agent configs
+vendatta update         # Update all extends to latest versions
 vendatta plugin update  # Update plugins to latest versions
 vendatta plugin list    # List loaded plugins
 ```

@@ -70,14 +70,72 @@ func (m *Manager) Merge(baseDir string, _ []string, extends []string) (*Template
 	return data, nil
 }
 
-func (m *Manager) loadExtends(_ string, extends []string, data *TemplateData) error {
+func (m *Manager) loadExtends(baseDir string, extends []string, data *TemplateData) error {
 	for _, extend := range extends {
 		parts := strings.Split(extend, "/")
 		if len(parts) != 2 {
 			continue
 		}
-		// TODO: Implement fetching from GitHub
+
+		owner, repo := parts[0], parts[1]
+
+		// Parse optional branch
+		branch := ""
+		if strings.Contains(repo, "@") {
+			repoParts := strings.SplitN(repo, "@", 2)
+			repo = repoParts[0]
+			branch = repoParts[1]
+		}
+
+		repoURL := fmt.Sprintf("https://github.com/%s/%s", owner, repo)
+		repoTemplate := TemplateRepo{
+			URL:    repoURL,
+			Branch: branch,
+		}
+
+		// Clone if missing, no network update
+		if err := m.PullWithoutUpdate(repoTemplate); err != nil {
+			return fmt.Errorf("failed to pull extend %s: %w", extend, err)
+		}
+
+		repoName := extractRepoName(repoURL)
+		repoDir := m.GetRepoDir(repoName)
+
+		// Load templates from the extended repo
+		if err := m.loadTemplatesFromExtendsRepo(repoDir, data); err != nil {
+			return fmt.Errorf("failed to load templates from %s: %w", extend, err)
+		}
 	}
+	return nil
+}
+
+func (m *Manager) loadTemplatesFromExtendsRepo(repoDir string, data *TemplateData) error {
+	entries, err := os.ReadDir(repoDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		pluginName := entry.Name()
+		pluginDir := filepath.Join(repoDir, pluginName)
+		plugin := m.getOrCreatePlugin(data, pluginName)
+
+		// Load skills, rules, commands from each subdirectory
+		for _, templateType := range []string{"skills", "rules", "commands"} {
+			subDir := filepath.Join(pluginDir, templateType)
+			if err := m.loadTemplatesFromDir(subDir, plugin); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 

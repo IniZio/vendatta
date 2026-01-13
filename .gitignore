@@ -2,7 +2,9 @@
 bin/
 dist/
 *.exe
-coverage.out
+vendatta
+*.out
+coverage*.out
 coverage.html
 # Dependencies
 node_modules/
@@ -23,3 +25,24 @@ opencode.json
 Thumbs.db
 AGENTS.md
 example/.vendatta/remotes/
+# Session and temporary files
+.sisyphus/
+# Examples directory (separate git project)
+examples/
+# Temporary status and documentation files
+TASK_*.md
+PROJECT_COMPLETE.md
+FINAL_PROJECT_STATUS.md
+SESSION_COMPLETE.md
+SESSION_SUMMARY.md
+NEXT_STEPS.md
+EXAMPLE_STRUCTURE_UPDATE.md
+FINAL_COMPLETION_GUIDE.md
+*_EXECUTION_REPORT.md
+*_FINAL_STATUS.md
+*_MAXIMUM_COMPLETION.md
+# Temporary scripts
+scripts/task_*.sh
+scripts/README_TASK_*.md
+# Temporary documentation
+vendetta-config-inizio-README.md

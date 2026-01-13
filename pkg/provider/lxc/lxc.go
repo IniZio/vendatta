@@ -35,6 +35,12 @@ func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePat
 		return nil, fmt.Errorf("failed to init LXC container: %w: %s", err, string(output))
 	}
 
+	// Ensure workspace path exists
+	if err := os.MkdirAll(workspacePath, 0755); err != nil {
+		_ = p.Destroy(ctx, sessionID)
+		return nil, fmt.Errorf("failed to create workspace path: %w", err)
+	}
+
 	// Add bind mount for worktree
 	mountCmd := exec.CommandContext(ctx, "lxc", "config", "device", "add", containerName, "worktree", "disk", fmt.Sprintf("source=%s", workspacePath), "path=/workspace")
 	mountOutput, mountErr := mountCmd.CombinedOutput()

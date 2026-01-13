@@ -30,9 +30,22 @@ Extends allow you to inherit base configurations from remote repositories, simil
 extends:
   - inizio/vendatta-config-inizio     # Base config from remote repo
   - company/base-config               # Company-wide base config
+  - owner/repo@branch                 # With optional branch (default: main)
 ```
 
 Extends are loaded first and provide the foundation rules, skills, and commands.
+
+#### **Updating Extends**
+```bash
+vendatta update         # Fetch latest versions of all extends
+```
+
+This command:
+- Fetches latest content from remote repositories
+- Updates the cached copies in `.vendatta/remotes/`
+- Displays updated repos with their commit SHAs
+
+**Note:** Normal operations (workspace create, apply) use cached extends with no network calls. Run `vendatta update` periodically to get the latest templates.
 
 ### **Plugins Configuration**
 
@@ -65,12 +78,13 @@ For customization, use local overrides in `.vendatta/templates/` to modify or re
 ---
 
 ### **Reproducible Locking (`vendatta.lock`)**
-Vendatta automatically generates a `vendatta.lock` file to ensure that your team is always using the exact same versions of all plugins.
+
+Vendatta automatically generates a `vendatta.lock` file to ensure that your team is always using the exact same versions of all extends.
 
 **Command Workflow:**
-1. `vendatta plugin add <url>`: Adds a plugin and updates `config.yaml`.
-2. `vendatta plugin update`: Updates all remote plugins to their latest versions and refreshes the lockfile.
-3. `vendatta workspace create`: Uses the lockfile to perform parallel, deterministic downloads.
+1. `vendatta init`: Initializes project with optional extends.
+2. `vendatta update`: Updates all extends to their latest versions and refreshes the cache.
+3. `vendatta workspace create`: Uses cached extends for offline-safe, deterministic workspace creation.
 
 ### **Services Configuration**
 
