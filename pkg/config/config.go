@@ -90,7 +90,7 @@ func LoadConfig(path string) (*Config, error) {
 	return &cfg, err
 }
 
-func detectInstalledAgents() []string {
+func DetectInstalledAgents() []string {
 	var agents []string
 	if _, err := exec.LookPath("cursor"); err == nil {
 		agents = append(agents, "cursor")
@@ -272,7 +272,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		gitignorePatterns = append(gitignorePatterns, "AGENTS.md")
 	}
 
-	detectedAgents := detectInstalledAgents()
+	detectedAgents := DetectInstalledAgents()
 	for _, agentName := range detectedAgents {
 		cfg, ok := agentConfigs[agentName]
 		if !ok {
