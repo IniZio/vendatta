@@ -525,7 +525,7 @@ func (c *BaseController) Apply(ctx context.Context) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	agents := detectInstalledAgents()
+	agents := config.DetectInstalledAgents()
 	if len(agents) == 0 {
 		fmt.Println("⚠️  No AI agents detected. Install Cursor, OpenCode, or Claude to use Vendatta.")
 		return nil
@@ -582,26 +582,6 @@ func (c *BaseController) Apply(ctx context.Context) error {
 	return nil
 }
 
-func detectInstalledAgents() []string {
-	var agents []string
-	if _, err := exec.LookPath("cursor"); err == nil {
-		agents = append(agents, "cursor")
-	} else if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".cursor")); err == nil {
-		agents = append(agents, "cursor")
-	}
-
-	if _, err := exec.LookPath("opencode"); err == nil {
-		agents = append(agents, "opencode")
-	}
-
-	if _, err := exec.LookPath("claude"); err == nil {
-		agents = append(agents, "claude-desktop")
-		agents = append(agents, "claude-code")
-	}
-
-	return agents
-}
-
 func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
 	cursorDir := ".cursor"
 	if err := os.MkdirAll(cursorDir, 0755); err == nil {
@@ -644,7 +624,9 @@ func (c *BaseController) createCursorRules(cursorDir string) error {
 
 	for filename, content := range rules {
 		rulePath := filepath.Join(rulesDir, filename)
-		_ = os.WriteFile(rulePath, []byte(content), 0644)
+		if err := os.WriteFile(rulePath, []byte(content), 0644); err != nil {
+			fmt.Printf("⚠️  Warning: failed to write rule file %s: %v\n", rulePath, err)
+		}
 	}
 
 	return nil
@@ -666,7 +648,9 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 		return err
 	}
 	_ = c.copyPluginCapabilitiesToOpenCode(cfg)
-	_ = os.WriteFile("opencode.json", data, 0644)
+	if err := os.WriteFile("opencode.json", data, 0644); err != nil {
+		fmt.Printf("⚠️  Warning: failed to write opencode.json: %v\n", err)
+	}
 
 	worktreesDir := ".vendatta/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
@@ -682,7 +666,9 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 		worktreePath := filepath.Join(worktreesDir, entry.Name())
 		_ = c.copyPluginCapabilitiesToOpenCodeWorktree(cfg, worktreePath)
 		configPath := filepath.Join(worktreePath, "opencode.json")
-		_ = os.WriteFile(configPath, data, 0644)
+		if err := os.WriteFile(configPath, data, 0644); err != nil {
+			fmt.Printf("⚠️  Warning: failed to write worktree opencode.json: %v\n", err)
+		}
 	}
 
 	return nil
@@ -725,7 +711,9 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) er
 				manager := templates.NewManager(".")
 				rendered, err := manager.RenderTemplate(string(data), renderData)
 				if err == nil {
-					_ = os.WriteFile(dst, []byte(rendered), 0644)
+					if err := os.WriteFile(dst, []byte(rendered), 0644); err != nil {
+						fmt.Printf("⚠️  Warning: failed to write rendered template %s: %v\n", dst, err)
+					}
 				}
 			}
 		}
@@ -771,29 +759,82 @@ func (c *BaseController) fetchPluginFiles(repoURL, repoPath, branch string) ([]G
 	if len(parts) < 2 {
 		return nil, fmt.Errorf("invalid GitHub URL: %s", repoURL)
 	}
-	owner := parts[len(parts)-2]
-	repo := parts[len(parts)-1]
 
-	//nolint:ineffassign // Placeholder for future branch functionality
+	repoName := parts[len(parts)-1]
+	repoName = strings.TrimSuffix(repoName, ".git")
+
 	if branch == "" {
 		branch = "main"
 	}
 
-	var files []GitHubFile
+	// Clone the repository to a temporary directory
+	tmpDir, err := os.MkdirTemp("", "vendatta-plugin-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
 
-	if owner == "IniZio" && repo == "vendatta" {
-		switch repoPath {
-		case ".vendatta/templates/rules":
-			files = []GitHubFile{
-				{Name: "conventional-commits.md", Content: "# Conventional Commits\n\nFormat: `<type>[optional scope]: <description>`\n\n## Types\n\n- **feat**: A new feature\n- **fix**: A bug fix\n- **docs**: Documentation only changes\n- **style**: Changes that do not affect the meaning of the code\n- **refactor**: A code change that neither fixes a bug nor adds a feature\n- **perf**: A code change that improves performance\n- **test**: Adding missing tests or correcting existing tests\n- **build**: Changes that affect the build system or external dependencies\n- **ci**: Changes to our CI configuration files and scripts\n- **chore**: Other changes that don't modify src or test files\n\n## Examples\n\n```\nfeat: add user authentication\nfix: resolve memory leak in user service\ndocs: update API documentation\n```\n"},
-				{Name: "go-conventions.md", Content: "# Go Conventions\n\nFollow standard Go project layout (`cmd/`, `pkg/`, `internal/`).\n\n## Error Handling\n- Always wrap errors: `fmt.Errorf(\"failed to connect: %w\", err)`\n- Use `errors.Is` and `errors.As` for type checking\n\n## Package Structure\n- `pkg/` for public libraries\n- `internal/` for private implementation\n- Short, lowercase package names\n\n## Testing\n- Use `testify/assert` and `require`\n- Table-driven tests for multiple scenarios\n- Test file naming: `*_test.go`\n"},
-				{Name: "project.md", Content: "# Project Standards\n\nTeam-specific coding standards and development guidelines.\n\n## Code Quality\n- Use TypeScript for new code\n- Functions should be < 30 lines\n- Always add return types\n- Prefer early returns\n\n## Git Workflow\n- Use feature branches for all development\n- Write descriptive commit messages\n- Keep PRs small (< 300 lines)\n\n## Testing\n- Aim for 80%+ test coverage\n- Write tests before implementation (TDD)\n- Test both happy path and error cases\n"},
-			}
-		}
+	// Use the existing templates.Manager to clone
+	manager := templates.NewManager(tmpDir)
+	repo := templates.TemplateRepo{
+		URL:    repoURL,
+		Branch: branch,
 	}
 
-	if len(files) == 0 {
-		return nil, fmt.Errorf("no files found for path: %s in repo %s/%s", repoPath, owner, repo)
+	if err := manager.PullRepo(repo); err != nil {
+		return nil, fmt.Errorf("failed to clone repo: %w", err)
+	}
+
+	// Find the cloned repo directory
+	repoDir := manager.GetRepoDir(repoName)
+
+	// Read files from the requested path
+	targetPath := filepath.Join(repoDir, repoPath)
+	files, err := readFilesFromDirectory(targetPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read files from %s: %w", targetPath, err)
+	}
+
+	return files, nil
+}
+
+// readFilesFromDirectory recursively reads files from a directory and returns them as GitHubFile objects
+func readFilesFromDirectory(dirPath string) ([]GitHubFile, error) {
+	var files []GitHubFile
+
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			// Recursively read subdirectory
+			subDirPath := filepath.Join(dirPath, entry.Name())
+			subFiles, err := readFilesFromDirectory(subDirPath)
+			if err != nil {
+				continue
+			}
+			files = append(files, subFiles...)
+			continue
+		}
+
+		// Skip non-markdown files for rules/skills/commands
+		if !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		// Read file content
+		filePath := filepath.Join(dirPath, entry.Name())
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			continue
+		}
+
+		files = append(files, GitHubFile{
+			Name:    entry.Name(),
+			Content: string(content),
+		})
 	}
 
 	return files, nil
@@ -813,7 +854,9 @@ func (c *BaseController) createPlaceholderFiles(pluginDir, baseDir string) {
 	for _, file := range files {
 		filePath := filepath.Join(pluginDir, file)
 		content := fmt.Sprintf("# %s Capability\n\nThis is a placeholder file.\nPlugin files could not be downloaded.\n", strings.TrimSuffix(file, ".md"))
-		_ = os.WriteFile(filePath, []byte(content), 0644)
+		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+			fmt.Printf("⚠️  Warning: failed to write placeholder file %s: %v\n", filePath, err)
+		}
 	}
 }
 
@@ -852,7 +895,9 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCodeWorktree(cfg *config.Co
 				manager := templates.NewManager(".")
 				rendered, err := manager.RenderTemplate(string(data), renderData)
 				if err == nil {
-					_ = os.WriteFile(dst, []byte(rendered), 0644)
+					if err := os.WriteFile(dst, []byte(rendered), 0644); err != nil {
+						fmt.Printf("⚠️  Warning: failed to write worktree capability %s: %v\n", dst, err)
+					}
 				}
 			}
 		}
@@ -871,7 +916,9 @@ func (c *BaseController) generateClaudeDesktopConfig(cfg *config.Config) error {
 		return err
 	}
 
-	_ = os.WriteFile("claude_desktop_config.json", data, 0644)
+	if err := os.WriteFile("claude_desktop_config.json", data, 0644); err != nil {
+		fmt.Printf("⚠️  Warning: failed to write claude_desktop_config.json: %v\n", err)
+	}
 
 	worktreesDir := ".vendatta/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
@@ -886,7 +933,9 @@ func (c *BaseController) generateClaudeDesktopConfig(cfg *config.Config) error {
 
 		worktreePath := filepath.Join(worktreesDir, entry.Name())
 		configPath := filepath.Join(worktreePath, "claude_desktop_config.json")
-		_ = os.WriteFile(configPath, data, 0644)
+		if err := os.WriteFile(configPath, data, 0644); err != nil {
+			fmt.Printf("⚠️  Warning: failed to write worktree claude_desktop_config.json: %v\n", err)
+		}
 	}
 
 	return nil
@@ -902,7 +951,9 @@ func (c *BaseController) generateClaudeCodeConfig(cfg *config.Config) error {
 		return err
 	}
 
-	_ = os.WriteFile("claude_code_config.json", data, 0644)
+	if err := os.WriteFile("claude_code_config.json", data, 0644); err != nil {
+		fmt.Printf("⚠️  Warning: failed to write claude_code_config.json: %v\n", err)
+	}
 
 	worktreesDir := ".vendatta/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
@@ -917,7 +968,9 @@ func (c *BaseController) generateClaudeCodeConfig(cfg *config.Config) error {
 
 		worktreePath := filepath.Join(worktreesDir, entry.Name())
 		configPath := filepath.Join(worktreePath, "claude_code_config.json")
-		_ = os.WriteFile(configPath, data, 0644)
+		if err := os.WriteFile(configPath, data, 0644); err != nil {
+			fmt.Printf("⚠️  Warning: failed to write worktree claude_code_config.json: %v\n", err)
+		}
 	}
 
 	return nil
@@ -1234,7 +1287,9 @@ func (c *BaseController) runHook(ctx context.Context, hookPath string, cfg *conf
 			envLines = append(envLines, fmt.Sprintf("VENDATTA_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
-	_ = os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644)
+	if err := os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644); err != nil {
+		fmt.Printf("⚠️  Warning: failed to write env file %s: %v\n", envFile, err)
+	}
 
 	absHookPath, _ := filepath.Abs(hookPath)
 
@@ -1284,7 +1339,9 @@ func (c *BaseController) setupWorkspaceEnvironment(ctx context.Context, session 
 			envLines = append(envLines, fmt.Sprintf("VENDATTA_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
-	_ = os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644)
+	if err := os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644); err != nil {
+		fmt.Printf("⚠️  Warning: failed to write env file %s: %v\n", envFile, err)
+	}
 
 	if cfg.Hooks.Setup != "" {
 
