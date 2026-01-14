@@ -21,65 +21,26 @@ help: ## Show this help message
 	@echo "  ci-build           Build for multiple platforms"
 	@echo "  ci-docker          Build and push Docker image"
 
+# Get version from git tag or use dev
+VERSION := $(shell git describe --tags --always 2>/dev/null || echo "dev")
+BUILDDATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+LDFLAGS := -X main.version=$(VERSION) -X main.buildDate=$(BUILDDATE)
+
 # Development
 build: ## Build vendetta binary
-	go build -o bin/vendetta ./cmd/vendetta
+	go build -ldflags "$(LDFLAGS)" -o bin/vendetta ./cmd/vendetta
 
 install: build ## Install vendetta to ~/.local/bin
 	cp bin/vendetta ~/.local/bin/vendetta
 	chmod +x ~/.local/bin/vendetta
 
-clean: ## Clean build artifacts
-	rm -rf bin/
-	rm -rf dist/
-	rm -f coverage.out coverage.html
-
-lint: ## Run golangci-lint
-	golangci-lint run
-
-fmt: ## Format Go code
-	go fmt ./...
-	go mod tidy
-
-fmt-check: ## Check if code is properly formatted
-	@if [ -n "$$(gofmt -l .)" ]; then \
-		echo "Code is not formatted. Run 'make fmt' to fix."; \
-		gofmt -l .; \
-		exit 1; \
-	fi
-
-# Testing
-test-unit: ## Run unit tests with coverage
-	go test -v -race -coverprofile=coverage.out ./pkg/...
-	go tool cover -html=coverage.out -o coverage.html
-	@echo "Coverage report: coverage.html"
-
-test-integration: ## Run integration tests
-	go test -v -race -tags=integration ./pkg/...
-
-test-e2e: ## Run end-to-end tests
-	./scripts/run-e2e-tests.sh
-
-test-all: test-unit test-integration test-e2e ## Run all tests
-
-# Docker
-docker-build: ## Build Docker image
-	docker build -t vendetta:latest .
-
-docker-push: ## Push Docker image
-	docker tag vendetta:latest inizio/vendetta:latest
-	docker push inizio/vendetta:latest
-
-# CI Pipeline
-ci-check: fmt-check lint test-all ## Run all CI checks
-
 ci-build: ## Build for multiple platforms
 	mkdir -p dist
-	GOOS=linux GOARCH=amd64 go build -o dist/vendetta-linux-amd64 ./cmd/vendetta
-	GOOS=linux GOARCH=arm64 go build -o dist/vendetta-linux-arm64 ./cmd/vendetta
-	GOOS=darwin GOARCH=amd64 go build -o dist/vendetta-darwin-amd64 ./cmd/vendetta
-	GOOS=darwin GOARCH=arm64 go build -o dist/vendetta-darwin-arm64 ./cmd/vendetta
-	GOOS=windows GOARCH=amd64 go build -o dist/vendetta-windows-amd64.exe ./cmd/vendetta
+	GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-linux-amd64 ./cmd/vendetta
+	GOOS=linux GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-linux-arm64 ./cmd/vendetta
+	GOOS=darwin GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-darwin-amd64 ./cmd/vendetta
+	GOOS=darwin GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-darwin-arm64 ./cmd/vendetta
+	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-windows-amd64.exe ./cmd/vendetta
 
 ci-docker: docker-build docker-push ## Build and push Docker image
 
