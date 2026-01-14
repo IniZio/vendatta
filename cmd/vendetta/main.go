@@ -2,415 +2,501 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/vibegear/vendatta/pkg/coordination"
+	"github.com/vibegear/vendatta/cmd/internal"
+	"github.com/vibegear/vendatta/pkg/config"
 	"github.com/vibegear/vendatta/pkg/ctrl"
+	"github.com/vibegear/vendatta/pkg/metrics"
 	"github.com/vibegear/vendatta/pkg/provider"
 	dockerProvider "github.com/vibegear/vendatta/pkg/provider/docker"
 	lxcProvider "github.com/vibegear/vendatta/pkg/provider/lxc"
-	qemuProvider "github.com/vibegear/vendatta/pkg/provider/qemu"
+	"github.com/vibegear/vendatta/pkg/templates"
 	"github.com/vibegear/vendatta/pkg/worktree"
 )
 
-func main() {
-	var rootCmd = &cobra.Command{
-		Use:   "vendatta",
-		Short: "Isolated development environments that work with AI agents",
-		Long: `Vendatta provides isolated development environments that integrate 
+var rootCmd = &cobra.Command{
+	Use:   "vendetta",
+	Short: "Isolated development environments that work with AI agents",
+	Long: `Vendetta provides isolated development environments that integrate 
 seamlessly with AI coding assistants like Cursor, OpenCode, Claude, and others.`,
-	}
+}
 
-	providers, err := initProviders()
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "Initialize a new vendatta project",
+	Long:  `Initialize a new vendatta project by creating the .vendatta directory and default configuration files.`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		ctx := context.Background()
+		controller := createController()
+		return controller.Init(ctx)
+	},
+}
+
+var workspaceCmd = &cobra.Command{
+	Use:   "workspace",
+	Short: "Manage workspaces",
+	Long:  `Create, start, stop, and manage isolated development workspaces.`,
+}
+
+var workspaceCreateCmd = &cobra.Command{
+	Use:   "create <name>",
+	Short: "Create a new workspace",
+	Long:  `Create a new workspace with the specified name. This will set up a Git worktree and generate AI agent configurations.`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		ctx := context.Background()
+		controller := createController()
+		return controller.WorkspaceCreate(ctx, args[0])
+	},
+}
+
+var workspaceUpCmd = &cobra.Command{
+	Use:   "up [name]",
+	Short: "Start a workspace",
+	Long:  `Start the specified workspace or auto-detect if no name is provided. This will create and start the isolated environment.`,
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		ctx := context.Background()
+		controller := createController()
+		name := ""
+		if len(args) > 0 {
+			name = args[0]
+		}
+		return controller.WorkspaceUp(ctx, name)
+	},
+}
+
+var workspaceDownCmd = &cobra.Command{
+	Use:   "down [name]",
+	Short: "Stop a workspace",
+	Long:  `Stop the specified workspace or auto-detect if no name is provided.`,
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		ctx := context.Background()
+		controller := createController()
+		name := ""
+		if len(args) > 0 {
+			name = args[0]
+		}
+		return controller.WorkspaceDown(ctx, name)
+	},
+}
+
+var workspaceListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all workspaces",
+	Long:  `List all workspaces, showing their status and provider information.`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		ctx := context.Background()
+		controller := createController()
+		return controller.WorkspaceList(ctx)
+	},
+}
+
+var workspaceRmCmd = &cobra.Command{
+	Use:   "rm <name>",
+	Short: "Remove a workspace",
+	Long:  `Remove the specified workspace, stopping it first if it's running.`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		ctx := context.Background()
+		controller := createController()
+		return controller.WorkspaceRm(ctx, args[0])
+	},
+}
+
+var workspaceShellCmd = &cobra.Command{
+	Use:   "shell [name]",
+	Short: "Open shell in workspace",
+	Long:  `Open an interactive shell in the specified workspace or auto-detect if no name is provided.`,
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		ctx := context.Background()
+		controller := createController()
+		name := ""
+		if len(args) > 0 {
+			name = args[0]
+		}
+		return controller.WorkspaceShell(ctx, name)
+	},
+}
+
+var applyCmd = &cobra.Command{
+	Use:   "apply",
+	Short: "Apply latest configuration to agent configs",
+	Long:  `Apply the latest vendatta configuration to all enabled AI agent configuration files (Cursor, OpenCode, Claude, etc.).`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		ctx := context.Background()
+		controller := createController()
+		return controller.Apply(ctx)
+	},
+}
+
+var pluginCmd = &cobra.Command{
+	Use:   "plugin",
+	Short: "Manage plugins",
+	Long:  `Manage plugins: add, remove, update, and list available plugins.`,
+}
+
+var pluginUpdateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update all plugins to latest versions",
+	Long:  `Update all loaded plugins to their latest versions and refresh the lockfile.`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		ctx := context.Background()
+		controller := createController()
+		return controller.PluginUpdate(ctx)
+	},
+}
+
+var pluginListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all loaded plugins",
+	Long:  `List all currently loaded plugins with their versions and status.`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		ctx := context.Background()
+		controller := createController()
+		return controller.PluginList(ctx)
+	},
+}
+
+var usageCmd = &cobra.Command{
+	Use:   "usage",
+	Short: "Analyze usage metrics and productivity",
+	Long:  `Generate reports and insights from usage logs.`,
+}
+
+var usageSummaryCmd = &cobra.Command{
+	Use:   "summary [date]",
+	Short: "Generate daily summary report",
+	Long:  `Generate a daily summary of usage metrics and insights. Date format: YYYY-MM-DD (defaults to today).`,
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		return runUsageSummary(args)
+	},
+}
+
+var usageMetricsCmd = &cobra.Command{
+	Use:   "metrics [days]",
+	Short: "Calculate productivity metrics",
+	Long:  `Calculate detailed productivity metrics for the specified number of days (defaults to 7).`,
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		return runUsageMetrics(args)
+	},
+}
+
+var usagePatternsCmd = &cobra.Command{
+	Use:   "patterns [days]",
+	Short: "Analyze usage patterns",
+	Long:  `Analyze usage patterns and trends for the specified number of days (defaults to 7).`,
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		return runUsagePatterns(args)
+	},
+}
+
+var usageBenchmarkCmd = &cobra.Command{
+	Use:   "benchmark <baseline-days> <current-days>",
+	Short: "Compare baseline and current metrics",
+	Long:  `Compare productivity metrics between baseline period and current period.`,
+	Args:  cobra.ExactArgs(2),
+	RunE: func(_ *cobra.Command, args []string) error {
+		return runUsageBenchmark(args)
+	},
+}
+
+var configCmd = &cobra.Command{
+	Use:   "config",
+	Short: "Manage configuration",
+	Long:  `Manage Vendatta configuration files.`,
+}
+
+var configExtractCmd = &cobra.Command{
+	Use:   "extract <plugin-name>",
+	Short: "Extract configuration to plugin",
+	Long: `Extract local configuration (rules, skills, commands) into a reusable plugin.
+This allows teams to share their coding standards and configurations as distributable plugins.`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		pluginName := args[0]
+
+		// Default to extracting all types
+		return internal.ExtractConfigToPlugin(pluginName, true, true, true)
+	},
+}
+
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update all extends to latest versions",
+	Long: `Fetch the latest versions of all configured extends and update the lockfile.
+This ensures you have the most recent templates from remote repositories.`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		return runUpdate()
+	},
+}
+
+func init() {
+	// Add subcommands
+	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(applyCmd)
+	rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(pluginCmd)
+	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(usageCmd)
+	rootCmd.AddCommand(workspaceCmd)
+
+	// Plugin subcommands
+	pluginCmd.AddCommand(pluginUpdateCmd)
+	pluginCmd.AddCommand(pluginListCmd)
+
+	// Config subcommands
+	configCmd.AddCommand(configExtractCmd)
+
+	// Usage subcommands
+	usageCmd.AddCommand(usageSummaryCmd)
+	usageCmd.AddCommand(usageMetricsCmd)
+	usageCmd.AddCommand(usagePatternsCmd)
+	usageCmd.AddCommand(usageBenchmarkCmd)
+
+	// Workspace subcommands
+	workspaceCmd.AddCommand(workspaceCreateCmd)
+	workspaceCmd.AddCommand(workspaceUpCmd)
+	workspaceCmd.AddCommand(workspaceDownCmd)
+	workspaceCmd.AddCommand(workspaceListCmd)
+	workspaceCmd.AddCommand(workspaceRmCmd)
+	workspaceCmd.AddCommand(workspaceShellCmd)
+}
+
+func createController() ctrl.Controller {
+	// Create providers
+	dockerProv, err := dockerProvider.NewDockerProvider()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error initializing providers: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to create Docker provider: %v\n", err)
 		os.Exit(1)
 	}
 
-	worktreeManager := worktree.NewManager(".", ".vendatta/worktrees")
-	controller := ctrl.NewBaseController(providers, worktreeManager)
+	lxcProv, err := lxcProvider.NewLXCProvider()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create LXC provider: %v\n", err)
+		os.Exit(1)
+	}
 
-	addInitCommand(rootCmd, controller)
-	addWorkspaceCommands(rootCmd, controller)
-	addPluginCommands(rootCmd, controller)
-	addManagementCommands(rootCmd, controller)
-	addCoordinationCommands(rootCmd)
-	addAgentCommands(rootCmd)
+	providers := []provider.Provider{dockerProv, lxcProv}
 
+	// Create worktree manager
+	wtManager := worktree.NewManager(".", ".vendatta/worktrees")
+
+	// Create controller
+	return ctrl.NewBaseController(providers, wtManager)
+}
+
+// runUpdate updates all extends to their latest versions
+func runUpdate() error {
+	fmt.Println("📦 Updating extends to latest versions...")
+
+	// Load config
+	cfg, err := config.LoadConfig(".vendatta/config.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Create templates manager
+	templateManager := templates.NewManager(".")
+
+	// Update each extend
+	updated := 0
+	for _, ext := range cfg.Extends {
+		extStr, ok := ext.(string)
+		if !ok {
+			continue
+		}
+		parts := strings.Split(extStr, "/")
+		if len(parts) != 2 {
+			continue
+		}
+
+		owner, repo := parts[0], parts[1]
+
+		// Parse optional branch
+		branch := ""
+		if strings.Contains(repo, "@") {
+			repoParts := strings.SplitN(repo, "@", 2)
+			repo = repoParts[0]
+			branch = repoParts[1]
+		}
+
+		repoURL := fmt.Sprintf("https://github.com/%s/%s", owner, repo)
+		repoTemplate := templates.TemplateRepo{
+			URL:    repoURL,
+			Branch: branch,
+		}
+
+		fmt.Printf("  Updating %s...\n", ext)
+		if err := templateManager.PullWithUpdate(repoTemplate); err != nil {
+			fmt.Printf("  ⚠️  Failed to update %s: %v\n", ext, err)
+			continue
+		}
+
+		// Get new SHA
+		sha, err := templateManager.GetRepoSHA(repoTemplate)
+		if err != nil {
+			fmt.Printf("  ⚠️  Failed to get SHA for %s: %v\n", ext, err)
+			continue
+		}
+
+		fmt.Printf("  ✅ %s (SHA: %s)\n", ext, sha[:7])
+		updated++
+	}
+
+	if updated == 0 {
+		fmt.Println("No extends to update")
+	} else {
+		fmt.Printf("✅ Updated %d extends\n", updated)
+	}
+
+	return nil
+}
+
+func runUsageSummary(args []string) error {
+	logger := metrics.NewLogger(".")
+	reporter := metrics.NewReporter()
+
+	var date time.Time
+	if len(args) > 0 {
+		var err error
+		date, err = time.Parse("2006-01-02", args[0])
+		if err != nil {
+			return fmt.Errorf("invalid date format: %w (use YYYY-MM-DD)", err)
+		}
+	} else {
+		date = time.Now()
+	}
+
+	summary, err := reporter.GenerateDailySummary(logger, date)
+	if err != nil {
+		return fmt.Errorf("failed to generate summary: %w", err)
+	}
+
+	data, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal summary: %w", err)
+	}
+
+	fmt.Println(string(data))
+	return nil
+}
+
+func runUsageMetrics(args []string) error {
+	days := 7
+	if len(args) > 0 {
+		parsed, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("invalid days value: %w", err)
+		}
+		days = parsed
+	}
+
+	logger := metrics.NewLogger(".")
+	reporter := metrics.NewReporter()
+
+	m, summary, patterns, err := reporter.GenerateReport(logger, days)
+	if err != nil {
+		return fmt.Errorf("failed to generate report: %w", err)
+	}
+
+	result := map[string]interface{}{
+		"summary":  summary,
+		"metrics":  m,
+		"patterns": patterns,
+	}
+
+	data, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal report: %w", err)
+	}
+
+	fmt.Println(string(data))
+	return nil
+}
+
+func runUsagePatterns(args []string) error {
+	days := 7
+	if len(args) > 0 {
+		parsed, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("invalid days value: %w", err)
+		}
+		days = parsed
+	}
+
+	logger := metrics.NewLogger(".")
+	analyzer := metrics.NewAnalyzer()
+
+	endDate := time.Now()
+	startDate := endDate.AddDate(0, 0, -days)
+
+	logs, err := logger.Query(metrics.Filter{
+		StartTime: startDate,
+		EndTime:   endDate,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to query logs: %w", err)
+	}
+
+	patterns, err := analyzer.AnalyzePatterns(logs)
+	if err != nil {
+		return fmt.Errorf("failed to analyze patterns: %w", err)
+	}
+
+	data, err := json.MarshalIndent(patterns, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal patterns: %w", err)
+	}
+
+	fmt.Println(string(data))
+	return nil
+}
+
+func runUsageBenchmark(args []string) error {
+	baselineDays, err := strconv.Atoi(args[0])
+	if err != nil {
+		return fmt.Errorf("invalid baseline days: %w", err)
+	}
+
+	currentDays, err := strconv.Atoi(args[1])
+	if err != nil {
+		return fmt.Errorf("invalid current days: %w", err)
+	}
+
+	logger := metrics.NewLogger(".")
+	reporter := metrics.NewReporter()
+
+	comparison, err := reporter.GenerateBenchmark(logger, baselineDays, currentDays)
+	if err != nil {
+		return fmt.Errorf("failed to generate benchmark: %w", err)
+	}
+
+	data, err := json.MarshalIndent(comparison, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal benchmark: %w", err)
+	}
+
+	fmt.Println(string(data))
+	return nil
+}
+
+func main() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-}
-
-func initProviders() ([]provider.Provider, error) {
-	var providers []provider.Provider
-
-	dockerProv, err := dockerProvider.NewDockerProvider()
-	if err == nil {
-		providers = append(providers, dockerProv)
-		fmt.Println("✅ Docker provider initialized")
-	} else {
-		fmt.Printf("⚠️  Docker provider not available: %v\n", err)
-	}
-
-	lxcProv, err := lxcProvider.NewLXCProvider()
-	if err == nil {
-		providers = append(providers, lxcProv)
-		fmt.Println("✅ LXC provider initialized")
-	} else {
-		fmt.Printf("⚠️  LXC provider not available: %v\n", err)
-	}
-
-	qemuProv, err := qemuProvider.NewQEMUProvider()
-	if err == nil {
-		providers = append(providers, qemuProv)
-		fmt.Println("✅ QEMU provider initialized")
-	} else {
-		fmt.Printf("⚠️  QEMU provider not available: %v\n", err)
-	}
-
-	if len(providers) == 0 {
-		return nil, fmt.Errorf("no providers available")
-	}
-
-	return providers, nil
-}
-
-func addInitCommand(rootCmd *cobra.Command, controller ctrl.Controller) {
-	var cmd = &cobra.Command{
-		Use:   "init",
-		Short: "Initialize a new Vendatta project",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.Init(context.Background()); err != nil {
-				fmt.Printf("Error initializing project: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-	rootCmd.AddCommand(cmd)
-}
-
-func addWorkspaceCommands(rootCmd *cobra.Command, controller ctrl.Controller) {
-	var createCmd = &cobra.Command{
-		Use:   "create [name]",
-		Short: "Create a new workspace",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.WorkspaceCreate(context.Background(), args[0]); err != nil {
-				fmt.Printf("Error creating workspace: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var upCmd = &cobra.Command{
-		Use:   "up [name]",
-		Short: "Start a workspace",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.WorkspaceUp(context.Background(), args[0]); err != nil {
-				fmt.Printf("Error starting workspace: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var downCmd = &cobra.Command{
-		Use:   "down [name]",
-		Short: "Stop a workspace",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.WorkspaceDown(context.Background(), args[0]); err != nil {
-				fmt.Printf("Error stopping workspace: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var shellCmd = &cobra.Command{
-		Use:   "shell [name]",
-		Short: "Open shell in workspace",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.WorkspaceShell(context.Background(), args[0]); err != nil {
-				fmt.Printf("Error opening shell: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var listCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all workspaces",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.WorkspaceList(context.Background()); err != nil {
-				fmt.Printf("Error listing workspaces: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var rmCmd = &cobra.Command{
-		Use:   "rm [name]",
-		Short: "Remove a workspace",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.WorkspaceRm(context.Background(), args[0]); err != nil {
-				fmt.Printf("Error removing workspace: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var devCmd = &cobra.Command{
-		Use:   "dev [branch]",
-		Short: "Create workspace for development (alias for workspace create)",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.Dev(context.Background(), args[0]); err != nil {
-				fmt.Printf("Error creating dev workspace: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var workspaceCmd = &cobra.Command{
-		Use:   "workspace",
-		Short: "Workspace management commands",
-	}
-	workspaceCmd.AddCommand(createCmd, upCmd, downCmd, shellCmd, listCmd, rmCmd)
-	rootCmd.AddCommand(workspaceCmd)
-	rootCmd.AddCommand(devCmd)
-}
-
-func addPluginCommands(rootCmd *cobra.Command, controller ctrl.Controller) {
-	var listCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List loaded plugins",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.PluginList(context.Background()); err != nil {
-				fmt.Printf("Error listing plugins: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var updateCmd = &cobra.Command{
-		Use:   "update",
-		Short: "Update plugins to latest versions",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.PluginUpdate(context.Background()); err != nil {
-				fmt.Printf("Error updating plugins: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var pluginCmd = &cobra.Command{
-		Use:   "plugin",
-		Short: "Plugin management commands",
-	}
-	pluginCmd.AddCommand(listCmd, updateCmd)
-	rootCmd.AddCommand(pluginCmd)
-}
-
-func addManagementCommands(rootCmd *cobra.Command, controller ctrl.Controller) {
-	var applyCmd = &cobra.Command{
-		Use:   "apply",
-		Short: "Apply latest configuration to agent configs",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.Apply(context.Background()); err != nil {
-				fmt.Printf("Error applying configuration: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var killCmd = &cobra.Command{
-		Use:   "kill [session-id]",
-		Short: "Kill a specific session",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.Kill(context.Background(), args[0]); err != nil {
-				fmt.Printf("Error killing session: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var listCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all active sessions",
-		Run: func(cmd *cobra.Command, args []string) {
-			sessions, err := controller.List(context.Background())
-			if err != nil {
-				fmt.Printf("Error listing sessions: %v\n", err)
-				os.Exit(1)
-			}
-
-			if len(sessions) == 0 {
-				fmt.Println("No active sessions")
-				return
-			}
-
-			fmt.Println("Active sessions:")
-			for _, session := range sessions {
-				fmt.Printf("  - %s (%s) [%s]\n", session.ID, session.Provider, session.Status)
-				if len(session.Services) > 0 {
-					var ports []string
-					for name, port := range session.Services {
-						ports = append(ports, fmt.Sprintf("%s:%d", name, port))
-					}
-					fmt.Printf("    Services: %s\n", strings.Join(ports, ", "))
-				}
-			}
-		},
-	}
-
-	var execCmd = &cobra.Command{
-		Use:   "exec [session-id] [command...]",
-		Short: "Execute command in a session",
-		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := controller.Exec(context.Background(), args[0], args[1:]); err != nil {
-				fmt.Printf("Error executing command: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	rootCmd.AddCommand(applyCmd, killCmd, listCmd, execCmd)
-}
-
-func addCoordinationCommands(rootCmd *cobra.Command) {
-	var startCmd = &cobra.Command{
-		Use:   "start",
-		Short: "Start coordination server",
-		Run: func(cmd *cobra.Command, args []string) {
-			configPath := coordination.GetConfigPath()
-			if err := coordination.StartServer(configPath); err != nil {
-				fmt.Printf("Error starting coordination server: %v\n", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	var configCmd = &cobra.Command{
-		Use:   "config",
-		Short: "Generate coordination server configuration",
-		Run: func(cmd *cobra.Command, args []string) {
-			configPath := coordination.GetConfigPath()
-			if err := coordination.GenerateDefaultConfig(configPath); err != nil {
-				fmt.Printf("Error generating config: %v\n", err)
-				os.Exit(1)
-			}
-			fmt.Printf("Generated coordination server config at: %s\n", configPath)
-		},
-	}
-
-	var statusCmd = &cobra.Command{
-		Use:   "status",
-		Short: "Show coordination server status",
-		Run: func(cmd *cobra.Command, args []string) {
-			configPath := coordination.GetConfigPath()
-			cfg, err := coordination.LoadConfig(configPath)
-			if err != nil {
-				fmt.Printf("Error loading config: %v\n", err)
-				os.Exit(1)
-			}
-
-			server := coordination.NewServer(cfg)
-			stats := server.GetStats()
-
-			fmt.Println("Coordination Server Status:")
-			fmt.Printf("  Config: %s\n", configPath)
-			fmt.Printf("  Host: %s:%d\n", cfg.Server.Host, cfg.Server.Port)
-			fmt.Printf("  Registry Provider: %s\n", cfg.Registry.Provider)
-			fmt.Printf("  WebSocket Enabled: %t\n", cfg.WebSocket.Enabled)
-			fmt.Printf("  Auth Enabled: %t\n", cfg.Auth.Enabled)
-			fmt.Printf("  Timestamp: %s\n", stats["timestamp"])
-		},
-	}
-
-	var coordinationCmd = &cobra.Command{
-		Use:   "coordination",
-		Short: "Coordination server management commands",
-		Long: `Coordination server manages remote nodes and provides a centralized
-API for dispatching commands and monitoring cluster status.`,
-	}
-	coordinationCmd.AddCommand(startCmd, configCmd, statusCmd)
-	rootCmd.AddCommand(coordinationCmd)
-}
-
-func addAgentCommands(rootCmd *cobra.Command) {
-	var installCmd = &cobra.Command{
-		Use:   "install [target]",
-		Short: "Install agent to remote node",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Installing agent to %s...\n", args[0])
-			// TODO: Implement agent installation
-			fmt.Println("Agent installation completed")
-		},
-	}
-
-	var startCmd = &cobra.Command{
-		Use:   "start",
-		Short: "Start agent daemon",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Starting agent daemon...")
-			// TODO: Implement agent daemon start
-		},
-	}
-
-	var stopCmd = &cobra.Command{
-		Use:   "stop",
-		Short: "Stop agent daemon",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Stopping agent daemon...")
-			// TODO: Implement agent daemon stop
-		},
-	}
-
-	var statusCmd = &cobra.Command{
-		Use:   "status",
-		Short: "Show agent status",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Agent status:")
-			// TODO: Implement agent status check
-		},
-	}
-
-	var connectCmd = &cobra.Command{
-		Use:   "connect [url]",
-		Short: "Connect to coordination server",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Connecting to coordination server at %s...\n", args[0])
-			// TODO: Implement server connection
-		},
-	}
-
-	var configCmd = &cobra.Command{
-		Use:   "config",
-		Short: "Generate agent configuration",
-		Run: func(cmd *cobra.Command, args []string) {
-			configPath := "/tmp/vendetta-agent.yaml"
-			// TODO: Generate agent config
-			fmt.Printf("Agent configuration generated at: %s\n", configPath)
-		},
-	}
-
-	var agentCmd = &cobra.Command{
-		Use:   "agent",
-		Short: "Node agent management commands",
-		Long: `Node agent manages remote execution environments and communicates
-with the coordination server for centralized management.`,
-	}
-	agentCmd.AddCommand(installCmd, startCmd, stopCmd, statusCmd, connectCmd, configCmd)
-	rootCmd.AddCommand(agentCmd)
 }

@@ -1,5 +1,5 @@
 name: my-project
-provider: lxc
+provider: docker
 extends:
   - inizio/vendatta-config-inizio
 plugins:

@@ -22,11 +22,10 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "vendatta",
-	Short: "Vendatta - Isolated Development Environments",
-	Long: `Vendatta eliminates the "it works on my machine" problem by providing
-isolated, reproducible development environments that work seamlessly with
-Coding Agents like Cursor, OpenCode, Claude, etc.`,
+	Use:   "vendetta",
+	Short: "Isolated development environments that work with AI agents",
+	Long: `Vendetta provides isolated development environments that integrate 
+seamlessly with AI coding assistants like Cursor, OpenCode, Claude, and others.`,
 }
 
 var initCmd = &cobra.Command{

@@ -32,7 +32,7 @@ This guide covers setting up both **local** and **remote** transport testing to 
 curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | bash
 
 # 2. Verify installation
-vendatta --version
+vendetta --version
 
 # 3. Check available providers
 # On Linux:
@@ -69,7 +69,7 @@ mkdir -p ~/vendatta-test
 cd ~/vendatta-test
 
 # Initialize vendatta
-vendatta init
+vendetta init
 
 # Verify structure
 ls -la
@@ -97,10 +97,10 @@ docker:
 EOF
 
 # Create workspace
-vendatta workspace create local-demo
+vendetta workspace create local-demo
 
 # Verify workspace created
-vendatta workspace list
+vendetta workspace list
 # Should show: local-demo (status: created)
 
 # Start workspace
@@ -167,7 +167,7 @@ mkdir -p ~/vendatta-shared
 cd ~/vendatta-shared
 
 # Initialize vendatta
-vendatta init
+vendetta init
 
 # Create minimal config
 cat > .vendatta/config.yaml << 'EOF'
@@ -209,10 +209,10 @@ docker:
 cd ~/vendatta-test
 
 # Create workspace (will connect to remote via SSH)
-vendatta workspace create remote-demo
+vendetta workspace create remote-demo
 
 # Verify it connected
-vendatta workspace list
+vendetta workspace list
 # Should show: remote-demo (status: created or running on remote)
 ```
 
@@ -220,7 +220,7 @@ vendatta workspace list
 
 ```bash
 # Execute command on remote via transport layer
-vendatta workspace shell remote-demo
+vendetta workspace shell remote-demo
 # This should SSH into the remote container/VM
 
 # Inside remote shell:
@@ -275,10 +275,10 @@ EOF
 
 ```bash
 # Start in background
-vendatta coordination start --config ~/.config/vendatta/coordination.yaml
+vendetta coordination start --config ~/.config/vendatta/coordination.yaml
 
 # Or run with specific port
-vendatta coordination start --host 0.0.0.0 --port 3001
+vendetta coordination start --host 0.0.0.0 --port 3001
 
 # Verify server is running
 curl http://localhost:3001/health
@@ -296,7 +296,7 @@ curl http://localhost:3001/metrics
 export VENDETTA_COORD_HOST="192.168.1.100"  # or localhost if same machine
 export VENDETTA_COORD_PORT="3001"
 
-vendatta agent start --coordination-url http://192.168.1.100:3001
+vendetta agent start --coordination-url http://192.168.1.100:3001
 ```
 
 **On LOCAL machine:**
@@ -353,16 +353,16 @@ docker:
 cd ~/vendatta-test
 
 # Create workspace (prepares remote environment)
-vendatta workspace create full-remote
+vendetta workspace create full-remote
 
 # Start workspace (bootstraps provider on remote)
-vendatta workspace up full-remote
+vendetta workspace up full-remote
 
 # Monitor startup
-vendatta workspace status full-remote
+vendetta workspace status full-remote
 
 # Connect to remote workspace shell
-vendatta workspace shell full-remote
+vendetta workspace shell full-remote
 ```
 
 ### Step 4.3: Verify Remote Services
@@ -493,15 +493,15 @@ server:
 
 | Action | Command |
 |--------|---------|
-| Initialize project | `vendatta init` |
-| Create workspace | `vendatta workspace create <name>` |
-| Start workspace | `vendatta workspace up <name>` |
-| Stop workspace | `vendatta workspace down <name>` |
-| List workspaces | `vendatta workspace list` |
-| Connect to workspace | `vendatta workspace shell <name>` |
-| Remove workspace | `vendatta workspace rm <name>` |
-| Start coordination server | `vendatta coordination start` |
-| Start node agent | `vendatta agent start` |
+| Initialize project | `vendetta init` |
+| Create workspace | `vendetta workspace create <name>` |
+| Start workspace | `vendetta workspace up <name>` |
+| Stop workspace | `vendetta workspace down <name>` |
+| List workspaces | `vendetta workspace list` |
+| Connect to workspace | `vendetta workspace shell <name>` |
+| Remove workspace | `vendetta workspace rm <name>` |
+| Start coordination server | `vendetta coordination start` |
+| Start node agent | `vendetta agent start` |
 | Check health | `curl http://localhost:3001/health` |
 | List nodes | `curl http://localhost:3001/api/v1/nodes` |
 | List services | `curl http://localhost:3001/api/v1/services` |

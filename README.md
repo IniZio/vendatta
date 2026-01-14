@@ -19,10 +19,10 @@ Eliminate "it works on my machine" by providing reproducible dev environments th
 curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | bash
 
 # Initialize in your project
-vendatta init
+vendetta init
 
 # Create isolated workspace for your branch
-vendatta workspace create my-feature && vendatta workspace up my-feature
+vendetta workspace create my-feature && vendetta workspace up my-feature
 ```
 
 **That's it!** Your AI agents (Cursor, OpenCode, etc.) are now automatically configured to work in the isolated environment.
@@ -41,7 +41,7 @@ vendatta workspace create my-feature && vendatta workspace up my-feature
 curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | bash
 
 # Initialize project
-vendatta init
+vendetta init
 
 # Configure services
 cat .vendatta/config.yaml
@@ -50,12 +50,12 @@ cat .vendatta/config.yaml
 **Create Multiple Workspaces:**
 ```bash
 # Create first workspace
-vendatta workspace create feature/auth
-vendatta workspace up feature/auth
+vendetta workspace create feature/auth
+vendetta workspace up feature/auth
 
 # Create second workspace (runs in parallel)
-vendatta workspace create feature/payments
-vendatta workspace up feature/payments
+vendetta workspace create feature/payments
+vendetta workspace up feature/payments
 ```
 
 **Check Parallel Execution:**
@@ -88,10 +88,10 @@ git merge feature/payments
 **Cleanup:**
 ```bash
 # Stop and remove workspaces
-vendatta workspace down feature/auth
-vendatta workspace rm feature/auth
-vendatta workspace down feature/payments
-vendatta workspace rm feature/payments
+vendetta workspace down feature/auth
+vendetta workspace rm feature/auth
+vendetta workspace down feature/payments
+vendetta workspace rm feature/payments
 ```
 
 ### Understanding What Happened
@@ -121,7 +121,7 @@ services:
 
 ```
 
-Run `vendatta workspace create my-feature && vendatta workspace up my-feature` to create and start your workspace.
+Run `vendetta workspace create my-feature && vendetta workspace up my-feature` to create and start your workspace.
 
 ## ⚙️ Configuration
 
@@ -156,19 +156,19 @@ provider: "docker"  # Preferred container provider
 
 **Configuration Management:**
 ```bash
-vendatta apply          # Apply latest config to agent configs
-vendatta update         # Update all extends to latest versions
-vendatta plugin update  # Update plugins to latest versions
-vendatta plugin list    # List loaded plugins
+vendetta apply          # Apply latest config to agent configs
+vendetta update         # Update all extends to latest versions
+vendetta plugin update  # Update plugins to latest versions
+vendetta plugin list    # List loaded plugins
 ```
 
 **Workspace Management:**
 ```bash
-vendatta workspace create <name>  # Create new workspace
-vendatta workspace up <name>      # Start workspace
-vendatta workspace down <name>    # Stop workspace
-vendatta workspace list           # List all workspaces
-vendatta workspace rm <name>      # Remove workspace
+vendetta workspace create <name>  # Create new workspace
+vendetta workspace up <name>      # Start workspace
+vendetta workspace down <name>    # Stop workspace
+vendetta workspace list           # List all workspaces
+vendetta workspace rm <name>      # Remove workspace
 ```
 
 **Generated Structure:**
@@ -189,6 +189,16 @@ vendatta workspace rm <name>      # Remove workspace
 
 ## 🌟 What It Does
 
+**Distributed Development**: Remote execution across multiple nodes with provider-agnostic support
+```bash
+# Local development
+vendetta workspace create my-feature && vendetta workspace up my-feature
+
+# Remote development with coordination server
+vendetta node add my-node remote.example.com
+vendetta workspace create my-feature --node my-node
+```
+
 **Service Discovery**: Automatic environment variables for service URLs
 ```bash
 # In your worktree
@@ -200,10 +210,23 @@ env | grep VENDATTA_SERVICE
 
 **AI Agent Integration**: Automatically configures Cursor, OpenCode, and Claude agents for isolated development
 
-**Plugin System**: Load capabilities from remote repos, enable what you need:
-- **Rules**: Coding standards and linting
-- **Skills**: AI capabilities (web search, file ops, etc.)
-- **Commands**: Development workflows
+**Multi-Provider Support**: Docker, LXC, and QEMU with unified interface
+```yaml
+# Choose your provider
+provider: docker  # or lxc, qemu
+
+# Remote configuration
+remote:
+  node: remote-server.example.com
+  user: developer
+  port: 22
+```
+
+**Advanced Service Orchestration**: Health monitoring and auto-restart capabilities
+- Dependency resolution and startup ordering
+- Health checks with configurable intervals
+- Automatic restart on service failure
+- Real-time service status tracking
 
 ## 📚 Documentation
 

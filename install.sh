@@ -36,7 +36,7 @@ detect_platform() {
             ;;
     esac
 
-    BINARY_NAME="vendatta-${OS}-${ARCH}"
+    BINARY_NAME="vendetta-${OS}-${ARCH}"
     if [ "$OS" = "windows" ]; then
         BINARY_NAME="${BINARY_NAME}.exe"
     fi
@@ -59,21 +59,21 @@ install_binary() {
     echo "Downloading $BINARY_NAME from $DOWNLOAD_URL"
 
     if command -v curl >/dev/null 2>&1; then
-        curl -L -o "/tmp/vendatta" "$DOWNLOAD_URL"
+        curl -L -o "/tmp/vendetta" "$DOWNLOAD_URL"
     elif command -v wget >/dev/null 2>&1; then
-        wget -O "/tmp/vendatta" "$DOWNLOAD_URL"
+        wget -O "/tmp/vendetta" "$DOWNLOAD_URL"
     else
         echo "Neither curl nor wget found. Please install one of them."
         exit 1
     fi
 
-    chmod +x "/tmp/vendatta"
+    chmod +x "/tmp/vendetta"
 
     mkdir -p "$INSTALL_DIR"
-    mv "/tmp/vendatta" "$INSTALL_DIR/vendatta"
+    mv "/tmp/vendetta" "$INSTALL_DIR/vendetta"
 
-    echo "Vendatta installed successfully to $INSTALL_DIR/vendatta"
-    echo "Run 'vendatta --help' to get started"
+    echo "Vendetta installed successfully to $INSTALL_DIR/vendetta"
+    echo "Run 'vendetta --help' to get started"
 }
 
 main() {

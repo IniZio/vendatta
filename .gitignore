@@ -2,7 +2,6 @@
 bin/
 dist/
 *.exe
-vendatta
 *.out
 coverage*.out
 coverage.html
