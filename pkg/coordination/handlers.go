@@ -11,8 +11,27 @@ import (
 
 // handleRegisterNode handles node registration
 func (s *Server) handleRegisterNode(w http.ResponseWriter, r *http.Request) {
+	// First decode into a generic map to handle both array and map formats
+	var rawData map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&rawData); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Convert capabilities from array to map if needed
+	if caps, ok := rawData["capabilities"].([]interface{}); ok {
+		capMap := make(map[string]interface{})
+		for _, c := range caps {
+			if capStr, ok := c.(string); ok {
+				capMap[capStr] = true
+			}
+		}
+		rawData["capabilities"] = capMap
+	}
+
+	// Now decode the processed data into Node
 	var node Node
-	if err := json.NewDecoder(r.Body).Decode(&node); err != nil {
+	if err := json.Unmarshal(jsonEncode(rawData), &node); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
 		return
 	}
@@ -28,6 +47,12 @@ func (s *Server) handleRegisterNode(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(node)
+}
+
+// jsonEncode encodes a map to JSON bytes
+func jsonEncode(data map[string]interface{}) []byte {
+	b, _ := json.Marshal(data)
+	return b
 }
 
 // handleListNodes handles listing all nodes
