@@ -93,8 +93,8 @@ func (env *TestEnvironment) BuildVendattaBinary(t *testing.T) string {
 	// until we find a directory containing go.mod
 	repoRoot := findRepoRoot(t)
 
-	binaryPath := filepath.Join(env.tempDir, "vendatta")
-	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/vendatta/main.go")
+	binaryPath := filepath.Join(env.tempDir, "vendetta")
+	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/vendetta/main.go")
 	cmd.Dir = repoRoot
 	require.NoError(t, cmd.Run())
 
