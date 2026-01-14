@@ -2,7 +2,7 @@
 
 set -e
 
-REPO="inizio/vendatta"
+REPO="IniZio/vendatta"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 # Detect OS and architecture
