@@ -31,6 +31,7 @@ type Healthcheck struct {
 
 type Agent struct {
 	Name     string   `yaml:"name"`
+	Remote  Remote            `yaml:"remote,omitempty"`
 	Enabled  bool     `yaml:"enabled,omitempty"`
 	Rules    string   `yaml:"rules,omitempty"`
 	Skills   []string `yaml:"skills,omitempty"`
@@ -54,12 +55,14 @@ type PluginManifest struct {
 }
 
 type Remote struct {
-	Name string `yaml:"name"`
-	URL  string `yaml:"url"`
+	Node string `yaml:"node"`
+	User string `yaml:"user,omitempty"`
+	Port int    `yaml:"port,omitempty"`
 }
 
 type Config struct {
 	Name     string             `yaml:"name"`
+	Remote  Remote            `yaml:"remote,omitempty"`
 	Provider string             `yaml:"provider,omitempty"`
 	Services map[string]Service `yaml:"services"`
 	Extends  []interface{}      `yaml:"extends,omitempty"`
@@ -73,6 +76,19 @@ type Config struct {
 	LXC struct {
 		Image string `yaml:"image,omitempty"`
 	} `yaml:"lxc,omitempty"`
+	QEMU struct {
+		Image        string   `yaml:"image,omitempty"`
+		CPU          int      `yaml:"cpu,omitempty"`
+		Memory       string   `yaml:"memory,omitempty"`
+		Disk         string   `yaml:"disk,omitempty"`
+		SSHPort      int      `yaml:"ssh_port,omitempty"`
+		ForwardPorts []string `yaml:"forward_ports,omitempty"`
+		CacheMode    string   `yaml:"cache_mode,omitempty"`
+		IoThread     bool     `yaml:"io_thread,omitempty"`
+		VirtIO       bool     `yaml:"virtio,omitempty"`
+		SELinux      bool     `yaml:"selinux,omitempty"`
+		Firewall     bool     `yaml:"firewall,omitempty"`
+	} `yaml:"qemu,omitempty"`
 	Hooks struct {
 		Setup    string `yaml:"setup,omitempty"`
 		Dev      string `yaml:"dev,omitempty"`
@@ -517,8 +533,8 @@ func GenerateJSONSchema() (string, error) {
 			},
 			"provider": map[string]interface{}{
 				"type":        "string",
-				"description": "Execution provider (docker, lxc)",
-				"enum":        []string{"docker", "lxc"},
+				"description": "Execution provider (docker, lxc, qemu)",
+				"enum":        []string{"docker", "lxc", "qemu"},
 			},
 			"services": map[string]interface{}{
 				"type":        "object",
@@ -685,6 +701,68 @@ func GenerateJSONSchema() (string, error) {
 					"image": map[string]interface{}{
 						"type":        "string",
 						"description": "LXC image to use",
+					},
+				},
+				"additionalProperties": false,
+			},
+			"qemu": map[string]interface{}{
+				"type":        "object",
+				"description": "QEMU provider configuration",
+				"properties": map[string]interface{}{
+					"image": map[string]interface{}{
+						"type":        "string",
+						"description": "QEMU OS image to use (e.g., ubuntu:22.04, alpine:3.19)",
+					},
+					"cpu": map[string]interface{}{
+						"type":        "integer",
+						"description": "Number of CPU cores",
+						"minimum":     1,
+						"maximum":     32,
+					},
+					"memory": map[string]interface{}{
+						"type":        "string",
+						"description": "Memory allocation (e.g., 4G, 512M)",
+						"pattern":     "^[0-9]+[MG]$",
+					},
+					"disk": map[string]interface{}{
+						"type":        "string",
+						"description": "Disk size (e.g., 20G, 50G)",
+						"pattern":     "^[0-9]+[GT]?$",
+					},
+					"ssh_port": map[string]interface{}{
+						"type":        "integer",
+						"description": "SSH port for VM access",
+						"minimum":     1024,
+						"maximum":     65535,
+					},
+					"forward_ports": map[string]interface{}{
+						"type":        "array",
+						"description": "Port forwarding rules (host:guest)",
+						"items": map[string]interface{}{
+							"type":    "string",
+							"pattern": "^[0-9]+:[0-9]+$",
+						},
+					},
+					"cache_mode": map[string]interface{}{
+						"type":        "string",
+						"description": "Disk cache mode",
+						"enum":        []string{"none", "writeback", "writethrough", "directsync", "unsafe"},
+					},
+					"io_thread": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Enable I/O threads for better performance",
+					},
+					"virtio": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Enable VirtIO drivers for better performance",
+					},
+					"selinux": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Enable SELinux (for server images like CentOS)",
+					},
+					"firewall": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Enable firewall configuration",
 					},
 				},
 				"additionalProperties": false,

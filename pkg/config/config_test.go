@@ -45,6 +45,54 @@ agents:
 			yaml:    "",
 			wantErr: true,
 		},
+		{
+			name: "valid qemu config",
+			yaml: `name: qemu-test
+provider: qemu
+qemu:
+  image: ubuntu:22.04
+  cpu: 2
+  memory: 4G
+  disk: 20G
+  ssh_port: 2222
+  forward_ports:
+    - 8080:80
+    - 3000:3000
+services:
+  web:
+    port: 8080
+  api:
+    port: 3000`,
+			expected: &Config{
+				Name:     "qemu-test",
+				Provider: "qemu",
+				Services: map[string]Service{
+					"web": {Port: 8080},
+					"api": {Port: 3000},
+				},
+				QEMU: struct {
+					Image        string   `yaml:"image,omitempty"`
+					CPU          int      `yaml:"cpu,omitempty"`
+					Memory       string   `yaml:"memory,omitempty"`
+					Disk         string   `yaml:"disk,omitempty"`
+					SSHPort      int      `yaml:"ssh_port,omitempty"`
+					ForwardPorts []string `yaml:"forward_ports,omitempty"`
+					CacheMode    string   `yaml:"cache_mode,omitempty"`
+					IoThread     bool     `yaml:"io_thread,omitempty"`
+					VirtIO       bool     `yaml:"virtio,omitempty"`
+					SELinux      bool     `yaml:"selinux,omitempty"`
+					Firewall     bool     `yaml:"firewall,omitempty"`
+				}{
+					Image:        "ubuntu:22.04",
+					CPU:          2,
+					Memory:       "4G",
+					Disk:         "20G",
+					SSHPort:      2222,
+					ForwardPorts: []string{"8080:80", "3000:3000"},
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
