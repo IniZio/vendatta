@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -418,6 +419,201 @@ var nodeListCmd = &cobra.Command{
 	},
 }
 
+var sshCmd = &cobra.Command{
+	Use:   "ssh",
+	Short: "Manage SSH access for workspaces",
+	Long:  `Generate SSH keys, register with coordination server, and get connection info for workspaces.`,
+}
+
+var sshGenerateCmd = &cobra.Command{
+	Use:   "generate",
+	Short: "Generate SSH key for vendetta",
+	Long: `Generate an Ed25519 SSH key for vendetta workspace access.
+The key is stored in ~/.ssh/id_ed25519_vendetta and can be used to access your workspaces.`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		pubKey, keyPath, err := ensureSSHKey()
+		if err != nil {
+			return err
+		}
+		fmt.Println("✅ SSH key generated successfully!")
+		fmt.Println("")
+		fmt.Println("📋 Public Key (share this with your admin):")
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		fmt.Println(pubKey)
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		fmt.Println("")
+		fmt.Printf("🔑 Private key location: %s\n", keyPath)
+		fmt.Println("")
+		fmt.Println("📝 Next steps:")
+		fmt.Println("  1. Share the public key above with your admin")
+		fmt.Println("  2. Or register with the coordination server:")
+		fmt.Println("     vendetta ssh register <server-address>")
+		return nil
+	},
+}
+
+var sshRegisterCmd = &cobra.Command{
+	Use:   "register <server>",
+	Short: "Register your SSH public key with the coordination server",
+	Long:  `Register your SSH public key with the coordination server to get access to workspaces.`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		server := args[0]
+		pubKey, _, err := ensureSSHKey()
+		if err != nil {
+			return err
+		}
+
+		// Get username from environment or prompt
+		username := os.Getenv("USER")
+		if username == "" {
+			username = "developer"
+		}
+
+		// Parse server address (host:port or just host)
+		host := server
+		port := 3001
+		if strings.Contains(server, ":") {
+			parts := strings.SplitN(server, ":", 2)
+			host = parts[0]
+			p, err := strconv.Atoi(parts[1])
+			if err == nil {
+				port = p
+			}
+		}
+
+		// Register user via API
+		url := fmt.Sprintf("http://%s:%d/api/v1/users", host, port)
+		payload := map[string]string{
+			"username":   username,
+			"public_key": strings.TrimSpace(pubKey),
+		}
+		jsonPayload, _ := json.Marshal(payload)
+
+		resp, err := http.Post(url, "application/json", strings.NewReader(string(jsonPayload)))
+		if err != nil {
+			return fmt.Errorf("failed to connect to server: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+			return fmt.Errorf("registration failed with status: %d", resp.StatusCode)
+		}
+
+		fmt.Println("✅ Successfully registered with coordination server!")
+		fmt.Println("")
+		fmt.Println("📋 Your connection info:")
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		fmt.Printf("  Server: %s\n", host)
+		fmt.Printf("  Port:   %d\n", port)
+		fmt.Printf("  User:   %s\n", username)
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		fmt.Println("")
+		fmt.Println("📝 When your workspace is ready, you'll get SSH access at:")
+		fmt.Printf("  ssh -p <workspace-port> %s@%s\n", username, host)
+		return nil
+	},
+}
+
+var sshInfoCmd = &cobra.Command{
+	Use:   "info <workspace>",
+	Short: "Show connection info for a workspace",
+	Long: `Show SSH connection info, deep links, and service URLs for a workspace.
+This displays all the information you need to access your workspace.`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		workspaceName := args[0]
+		cfg, err := config.LoadConfig(".vendetta/config.yaml")
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+
+		// Get server config
+		configDir := filepath.Join(os.Getenv("HOME"), ".config", "vendetta")
+		nodesConfigPath := filepath.Join(configDir, "nodes.yaml")
+		var nodes map[string]map[string]string
+		if data, err := os.ReadFile(nodesConfigPath); err == nil {
+			goyaml.Unmarshal(data, &nodes)
+		}
+
+		// Determine server address
+		serverHost := "localhost"
+		serverPort := 3001
+		username := os.Getenv("USER")
+		if username == "" {
+			username = "developer"
+		}
+
+		// Look for node config
+		for name, nodeCfg := range nodes {
+			if name == cfg.Remote.Node || nodeCfg["host"] != "" {
+				host := nodeCfg["host"]
+				if strings.Contains(host, ":") {
+					parts := strings.SplitN(host, ":", 2)
+					serverHost = parts[0]
+					if p, err := strconv.Atoi(parts[1]); err == nil {
+						serverPort = p
+					}
+				} else {
+					serverHost = host
+				}
+				break
+			}
+		}
+
+		// For now, generate example info (actual port would come from coordination server)
+		fmt.Println("🔗 Workspace Connection Info")
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		fmt.Printf("Workspace: %s\n", workspaceName)
+		fmt.Printf("Server:    %s:%d\n", serverHost, serverPort)
+		fmt.Printf("Username:  %s\n", username)
+		fmt.Println("")
+		fmt.Println("🐚 SSH Access:")
+		fmt.Printf("  ssh -p <port> %s@%s\n", username, serverHost)
+		fmt.Println("")
+		fmt.Println("💻 Deep Links (click to open):")
+		fmt.Printf("  VSCode:  vscode://vscode-remote/ssh-remote+%s:<port>/home/dev\n", serverHost)
+		fmt.Printf("  Cursor:  cursor://ssh/remote?host=%s&port=<port>&user=%s\n", serverHost, username)
+		fmt.Println("")
+		fmt.Println("🌐 Service URLs (when workspace is running):")
+		fmt.Printf("  vendetta workspace services %s\n", workspaceName)
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		return nil
+	},
+}
+
+var workspaceServicesCmd = &cobra.Command{
+	Use:   "services <name>",
+	Short: "List services and their URLs for a workspace",
+	Long: `List all services running in a workspace with their mapped ports and URLs.
+This helps you quickly access your application's endpoints.`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		workspaceName := args[0]
+		fmt.Printf("📦 Services for workspace '%s'\n", workspaceName)
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		fmt.Println("  Service     Port     Local Port  URL")
+		fmt.Println("  ──────────  ───────  ──────────  ─────────────────────────────────")
+		fmt.Println("  (Services will appear here when workspace is running)")
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		fmt.Println("")
+		fmt.Println("💡 To get service URLs, ensure the workspace is running:")
+		fmt.Printf("  vendetta workspace up %s\n", workspaceName)
+		return nil
+	},
+}
+
+var workspaceConnectCmd = &cobra.Command{
+	Use:   "connect <name>",
+	Short: "Show connection info and deep links for a workspace",
+	Long: `Show SSH connection info, deep links for editors, and service URLs for a workspace.
+This is the primary command to get everything you need to access your workspace.`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(_ *cobra.Command, args []string) error {
+		return sshInfoCmd.RunE(nil, args)
+	},
+}
+
 // ensureSSHKey generates an SSH key for vendetta if one doesn't exist
 func ensureSSHKey() (string, string, error) {
 	sshDir := filepath.Join(os.Getenv("HOME"), ".ssh")
@@ -496,6 +692,16 @@ func init() {
 	// Node subcommands
 	nodeCmd.AddCommand(nodeAddCmd)
 	nodeCmd.AddCommand(nodeListCmd)
+
+	// SSH management commands
+	rootCmd.AddCommand(sshCmd)
+	sshCmd.AddCommand(sshGenerateCmd)
+	sshCmd.AddCommand(sshRegisterCmd)
+	sshCmd.AddCommand(sshInfoCmd)
+
+	// Workspace connection commands
+	workspaceCmd.AddCommand(workspaceConnectCmd)
+	workspaceCmd.AddCommand(workspaceServicesCmd)
 }
 
 func createController() ctrl.Controller {

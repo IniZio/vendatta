@@ -144,6 +144,18 @@ M3 is currently at **20% completion** after architectural correction revealed th
 
 **Implementation Required**: New CLI package `cmd/vendetta/node.go`
 
+#### 11. User Management System (0%)
+**Status**: No user registration or management functionality
+**Impact**: Manual user onboarding required, no programmatic access
+**Missing Features**:
+- USR-01: User struct and registry implementation
+- USR-02: User registration API endpoint
+- USR-03: SSH key auto-generation CLI
+- USR-04: Deep link generation for editors
+- USR-05: Service port discovery and display
+
+**Implementation Required**: New packages `pkg/user/`, API endpoints, CLI commands
+
 ## Detailed Implementation Progress
 
 ### Provider Implementation Status
@@ -168,6 +180,11 @@ M3 is currently at **20% completion** after architectural correction revealed th
 | **Coordination Server** | ❌ Missing | 0% | `pkg/coordination/` (missing) |
 | **Node Agents** | ❌ Missing | 0% | `pkg/nodeagent/` (missing) |
 | **Node Management CLI** | ❌ Missing | 0% | `cmd/vendetta/node.go` (missing) |
+| **User Registry** | ❌ Missing | 0% | `pkg/user/` (missing) |
+| **User API** | ❌ Missing | 0% | `pkg/coordination/api/user.go` (missing) |
+| **User CLI** | ❌ Missing | 0% | `cmd/vendatta/user.go` (missing) |
+| **Deep Links** | ❌ Missing | 0% | `pkg/user/deeplinks.go` (missing) |
+| **Port Discovery** | ❌ Missing | 0% | `pkg/coordination/ports.go` (missing) |
 
 ### Test Coverage Analysis
 
@@ -180,6 +197,11 @@ M3 is currently at **20% completion** after architectural correction revealed th
 | **Service Orchestration** | 40% | ⚠️ Partial | ❌ Missing |
 | **Coordination Server** | 0% | ❌ Missing | ❌ Missing |
 | **Remote Providers** | 0% | ❌ Missing | ❌ Missing |
+| **User Registry** | 0% | ❌ Missing | ❌ Missing |
+| **User API** | 0% | ❌ Missing | ❌ Missing |
+| **User CLI** | 0% | ❌ Missing | ❌ Missing |
+| **Deep Links** | 0% | ❌ Missing | ❌ Missing |
+| **Port Discovery** | 0% | ❌ Missing | ❌ Missing |
 
 ## Critical Blockers Analysis
 
@@ -234,6 +256,7 @@ M3 is currently at **20% completion** after architectural correction revealed th
 | **Phase 2** | Provider Cleanup + Node CLI | 8-10 | No |
 | **Phase 3** | Docker/LXC Remote via Agents | 6-8 | No |
 | **Phase 4** | SSH Automation + Testing + UX | 6-8 | No |
+| **Phase 5** | User Management System (USR-01 to USR-05) | 8-10 | No |
 
 ### Skill Requirements
 - **Go Backend Development**: Coordination server, remote providers
@@ -289,6 +312,19 @@ M3 is currently at **20% completion** after architectural correction revealed th
    - Configuration management
 
 ### Long Term (Weeks 7-8)
+### Medium Term (Weeks 7-8)
+4. **User Management System** - Complete user onboarding
+   - USR-01: User registry and data structures
+   - USR-02: User registration API
+   - USR-03: SSH key generation CLI
+   - USR-04: IDE deep link generation
+   - USR-05: Service port discovery
+
+### Long Term (Weeks 9-10)
+5. **Enhanced Features** - Production polish
+   - SSH automation completion
+   - Advanced service orchestration
+   - Comprehensive testing
 4. **Enhanced Features** - Production polish
    - SSH automation completion
    - Advanced service orchestration
@@ -307,6 +343,16 @@ M3 is currently at **20% completion** after architectural correction revealed th
 - [ ] Basic service orchestration
 
 ### Phase 3 Success (Target: 100% complete)
+- [ ] Full SSH automation
+- [ ] Complete service orchestration
+- [ ] Production-ready UX
+- [ ] 90%+ test coverage
+### Phase 4 Success (Target: 100% complete)
+- [ ] Complete user management system
+- [ ] SSH key auto-generation working
+- [ ] IDE deep links functional
+- [ ] Service port discovery operational
+- [ ] User registration API complete
 - [ ] Full SSH automation
 - [ ] Complete service orchestration
 - [ ] Production-ready UX

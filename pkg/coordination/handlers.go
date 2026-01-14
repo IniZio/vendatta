@@ -437,6 +437,164 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// User management handlers
+
+func (s *Server) handleUsersRequest(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.handleRegisterUser(w, r)
+	case http.MethodGet:
+		s.handleListUsers(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleUserRequest(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/v1/users/")
+	if path == "" {
+		http.Error(w, "Username required", http.StatusBadRequest)
+		return
+	}
+
+	username := strings.Split(path, "/")[0]
+
+	switch r.Method {
+	case http.MethodGet:
+		s.handleGetUser(w, r, username)
+	case http.MethodDelete:
+		s.handleDeleteUser(w, r, username)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleWorkspaceUsersRequest(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/v1/workspaces/")
+	if path == "" {
+		http.Error(w, "Workspace ID required", http.StatusBadRequest)
+		return
+	}
+
+	parts := strings.Split(path, "/")
+	workspaceID := parts[0]
+
+	if len(parts) >= 2 && parts[1] == "users" {
+		switch r.Method {
+		case http.MethodGet:
+			s.handleGetWorkspaceUsers(w, r, workspaceID)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
+	if len(parts) >= 2 && parts[1] == "services" {
+		switch r.Method {
+		case http.MethodGet:
+			s.handleGetWorkspaceServices(w, r, workspaceID)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
+	http.Error(w, "Invalid endpoint", http.StatusNotFound)
+}
+
+func (s *Server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
+	var user User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	userRegistry := s.registry.GetUserRegistry()
+	if err := userRegistry.Register(&user); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to register user: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	s.broadcastEvent("user_registered", map[string]interface{}{"user": user})
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func (s *Server) handleListUsers(w http.ResponseWriter, r *http.Request) {
+	userRegistry := s.registry.GetUserRegistry()
+	users, err := userRegistry.List()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to list users: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"users": users, "count": len(users)})
+}
+
+func (s *Server) handleGetUser(w http.ResponseWriter, r *http.Request, username string) {
+	userRegistry := s.registry.GetUserRegistry()
+	user, err := userRegistry.GetByUsername(username)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("User not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func (s *Server) handleDeleteUser(w http.ResponseWriter, r *http.Request, username string) {
+	userRegistry := s.registry.GetUserRegistry()
+	if err := userRegistry.Delete(username); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to delete user: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	s.broadcastEvent("user_deleted", map[string]interface{}{"username": username})
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleGetWorkspaceUsers(w http.ResponseWriter, r *http.Request, workspaceID string) {
+	userRegistry := s.registry.GetUserRegistry()
+	users, err := userRegistry.GetByWorkspace(workspaceID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get workspace users: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"users": users, "count": len(users)})
+}
+func (s *Server) handleGetWorkspaceServices(w http.ResponseWriter, r *http.Request, workspaceID string) {
+	// For now, return mock services. In a real implementation, this would query
+	// the workspace services from the local vendatta instance or coordination registry
+	services := []map[string]interface{}{}
+	
+	// Mock services for demonstration
+	services = append(services, map[string]interface{}{
+		"name":       "web",
+		"port":       3000,
+		"local_port": 23000,
+		"url":        "http://localhost:23000",
+	})
+	services = append(services, map[string]interface{}{
+		"name":       "api",
+		"port":       4000,
+		"local_port": 23001,
+		"url":        "http://localhost:23001",
+	})
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"workspace": workspaceID,
+		"services":  services,
+	})
+}
+
+
 // responseWriter is a wrapper to capture status code
 type responseWriter struct {
 	http.ResponseWriter

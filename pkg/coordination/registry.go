@@ -45,6 +45,16 @@ type HealthStatus struct {
 	LastCheck time.Time `json:"last_check"`
 	URL       string    `json:"url,omitempty"`
 }
+// User represents a user in the coordination system
+type User struct {
+	ID          string    `json:"id"`
+	Username    string    `json:"username"`
+	PublicKey   string    `json:"public_key"`
+	WorkspaceID string    `json:"workspace_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
 
 // Command represents a command to be executed on a node
 type Command struct {
@@ -80,24 +90,37 @@ type Registry interface {
 	SetStatus(id, status string) error
 	GetByLabel(key, value string) ([]*Node, error)
 	GetByCapability(capability string) ([]*Node, error)
+	GetUserRegistry() UserRegistry
+}
+
+// UserRegistry manages user registration and tracking
+type UserRegistry interface {
+	Register(user *User) error
+	GetByUsername(username string) (*User, error)
+	GetByWorkspace(workspaceID string) ([]*User, error)
+	List() ([]*User, error)
+	Delete(username string) error
 }
 
 // InMemoryRegistry provides an in-memory implementation of Registry
 type InMemoryRegistry struct {
-	nodes map[string]*Node
-	mutex sync.RWMutex
+	nodes       map[string]*Node
+	userRegistry UserRegistry
+	nodeMutex   sync.RWMutex
 }
 
 // NewInMemoryRegistry creates a new in-memory node registry
 func NewInMemoryRegistry() *InMemoryRegistry {
 	return &InMemoryRegistry{
-		nodes: make(map[string]*Node),
+		nodes:        make(map[string]*Node),
+		userRegistry: NewInMemoryUserRegistry(),
 	}
 }
 
+
 func (r *InMemoryRegistry) Register(node *Node) error {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.nodeMutex.Lock()
+	defer r.nodeMutex.Unlock()
 
 	if node.ID == "" {
 		return fmt.Errorf("node ID cannot be empty")
@@ -113,16 +136,16 @@ func (r *InMemoryRegistry) Register(node *Node) error {
 }
 
 func (r *InMemoryRegistry) Unregister(id string) error {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.nodeMutex.Lock()
+	defer r.nodeMutex.Unlock()
 
 	delete(r.nodes, id)
 	return nil
 }
 
 func (r *InMemoryRegistry) Get(id string) (*Node, error) {
-	r.mutex.RLock()
-	defer r.mutex.RUnlock()
+	r.nodeMutex.RLock()
+	defer r.nodeMutex.RUnlock()
 
 	node, exists := r.nodes[id]
 	if !exists {
@@ -132,8 +155,8 @@ func (r *InMemoryRegistry) Get(id string) (*Node, error) {
 }
 
 func (r *InMemoryRegistry) List() ([]*Node, error) {
-	r.mutex.RLock()
-	defer r.mutex.RUnlock()
+	r.nodeMutex.RLock()
+	defer r.nodeMutex.RUnlock()
 
 	nodes := make([]*Node, 0, len(r.nodes))
 	for _, node := range r.nodes {
@@ -143,8 +166,8 @@ func (r *InMemoryRegistry) List() ([]*Node, error) {
 }
 
 func (r *InMemoryRegistry) Update(id string, updates map[string]interface{}) error {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.nodeMutex.Lock()
+	defer r.nodeMutex.Unlock()
 
 	node, exists := r.nodes[id]
 	if !exists {
@@ -188,8 +211,8 @@ func (r *InMemoryRegistry) SetStatus(id, status string) error {
 }
 
 func (r *InMemoryRegistry) GetByLabel(key, value string) ([]*Node, error) {
-	r.mutex.RLock()
-	defer r.mutex.RUnlock()
+	r.nodeMutex.RLock()
+	defer r.nodeMutex.RUnlock()
 
 	var nodes []*Node
 	for _, node := range r.nodes {
@@ -201,8 +224,8 @@ func (r *InMemoryRegistry) GetByLabel(key, value string) ([]*Node, error) {
 }
 
 func (r *InMemoryRegistry) GetByCapability(capability string) ([]*Node, error) {
-	r.mutex.RLock()
-	defer r.mutex.RUnlock()
+	r.nodeMutex.RLock()
+	defer r.nodeMutex.RUnlock()
 
 	var nodes []*Node
 	for _, node := range r.nodes {
@@ -212,6 +235,93 @@ func (r *InMemoryRegistry) GetByCapability(capability string) ([]*Node, error) {
 	}
 	return nodes, nil
 }
+func (r *InMemoryRegistry) GetUserRegistry() UserRegistry {
+	return r.userRegistry
+}
+
+
+// InMemoryUserRegistry provides an in-memory implementation of UserRegistry
+type InMemoryUserRegistry struct {
+	users map[string]*User
+	mutex sync.RWMutex
+}
+
+// NewInMemoryUserRegistry creates a new in-memory user registry
+func NewInMemoryUserRegistry() *InMemoryUserRegistry {
+	return &InMemoryUserRegistry{
+		users: make(map[string]*User),
+	}
+}
+
+// Register registers a new user
+func (r *InMemoryUserRegistry) Register(user *User) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if user.Username == "" {
+		return fmt.Errorf("username cannot be empty")
+	}
+
+	if user.ID == "" {
+		user.ID = fmt.Sprintf("user_%d_%s", time.Now().Unix(), user.Username)
+	}
+
+	now := time.Now()
+	user.CreatedAt = now
+	user.UpdatedAt = now
+
+	r.users[user.Username] = user
+	return nil
+}
+
+// GetByUsername retrieves a user by username
+func (r *InMemoryUserRegistry) GetByUsername(username string) (*User, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	user, exists := r.users[username]
+	if !exists {
+		return nil, fmt.Errorf("user not found: %s", username)
+	}
+	return user, nil
+}
+
+// GetByWorkspace retrieves all users for a workspace
+func (r *InMemoryUserRegistry) GetByWorkspace(workspaceID string) ([]*User, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	var users []*User
+	for _, user := range r.users {
+		if user.WorkspaceID == workspaceID {
+			users = append(users, user)
+		}
+	}
+	return users, nil
+}
+
+// List retrieves all users
+func (r *InMemoryUserRegistry) List() ([]*User, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	users := make([]*User, 0, len(r.users))
+	for _, user := range r.users {
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// Delete removes a user by username
+func (r *InMemoryUserRegistry) Delete(username string) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	delete(r.users, username)
+	return nil
+}
+
+
 
 // Server represents the coordination server
 type Server struct {
@@ -255,6 +365,12 @@ func (s *Server) setupRoutes() {
 
 	// Service discovery
 	s.router.HandleFunc("/api/v1/services", s.handleListServices)
+
+	// User management
+	s.router.HandleFunc("/api/v1/users", s.handleUsersRequest)
+	s.router.HandleFunc("/api/v1/users/", s.handleUserRequest)
+	s.router.HandleFunc("/api/v1/workspaces/", s.handleWorkspaceUsersRequest)
+
 
 	// Health and monitoring
 	s.router.HandleFunc("/health", s.handleHealth)

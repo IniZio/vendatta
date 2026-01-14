@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -157,7 +158,7 @@ func TestQEMUProvider_Create_WithDefaults(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, session)
 	// Verify defaults are set
-	assert.Equal(t, 2, session.SSHPort) // Default SSH port is 2222
+	assert.Equal(t, 2222, session.SSHPort) // Default SSH port is 2222
 
 	// Cleanup
 	_ = p.Destroy(ctx, sessionID)
@@ -187,6 +188,16 @@ func TestQEMUProvider_Start_Integration(t *testing.T) {
 
 	if _, err := exec.LookPath("qemu-system-x86_64"); err != nil {
 		t.Skip("QEMU not available:", err)
+	}
+
+	if !isCommandAvailable("ssh-keygen") {
+		t.Skip("ssh-keygen not available")
+	}
+
+	// This test requires a VM image with cloud-init support
+	// Skip unless explicitly enabled
+	if os.Getenv("VENDETTA_TEST_QEMU_VM") == "" {
+		t.Skip("Set VENDETTA_TEST_QEMU_VM to enable VM integration tests")
 	}
 
 	ctx := context.Background()
@@ -251,6 +262,14 @@ func TestQEMUProvider_Stop_Integration(t *testing.T) {
 
 	if _, err := exec.LookPath("qemu-system-x86_64"); err != nil {
 		t.Skip("QEMU not available:", err)
+	}
+
+	if !isCommandAvailable("ssh-keygen") {
+		t.Skip("ssh-keygen not available")
+	}
+
+	if os.Getenv("VENDETTA_TEST_QEMU_VM") == "" {
+		t.Skip("Set VENDETTA_TEST_QEMU_VM to enable VM integration tests")
 	}
 
 	ctx := context.Background()
@@ -385,6 +404,14 @@ func TestQEMUProvider_List_WithVMs(t *testing.T) {
 		t.Skip("QEMU not available:", err)
 	}
 
+	if !isCommandAvailable("ssh-keygen") {
+		t.Skip("ssh-keygen not available")
+	}
+
+	if os.Getenv("VENDETTA_TEST_QEMU_VM") == "" {
+		t.Skip("Set VENDETTA_TEST_QEMU_VM to enable VM integration tests")
+	}
+
 	ctx := context.Background()
 	sessionID := "test-list-vms"
 	workspacePath := t.TempDir()
@@ -461,18 +488,18 @@ func TestQEMUProvider_Exec_Commands(t *testing.T) {
 	p := &QEMUProvider{}
 
 	tests := []struct {
-		name     string
-		cmd      []string
+		name         string
+		cmd          []string
 		wantContains []string
 	}{
 		{
-			name:  "simple command",
-			cmd:   []string{"echo", "hello"},
+			name:         "simple command",
+			cmd:          []string{"echo", "hello"},
 			wantContains: []string{"ssh", "echo", "hello"},
 		},
 		{
-			name:  "command with quotes",
-			cmd:   []string{"echo", "'hello world'"},
+			name:         "command with quotes",
+			cmd:          []string{"echo", "'hello world'"},
 			wantContains: []string{"ssh", "echo", "hello world"},
 		},
 	}
@@ -505,6 +532,12 @@ func TestQEMUProvider_RemoteConfig(t *testing.T) {
 		t.Skip("QEMU not available:", err)
 	}
 
+	// This test requires an actual remote host to test SSH transport
+	// Skip unless explicitly enabled with a real remote
+	if os.Getenv("VENDETTA_TEST_REMOTE") == "" {
+		t.Skip("Set VENDETTA_TEST_REMOTE to enable remote integration tests")
+	}
+
 	ctx := context.Background()
 	sessionID := "test-remote"
 	workspacePath := t.TempDir()
@@ -512,6 +545,7 @@ func TestQEMUProvider_RemoteConfig(t *testing.T) {
 	cfg := &config.Config{
 		Remote: config.Remote{
 			Node: "remote-node.example.com",
+			User: "developer",
 		},
 		QEMU: struct {
 			Image        string   `yaml:"image,omitempty"`
@@ -649,6 +683,23 @@ func TestQEMUProvider_execRemote(t *testing.T) {
 func isCommandAvailable(name string) bool {
 	_, err := exec.LookPath(name)
 	return err == nil
+}
+
+// createTestSSHKey generates a temporary SSH key for testing
+func createTestSSHKey(t *testing.T) string {
+	t.Helper()
+
+	if !isCommandAvailable("ssh-keygen") {
+		t.Skip("ssh-keygen not available")
+	}
+
+	keyPath := filepath.Join(t.TempDir(), "id_rsa")
+	cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "2048", "-f", keyPath, "-N", "", "-q")
+	if err := cmd.Run(); err != nil {
+		t.Skipf("Failed to generate SSH key: %v", err)
+	}
+
+	return keyPath
 }
 
 // TestEnvironment checks test environment

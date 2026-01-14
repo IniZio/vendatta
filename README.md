@@ -1,153 +1,195 @@
 # vendetta
 
-**Isolated development environments that work with AI agents**
+**Isolated development environments with remote SSH access**
 
-Eliminate "it works on my machine" by providing reproducible dev environments that integrate seamlessly with Cursor, OpenCode, Claude, and other AI coding assistants.
+Vendatta creates isolated development environments (Docker/LXC/QEMU) on a coordination server. Each workspace gets its own SSH access with your public key seeded, so you can SSH directly into your workspace from anywhere.
 
-## 🚀 5-Minute Onboarding Guide
+## Architecture
 
-Get up and running with vendetta in 5 minutes.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  Coordination Server (Your Dev Host)             │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  vendetta coordination start                              │  │
+│  │  - Runs on port 3001                                      │  │
+│  │  - Manages workspace lifecycle                            │  │
+│  │  - Maps SSH ports to workspaces                           │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                            │                                    │
+│                            ▼                                    │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  Providers (Docker/LXC/QEMU)                              │  │
+│  │  - Spawn workspaces locally on this host                  │  │
+│  │  - Configure SSH with user's public key                   │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                            │                                    │
+│            ┌───────────────┼───────────────┐                    │
+│            ▼               ▼               ▼                    │
+│  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐           │
+│  │ Workspace 1 │   │ Workspace 2 │   │ Workspace 3 │           │
+│  │ SSH: :2222  │   │ SSH: :2223  │   │ SSH: :2224  │           │
+│  │ User: alice │   │ User: bob   │   │ User: carol │           │
+│  └─────────────┘   └─────────────┘   └─────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                            │
+                            │ SSH (your key grants access)
+                            ▼
+                  ┌─────────────────┐
+                  │  You (Anywhere) │
+                  │  SSH Client     │
+                  └─────────────────┘
 
-### Step 1: Install Vendetta
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/IniZio/vendetta/main/install.sh | bash
+# Example: SSH into your workspace
+ssh -p 2222 dev@your-server.com
 ```
 
-Verify the installation:
+## 🚀 Complete Onboarding Guide
+
+### Step 1: Generate Your SSH Key
 
 ```bash
-vendetta version
-# Output: Vendetta Version: 1.0.0, Go Version: go1.24.x, Build Date: ...
+# Generate an SSH key for vendetta (if you don't have one)
+vendetta ssh generate
+
+# This creates ~/.ssh/id_ed25519_vendetta
+# Your public key will be displayed - share it with your admin
 ```
 
-### Step 2: Create Your First Project
+### Step 2: Get Access to a Workspace
 
+**Option A: Register with the coordination server (if enabled)**
 ```bash
-# Create a new project directory
-mkdir my-app && cd my-app
-
-# Initialize vendetta (creates .vendetta/ directory)
-vendetta init
-
-# Initialize git (required for workspace creation)
-git init && git add . && git commit -m "Initial commit"
+vendetta ssh register your-server.com:3001
 ```
 
-### Step 3: Add a Remote Node
-
-Workspaces run on remote nodes (your own machines or servers).
-
-```bash
-# Add your current machine as a remote node
-vendetta node add my-machine user@localhost
-
-# Follow the instructions to copy your SSH key to enable passwordless access
-ssh-copy-id -i ~/.ssh/id_ed25519_vendetta user@localhost
+**Option B: Share your public key with your administrator**
+```
+Your public key:
+ssh-ed25519 AAAA... your-email@example.com
 ```
 
-### Step 4: Create Your First Workspace
+Your admin will add this key to your workspace and tell you:
+- Server address (e.g., `dev.company.com`)
+- SSH port (e.g., `2222`)
+- Username (e.g., `alice`)
+
+### Step 3: Connect to Your Workspace
 
 ```bash
-# Create a workspace on your remote node
-vendetta workspace create my-feature --node my-machine
+# Get connection info including deep links
+vendetta workspace connect my-feature
 
-# Start the workspace
-vendetta workspace up my-feature
+# Example output:
+# 🔗 Workspace Connection Info
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Workspace: my-feature
+# Path:      /home/user/my-app/.vendetta/worktrees/my-feature
+#
+# 🐚 SSH Access:
+#   ssh -p 2222 alice@dev.company.com
+#
+# 💻 Deep Links:
+#   VSCode:  vscode://vscode-remote/ssh-remote+dev.company.com:2222/home/alice
+#   Cursor:  cursor://ssh/remote?host=dev.company.com&port=2222&user=alice
+#
+# 🌐 Services:
+#   - http://localhost:23000 (web)
+#   - http://localhost:23001 (api)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-Your workspace is now running in an isolated Docker container on your remote node!
+### Step 4: Open in Your Editor
 
-### Step 5: Access Your Workspace
-
-#### Option A: VSCode Remote
-
+**VSCode:**
 ```bash
-# Connect with VSCode to the worktree
-code .vendetta/worktrees/my-feature/
+# Click the deep link or use:
+code --remote ssh-remote+dev.company.com:2222 /home/alice/my-feature
 ```
 
-#### Option B: Vim/Neovim
-
+**Cursor:**
 ```bash
-# Edit files directly in the worktree
-vim .vendetta/worktrees/my-feature/
+# Click the deep link or use cursor:// scheme
 ```
 
-#### Option C: Shell Access
-
+**Terminal:**
 ```bash
-# Open a shell in your workspace
-vendetta workspace shell my-feature
-
-# Inside the workspace, start a test webserver
-python3 -m http.server 8080
+ssh -p 2222 alice@dev.company.com
 ```
 
-### Step 6: Verify It Works
-
-From your host machine or in the workspace shell:
+### Step 5: Check Running Services
 
 ```bash
-# Test the webserver (if you started one)
-curl http://localhost:8080
+# List all services and their URLs
+vendetta workspace services my-feature
 
-# List your workspaces
-vendetta workspace list
-
-# Check running services on the remote node
-ssh user@localhost "docker ps | grep vendetta"
-```
-
-### Step 7: Clean Up
-
-```bash
-# Stop the workspace when done
-vendetta workspace down my-feature
-
-# Remove the workspace completely
-vendetta workspace rm my-feature
+# Output:
+# 📦 Services for workspace 'my-feature'
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Service     Port     Local Port  URL
+# web         3000     23000       http://localhost:23000
+# api         4000     23001       http://localhost:23001
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ---
 
 ## 📋 Command Reference
 
-### Installation & Version
+### SSH Management
 
 | Command | Description |
 |---------|-------------|
-| `curl -fsSL ... install.sh \| bash` | Install vendetta |
-| `vendetta version` | Show version info |
-| `vendetta --help` | Show help |
-
-### Remote Node Management
-
-| Command | Description |
-|---------|-------------|
-| `vendetta node add <name> <host>` | Add a remote node (auto-generates SSH key) |
-| `vendetta node list` | List configured nodes |
-| `vendetta coordination start` | Start coordination server (for multi-node setup) |
+| `vendetta ssh generate` | Generate SSH key for vendetta access |
+| `vendetta ssh register <server>` | Register your public key with coordination server |
+| `vendetta ssh info <workspace>` | Show connection info for a workspace |
 
 ### Workspace Management
 
 | Command | Description |
 |---------|-------------|
-| `vendetta workspace create <name> --node <node>` | Create workspace on remote node |
+| `vendetta workspace create <name>` | Create a new workspace |
 | `vendetta workspace up <name>` | Start a workspace |
 | `vendetta workspace down <name>` | Stop a workspace |
-| `vendetta workspace shell <name>` | Open shell in workspace |
 | `vendetta workspace list` | List all workspaces |
 | `vendetta workspace rm <name>` | Remove a workspace |
+| `vendetta workspace connect <name>` | Show connection info and deep links |
+| `vendetta workspace services <name>` | List services and their URLs |
+
+### Server Administration
+
+| Command | Description |
+|---------|-------------|
+| `vendetta coordination start` | Start the coordination server |
+| `vendetta coordination stop` | Stop the coordination server |
+| `vendetta coordination status` | Show server status |
 
 ---
 
 ## 🔧 Configuration
 
-Edit `.vendetta/config.yaml` to customize your environment:
+### Server Configuration (`.vendetta/coordination.yaml`)
 
 ```yaml
-name: my-app
+server:
+  host: "0.0.0.0"
+  port: 3001
+  auth_token: "change-this-in-production"
+
+registry:
+  provider: "memory"
+  health_check_interval: "10s"
+  node_timeout: "60s"
+
+auth:
+  enabled: false  # Enable for production with JWT
+  jwt_secret: "your-secure-secret"
+```
+
+### Workspace Configuration (`.vendetta/config.yaml`)
+
+```yaml
+name: my-workspace
 provider: docker
 
 services:
@@ -162,57 +204,43 @@ docker:
   image: node:20
 ```
 
-### Node-Specific Configuration
-
-Add to `.vendetta/config.yaml` for remote workspace creation:
-
-```yaml
-remote:
-  node: my-machine  # Name of the node from vendetta node list
-```
-
 ---
 
-## 🌐 Multi-Machine Setup (Optional)
+## 👥 User Management
 
-For team collaboration or using multiple remote machines:
+### Adding a User (Admin)
 
-### On Each Remote Machine
+Administrators can add users and their SSH public keys via API:
 
 ```bash
-# Install vendetta
-curl -fsSL https://raw.githubusercontent.com/IniZio/vendetta/main/install.sh | bash
-
-# Start the coordination server
-vendetta coordination start &
-# Server runs on http://localhost:3001
-
-# Start the node agent
-VENDETTA_COORD_URL="http://localhost:3001" vendetta agent start &
+curl -X POST http://localhost:3001/api/v1/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "alice",
+    "public_key": "ssh-ed25519 AAAA... alice@example.com",
+    "workspace": "my-feature"
+  }'
 ```
 
-### On Your Local Machine
+### List Users (Admin)
 
 ```bash
-# Add each remote node
-vendetta node add server-1 user@192.168.1.100
-vendetta node add server-2 user@192.168.1.101
-
-# Create workspace on specific node
-vendetta workspace create feature --node server-1
+curl http://localhost:3001/api/v1/users
+# Returns: {"users":[...],"count":N}
 ```
 
 ---
 
 ## ✨ Features
 
-- **🔒 Branch Isolation**: Git worktrees + containers for true environment separation
-- **📦 Single Binary**: Zero dependencies, works anywhere
+- **🔒 Isolated Environments**: Docker/LXC/QEMU containers and VMs
+- **🔑 SSH Key Authentication**: Users access workspaces via SSH with their keys
+- **🌐 Remote Access**: SSH to workspaces from anywhere
+- **💻 Editor Integration**: Deep links for VSCode and Cursor
+- **📦 Single Binary**: Zero dependencies on the coordination server
 - **🔌 Plugin System**: Extensible rules, skills, and commands
-- **🚀 Service Discovery**: Automatic port mapping and environment variables
-- **🐳 Multi-Provider**: Docker, LXC, and more container backends
+- **🚀 Service Discovery**: Automatic port mapping and service URLs
 - **🤖 AI Agent Ready**: Auto-configures Cursor, OpenCode, Claude, and more
-- **🌍 Remote Development**: Works seamlessly across multiple machines
 
 ---
 
@@ -221,7 +249,7 @@ vendetta workspace create feature --node server-1
 - [Configuration Guide](docs/spec/product/configuration.md)
 - [Plugin System](docs/spec/technical/plugins.md)
 - [Architecture](docs/spec/technical/architecture.md)
-- [Remote Development Guide](docs/REMOTE_CONNECTION_GUIDE.md)
+- [Coordination API](docs/coordination-api.md)
 
 ---
 

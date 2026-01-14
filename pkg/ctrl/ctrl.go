@@ -20,6 +20,15 @@ import (
 	"github.com/vibegear/vendetta/pkg/worktree"
 )
 
+// PortMapping represents a service port mapping for a workspace
+type PortMapping struct {
+	WorkspaceID string `json:"workspace_id"`
+	ServiceName string `json:"service_name"`
+	LocalPort   int    `json:"local_port"`
+	RemotePort  int    `json:"remote_port"`
+	URL         string `json:"url"`
+}
+
 type Controller interface {
 	Init(ctx context.Context) error
 	Dev(ctx context.Context, branch string) error
@@ -29,6 +38,8 @@ type Controller interface {
 	WorkspaceShell(ctx context.Context, name string) error
 	WorkspaceList(ctx context.Context) error
 	WorkspaceRm(ctx context.Context, name string) error
+	WorkspaceServices(ctx context.Context, name string) ([]PortMapping, error)
+	WorkspaceConnect(ctx context.Context, name string) error
 	Apply(ctx context.Context) error
 	PluginUpdate(ctx context.Context) error
 	PluginList(ctx context.Context) error
@@ -273,6 +284,89 @@ func (c *BaseController) WorkspaceRm(_ context.Context, name string) error {
 	}
 
 	fmt.Println("✅ Workspace removed successfully")
+	return nil
+}
+
+func (c *BaseController) WorkspaceServices(ctx context.Context, name string) ([]PortMapping, error) {
+	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	sessionID := fmt.Sprintf("%s-%s", cfg.Name, name)
+	var services []PortMapping
+
+	for _, p := range c.Providers {
+		sessions, _ := p.List(ctx)
+		for _, s := range sessions {
+			if s.Labels["vendetta.session.id"] == sessionID {
+				for serviceName, port := range s.Services {
+					services = append(services, PortMapping{
+						WorkspaceID: name,
+						ServiceName: serviceName,
+						LocalPort:   port,
+						RemotePort:  port,
+						URL:         fmt.Sprintf("http://localhost:%d", port),
+					})
+				}
+				return services, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("workspace session not found")
+}
+
+func (c *BaseController) WorkspaceConnect(ctx context.Context, name string) error {
+	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	sessionID := fmt.Sprintf("%s-%s", cfg.Name, name)
+	workspacePath, _ := filepath.Abs(filepath.Join(".vendetta/worktrees", name))
+
+	fmt.Println("🔗 Workspace Connection Info")
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	fmt.Printf("Workspace: %s\n", name)
+	fmt.Printf("Path:      %s\n", workspacePath)
+	fmt.Println("")
+
+	// Find running session for port info
+	for _, p := range c.Providers {
+		sessions, _ := p.List(ctx)
+		for _, s := range sessions {
+			if s.Labels["vendetta.session.id"] == sessionID {
+				sshPort := 22
+				for _, port := range s.Services {
+					sshPort = port
+					break
+				}
+				fmt.Println("🐚 SSH Access:")
+				fmt.Printf("  ssh -p %d dev@localhost\n", sshPort)
+				fmt.Println("")
+				fmt.Println("💻 Deep Links:")
+				fmt.Printf("  VSCode:  vscode://vscode-remote/ssh-remote+localhost:%d%s\n", sshPort, workspacePath)
+				fmt.Printf("  Cursor:  cursor://ssh/remote?host=localhost&port=%d&user=dev\n", sshPort)
+				fmt.Println("")
+				if len(s.Services) > 0 {
+					fmt.Println("🌐 Services:")
+					for serviceName, port := range s.Services {
+						fmt.Printf("  - http://localhost:%d (%s)\n", port, serviceName)
+					}
+				}
+				fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+				return nil
+			}
+		}
+	}
+
+	fmt.Println("🐚 SSH Access:")
+	fmt.Println("  ssh -p <port> dev@localhost")
+	fmt.Println("")
+	fmt.Println("💡 Workspace is not running. Start it with:")
+	fmt.Printf("  vendetta workspace up %s\n", name)
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	return nil
 }
 

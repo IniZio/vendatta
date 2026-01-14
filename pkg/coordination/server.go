@@ -199,9 +199,9 @@ func (s *Server) RestoreRegistry(backupData []byte) error {
 
 	// Clear existing registry
 	if memRegistry, ok := s.registry.(*InMemoryRegistry); ok {
-		memRegistry.mutex.Lock()
+		memRegistry.nodeMutex.Lock()
 		memRegistry.nodes = make(map[string]*Node)
-		memRegistry.mutex.Unlock()
+		memRegistry.nodeMutex.Unlock()
 	}
 
 	// Restore nodes
