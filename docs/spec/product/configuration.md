@@ -1,8 +1,8 @@
-# Configuration Reference: Project vendetta
+# Configuration Reference: Project mochi
 
 ## 1. Overview
 
-vendetta uses a declarative configuration system based on YAML and JSON templates. This reference covers all available configuration options and how to use them effectively.
+mochi uses a declarative configuration system based on YAML and JSON templates. This reference covers all available configuration options and how to use them effectively.
 
 ## 2. Main Configuration (`config.yaml`)
 
@@ -12,7 +12,7 @@ name: "project-name"           # Required: Project identifier
 description: "Optional description"
 
 extends:                       # Base configurations to extend
-  - inizio/vendetta-config-inizio
+  - inizio/mochi-config-inizio
 
 plugins:                       # Conditional plugins to load
   - golang                     # Only if go.mod exists
@@ -28,7 +28,7 @@ Extends allow you to inherit base configurations from remote repositories, simil
 #### **Extend Sources**
 ```yaml
 extends:
-  - inizio/vendetta-config-inizio     # Base config from remote repo
+  - inizio/mochi-config-inizio     # Base config from remote repo
   - company/base-config               # Company-wide base config
   - owner/repo@branch                 # With optional branch (default: main)
 ```
@@ -37,15 +37,15 @@ Extends are loaded first and provide the foundation rules, skills, and commands.
 
 #### **Updating Extends**
 ```bash
-vendetta update         # Fetch latest versions of all extends
+mochi update         # Fetch latest versions of all extends
 ```
 
 This command:
 - Fetches latest content from remote repositories
-- Updates the cached copies in `.vendetta/remotes/`
+- Updates the cached copies in `.mochi/remotes/`
 - Displays updated repos with their commit SHAs
 
-**Note:** Normal operations (workspace create, apply) use cached extends with no network calls. Run `vendetta update` periodically to get the latest templates.
+**Note:** Normal operations (workspace create, apply) use cached extends with no network calls. Run `mochi update` periodically to get the latest templates.
 
 ### **Plugins Configuration**
 
@@ -73,18 +73,18 @@ Plugin capabilities are organized in structured directories:
 
 When you load plugins, all their capabilities are automatically enabled and organized by plugin. This provides a "batteries included" experience where adding a plugin gives you a complete set of capabilities.
 
-For customization, use local overrides in `.vendetta/templates/` to modify or remove specific capabilities.
+For customization, use local overrides in `.mochi/templates/` to modify or remove specific capabilities.
 
 ---
 
-### **Reproducible Locking (`vendetta.lock`)**
+### **Reproducible Locking (`mochi.lock`)**
 
-vendetta automatically generates a `vendetta.lock` file to ensure that your team is always using the exact same versions of all extends.
+mochi automatically generates a `mochi.lock` file to ensure that your team is always using the exact same versions of all extends.
 
 **Command Workflow:**
-1. `vendetta init`: Initializes project with optional extends.
-2. `vendetta update`: Updates all extends to their latest versions and refreshes the cache.
-3. `vendetta workspace create`: Uses cached extends for offline-safe, deterministic workspace creation.
+1. `mochi init`: Initializes project with optional extends.
+2. `mochi update`: Updates all extends to their latest versions and refreshes the cache.
+3. `mochi workspace create`: Uses cached extends for offline-safe, deterministic workspace creation.
 
 ### **Services Configuration**
 
@@ -144,11 +144,11 @@ MCP (Model Context Protocol) servers are automatically configured and started wh
 - **Host**: localhost
 - **Auto-enabled**: When any agents are detected/enabled
 
-No manual MCP configuration is required - vendetta handles this automatically.
+No manual MCP configuration is required - mochi handles this automatically.
 
-### **User-Specific Configuration (`$XDG_CONFIG_HOME/vendetta/config.yaml`)**
+### **User-Specific Configuration (`$XDG_CONFIG_HOME/mochi/config.yaml`)**
 
-vendetta auto-generates a default user configuration at `$XDG_CONFIG_HOME/vendetta/config.yaml` (typically `~/.config/vendetta/config.yaml`). This file contains your personal preferences and is never committed to version control.
+mochi auto-generates a default user configuration at `$XDG_CONFIG_HOME/mochi/config.yaml` (typically `~/.config/mochi/config.yaml`). This file contains your personal preferences and is never committed to version control.
 
 AI agents are automatically detected from installed CLIs - no manual configuration required.
 
@@ -158,7 +158,7 @@ provider: "docker"
 ```
 
 #### **Auto-Detection**
-vendetta scans your system for installed AI agents:
+mochi scans your system for installed AI agents:
 - **Cursor**: Detects VS Code with Cursor extension
 - **OpenCode**: Detects OpenCode installation
 - **Claude Desktop/Code**: Detects Anthropic CLI tools
@@ -187,13 +187,13 @@ docker:
 ### **Hooks Configuration**
 
 #### **Convention-Based Lifecycle Scripts**
-Hooks are now convention-based and located in `.vendetta/hooks/`:
+Hooks are now convention-based and located in `.mochi/hooks/`:
 
 **Base Project Hooks:**
-- `.vendetta/hooks/create.sh` - Executed during `workspace create` (optional)
-- `.vendetta/hooks/up.sh` - Executed during `workspace up` (optional)
-- `.vendetta/hooks/stop.sh` - Executed during `workspace stop` (optional)
-- `.vendetta/hooks/down.sh` - Executed during `workspace down` (optional)
+- `.mochi/hooks/create.sh` - Executed during `workspace create` (optional)
+- `.mochi/hooks/up.sh` - Executed during `workspace up` (optional)
+- `.mochi/hooks/stop.sh` - Executed during `workspace stop` (optional)
+- `.mochi/hooks/down.sh` - Executed during `workspace down` (optional)
 
 **Execution:** Scripts must be executable (chmod +x) if present.
 
@@ -305,7 +305,7 @@ priority: "high"
 
 ## 4. Agent-Specific Configuration
 
-Agent configurations are generated based on your `$XDG_CONFIG_HOME/vendetta/config.yaml` settings and the enabled capabilities from `config.yaml`. Each supported agent gets customized configuration files.
+Agent configurations are generated based on your `$XDG_CONFIG_HOME/mochi/config.yaml` settings and the enabled capabilities from `config.yaml`. Each supported agent gets customized configuration files.
 
 ### **Cursor Configuration**
 Generated: `.cursor/mcp.json` (when cursor is enabled in `config.local.yaml`)
@@ -400,7 +400,7 @@ Generated: `claude_desktop_config.json` / `claude_code_config.json`
 
 ## 5. Environment Variables
 
-vendetta supports environment variable substitution in configuration:
+mochi supports environment variable substitution in configuration:
 
 ### **In config.yaml**
 ```yaml
@@ -450,7 +450,7 @@ GITHUB_TOKEN=ghp_...
 - Enable D in D only when needed
 
 ### **Maintenance**
-- Version control your `.vendetta/` directory
+- Version control your `.mochi/` directory
 - Test configuration changes in isolated branches
 - Document custom templates and their purpose
 
@@ -468,7 +468,7 @@ mcp:
 ```
 
 #### **Agent Config Not Generated**
-Ensure the AI agent CLI is installed and available in PATH. vendetta auto-detects supported agents.
+Ensure the AI agent CLI is installed and available in PATH. mochi auto-detects supported agents.
 
 #### **Container Won't Start**
 ```yaml
@@ -493,16 +493,16 @@ cat .cursor/mcp.json
 cat opencode.json
 
 # Check container logs
-docker logs vendetta-session-123
+docker logs mochi-session-123
 ```
 
 ## 8. Migration Guide
 
 ### **Upgrading from Manual Config**
-1. Run `vendetta init` to generate new structure
+1. Run `mochi init` to generate new structure
 2. Move existing configs to appropriate template directories
 3. Update `config.yaml` with your settings
-4. Test with `vendetta dev test-branch`
+4. Test with `mochi dev test-branch`
 
 ### **From Other Tools**
 - **docker-compose**: Move service definitions to `services:` section

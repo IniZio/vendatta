@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vibegear/vendetta/pkg/config"
-	"github.com/vibegear/vendetta/pkg/provider"
+	"github.com/nexus/nexus/pkg/config"
+	"github.com/nexus/nexus/pkg/provider"
 )
 
 type ServiceStatus string

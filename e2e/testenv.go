@@ -22,7 +22,7 @@ type TestEnvironment struct {
 
 // NewTestEnvironment creates a new test environment
 func NewTestEnvironment(t *testing.T) *TestEnvironment {
-	tempDir, err := os.MkdirTemp("", "vendetta-e2e-*")
+	tempDir, err := os.MkdirTemp("", "mochi-e2e-*")
 	require.NoError(t, err)
 
 	return &TestEnvironment{
@@ -34,7 +34,7 @@ func NewTestEnvironment(t *testing.T) *TestEnvironment {
 // Cleanup removes the test environment
 func (env *TestEnvironment) Cleanup() {
 	// Clean up docker containers
-	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=vendetta.session.id")
+	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=mochi.session.id")
 	if output, err := cmd.Output(); err == nil {
 		containerIDs := strings.Fields(string(output))
 		for _, id := range containerIDs {
@@ -83,18 +83,18 @@ func (env *TestEnvironment) CreateTestProject(t *testing.T, files map[string]str
 	return projectDir
 }
 
-// BuildvendettaBinary builds the vendetta binary for testing
-func (env *TestEnvironment) BuildvendettaBinary(t *testing.T) string {
+// BuildmochiBinary builds the mochi binary for testing
+func (env *TestEnvironment) BuildmochiBinary(t *testing.T) string {
 	if env.binaryPath != "" {
 		return env.binaryPath
 	}
 
-	// Find the vendetta source directory by walking up from test executable
+	// Find the mochi source directory by walking up from test executable
 	// until we find a directory containing go.mod
 	repoRoot := findRepoRoot(t)
 
-	binaryPath := filepath.Join(env.tempDir, "vendetta")
-	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/vendetta/main.go")
+	binaryPath := filepath.Join(env.tempDir, "mochi")
+	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/mochi/main.go")
 	cmd.Dir = repoRoot
 	require.NoError(t, cmd.Run())
 
@@ -120,8 +120,8 @@ func findRepoRoot(t *testing.T) string {
 	}
 }
 
-// RunvendettaCommand runs a vendetta command and returns the output
-func (env *TestEnvironment) RunvendettaCommand(t *testing.T, binaryPath, projectDir string, args ...string) string {
+// RunmochiCommand runs a mochi command and returns the output
+func (env *TestEnvironment) RunmochiCommand(t *testing.T, binaryPath, projectDir string, args ...string) string {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = projectDir
 
@@ -140,8 +140,8 @@ func (env *TestEnvironment) RunvendettaCommand(t *testing.T, binaryPath, project
 	return output
 }
 
-// RunvendettaCommandWithError runs a vendetta command and returns output and error
-func (env *TestEnvironment) RunvendettaCommandWithError(binaryPath, projectDir string, args ...string) (string, error) {
+// RunmochiCommandWithError runs a mochi command and returns output and error
+func (env *TestEnvironment) RunmochiCommandWithError(binaryPath, projectDir string, args ...string) (string, error) {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = projectDir
 

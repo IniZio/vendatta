@@ -71,12 +71,12 @@ if repo.Branch != "" {
 #### B002: `fetchPluginFiles` Hardcoded for Single Repo
 
 **Severity**: High  
-**Description**: The `fetchPluginFiles` method parses GitHub URLs but only returns files for `IniZio/vendetta`. For any other repository, it returns an error immediately after parsing, making the URL parsing logic dead code.
+**Description**: The `fetchPluginFiles` method parses GitHub URLs but only returns files for `IniZio/mochi`. For any other repository, it returns an error immediately after parsing, making the URL parsing logic dead code.
 
 **Current Behavior**:
 ```go
 // pkg/ctrl/ctrl.go:784-792
-if owner == "IniZio" && repo == "vendetta" {
+if owner == "IniZio" && repo == "mochi" {
     // ... returns hardcoded files
 }
 
@@ -239,7 +239,7 @@ func (m *Manager) loadExtends(_ string, extends []string, data *TemplateData) er
 **Impact**: Inefficiency, potential race conditions.
 
 **Proposed Fix**:
-1. Track downloaded repos in lockfile (`vendetta.lock`)
+1. Track downloaded repos in lockfile (`mochi.lock`)
 2. Check lockfile before cloning
 3. Use file modification times to detect updates
 

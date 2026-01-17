@@ -7,8 +7,8 @@ coverage*.out
 coverage.html
 # Dependencies
 node_modules/
-# vendetta artifacts
-.vendetta/worktrees/
+# mochi artifacts
+.mochi/worktrees/
 .cursor/
 .opencode/
 claude_desktop_config.json
@@ -23,7 +23,7 @@ opencode.json
 .DS_Store
 Thumbs.db
 AGENTS.md
-example/.vendetta/remotes/
+example/.mochi/remotes/
 # Session and temporary files
 .sisyphus/
 # Examples directory (separate git project)
@@ -44,4 +44,4 @@ FINAL_COMPLETION_GUIDE.md
 scripts/task_*.sh
 scripts/README_TASK_*.md
 # Temporary documentation
-vendetta-config-inizio-README.md
+mochi-config-inizio-README.md

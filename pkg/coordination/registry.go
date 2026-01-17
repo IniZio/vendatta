@@ -45,6 +45,7 @@ type HealthStatus struct {
 	LastCheck time.Time `json:"last_check"`
 	URL       string    `json:"url,omitempty"`
 }
+
 // User represents a user in the coordination system
 type User struct {
 	ID          string    `json:"id"`
@@ -54,7 +55,6 @@ type User struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
-
 
 // Command represents a command to be executed on a node
 type Command struct {
@@ -104,9 +104,9 @@ type UserRegistry interface {
 
 // InMemoryRegistry provides an in-memory implementation of Registry
 type InMemoryRegistry struct {
-	nodes       map[string]*Node
+	nodes        map[string]*Node
 	userRegistry UserRegistry
-	nodeMutex   sync.RWMutex
+	nodeMutex    sync.RWMutex
 }
 
 // NewInMemoryRegistry creates a new in-memory node registry
@@ -116,7 +116,6 @@ func NewInMemoryRegistry() *InMemoryRegistry {
 		userRegistry: NewInMemoryUserRegistry(),
 	}
 }
-
 
 func (r *InMemoryRegistry) Register(node *Node) error {
 	r.nodeMutex.Lock()
@@ -239,7 +238,6 @@ func (r *InMemoryRegistry) GetUserRegistry() UserRegistry {
 	return r.userRegistry
 }
 
-
 // InMemoryUserRegistry provides an in-memory implementation of UserRegistry
 type InMemoryUserRegistry struct {
 	users map[string]*User
@@ -321,8 +319,6 @@ func (r *InMemoryUserRegistry) Delete(username string) error {
 	return nil
 }
 
-
-
 // Server represents the coordination server
 type Server struct {
 	config    *Config
@@ -370,7 +366,6 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/api/v1/users", s.handleUsersRequest)
 	s.router.HandleFunc("/api/v1/users/", s.handleUserRequest)
 	s.router.HandleFunc("/api/v1/workspaces/", s.handleWorkspaceUsersRequest)
-
 
 	// Health and monitoring
 	s.router.HandleFunc("/health", s.handleHealth)

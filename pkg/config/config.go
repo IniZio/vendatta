@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/vibegear/vendetta/pkg/templates"
+	"github.com/nexus/nexus/pkg/templates"
 )
 
 type Service struct {
@@ -31,7 +31,7 @@ type Healthcheck struct {
 
 type Agent struct {
 	Name     string   `yaml:"name"`
-	Remote  Remote            `yaml:"remote,omitempty"`
+	Remote   Remote   `yaml:"remote,omitempty"`
 	Enabled  bool     `yaml:"enabled,omitempty"`
 	Rules    string   `yaml:"rules,omitempty"`
 	Skills   []string `yaml:"skills,omitempty"`
@@ -62,7 +62,7 @@ type Remote struct {
 
 type Config struct {
 	Name     string             `yaml:"name"`
-	Remote  Remote            `yaml:"remote,omitempty"`
+	Remote   Remote             `yaml:"remote,omitempty"`
 	Provider string             `yaml:"provider,omitempty"`
 	Services map[string]Service `yaml:"services"`
 	Extends  []interface{}      `yaml:"extends,omitempty"`
@@ -157,8 +157,8 @@ type RenderData struct {
 
 // GetMergedTemplates returns merged template data from all sources
 func (c *Config) GetMergedTemplates(baseDir string) (*templates.TemplateData, error) {
-	vendettaDir := filepath.Join(baseDir, ".vendetta")
-	manager := templates.NewManager(vendettaDir)
+	mochiDir := filepath.Join(baseDir, ".mochi")
+	manager := templates.NewManager(mochiDir)
 
 	var enabledPlugins []string
 	for _, p := range c.Plugins {
@@ -176,7 +176,7 @@ func (c *Config) GetMergedTemplates(baseDir string) (*templates.TemplateData, er
 		}
 	}
 
-	return manager.Merge(vendettaDir, enabledPlugins, extends)
+	return manager.Merge(mochiDir, enabledPlugins, extends)
 }
 
 func (c *Config) isPluginEnabled(baseDir, name string) bool {
@@ -205,24 +205,24 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		rulesDir     string
 	}{
 		"opencode": {
-			templatePath: ".vendetta/agents/opencode/opencode.json.tpl",
+			templatePath: ".nexus/agents/opencode/opencode.json.tpl",
 			outputPath:   "opencode.json",
 			gitignore:    "AGENTS.md",
 			rulesFormat:  "md",
 			rulesDir:     ".opencode/rules",
 		},
 		"claude-desktop": {
-			templatePath: ".vendetta/agents/claude-desktop/claude_desktop_config.json.tpl",
+			templatePath: ".nexus/agents/claude-desktop/claude_desktop_config.json.tpl",
 			outputPath:   "claude_desktop_config.json",
 			gitignore:    "claude_desktop_config.json",
 		},
 		"claude-code": {
-			templatePath: ".vendetta/agents/claude-code/claude_code_config.json.tpl",
+			templatePath: ".nexus/agents/claude-code/claude_code_config.json.tpl",
 			outputPath:   "claude_code_config.json",
 			gitignore:    "claude_code_config.json",
 		},
 		"codex": {
-			templatePath: ".vendetta/agents/codex/settings.json.tpl",
+			templatePath: ".nexus/agents/codex/settings.json.tpl",
 			outputPath:   ".vscode/settings.json",
 			gitignore:    ".vscode/",
 			rulesFormat:  "md",
@@ -344,7 +344,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			}
 
 			// Load agent-specific rules from override directory
-			agentOverrideDir := filepath.Join(".vendetta", "agents", agentName, "rules")
+			agentOverrideDir := filepath.Join(".mochi", "agents", agentName, "rules")
 			if _, err := os.Stat(agentOverrideDir); err == nil {
 				if err := filepath.Walk(agentOverrideDir, func(path string, info os.FileInfo, err error) error {
 					if err != nil {

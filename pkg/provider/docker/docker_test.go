@@ -15,11 +15,11 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
+	"github.com/nexus/nexus/pkg/config"
+	"github.com/nexus/nexus/pkg/provider"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vibegear/vendetta/pkg/config"
-	"github.com/vibegear/vendetta/pkg/provider"
 )
 
 // mockConn implements net.Conn for testing.
@@ -164,7 +164,7 @@ func TestDockerProvider_Create_Success(t *testing.T) {
 	assert.Equal(t, "container-123", session.ID)
 	assert.Equal(t, "docker", session.Provider)
 	assert.Equal(t, "created", session.Status)
-	assert.Contains(t, session.Labels, "vendetta.session.id")
+	assert.Contains(t, session.Labels, "nexus.session.id")
 }
 
 // TestDockerProvider_Create_WithServices tests container creation with services.
@@ -179,7 +179,7 @@ func TestDockerProvider_Create_WithServices(t *testing.T) {
 		// Verify service environment variables are set
 		found := false
 		for _, env := range config.Env {
-			if env == "vendetta_SERVICE_DB_URL=http://localhost:5432" {
+			if env == "loom_SERVICE_DB_URL=http://localhost:5432" {
 				found = true
 				break
 			}
@@ -505,7 +505,7 @@ func TestDockerProvider_List_Empty(t *testing.T) {
 	assert.Empty(t, sessions)
 }
 
-// TestDockerProvider_List_WithSessions tests listing with vendetta containers.
+// TestDockerProvider_List_WithSessions tests listing with mochi containers.
 func TestDockerProvider_List_WithSessions(t *testing.T) {
 	mock := &MockDockerClient{}
 
@@ -514,7 +514,7 @@ func TestDockerProvider_List_WithSessions(t *testing.T) {
 			{
 				ID:     "container-1",
 				Status: "running",
-				Labels: map[string]string{"vendetta.session.id": "session-1"},
+				Labels: map[string]string{"nexus.session.id": "session-1"},
 				Ports: []types.Port{
 					{PrivatePort: 22, PublicPort: 2222},
 					{PrivatePort: 5432, PublicPort: 5432},
@@ -523,7 +523,7 @@ func TestDockerProvider_List_WithSessions(t *testing.T) {
 			{
 				ID:     "container-2",
 				Status: "exited",
-				Labels: map[string]string{"vendetta.session.id": "session-2"},
+				Labels: map[string]string{"nexus.session.id": "session-2"},
 				Ports:  []types.Port{},
 			},
 		}, nil
@@ -546,8 +546,8 @@ func TestDockerProvider_List_WithSessions(t *testing.T) {
 	assert.Equal(t, 0, sessions[1].SSHPort)
 }
 
-// TestDockerProvider_List_NonvendettaContainers tests filtering non-vendetta containers.
-func TestDockerProvider_List_NonvendettaContainers(t *testing.T) {
+// TestDockerProvider_List_NonmochiContainers tests filtering non-mochi containers.
+func TestDockerProvider_List_NonmochiContainers(t *testing.T) {
 	mock := &MockDockerClient{}
 
 	mock.ContainerListFn = func(ctx context.Context, options container.ListOptions) ([]types.Container, error) {
@@ -558,9 +558,9 @@ func TestDockerProvider_List_NonvendettaContainers(t *testing.T) {
 				Labels: map[string]string{},
 			},
 			{
-				ID:     "vendetta-container",
+				ID:     "nexus-container",
 				Status: "running",
-				Labels: map[string]string{"vendetta.session.id": "session-1"},
+				Labels: map[string]string{"nexus.session.id": "session-1"},
 			},
 		}, nil
 	}
@@ -571,7 +571,7 @@ func TestDockerProvider_List_NonvendettaContainers(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, sessions, 1)
-	assert.Equal(t, "vendetta-container", sessions[0].ID)
+	assert.Equal(t, "nexus-container", sessions[0].ID)
 }
 
 // TestDockerProvider_List_Error tests error handling for list failures.
@@ -599,7 +599,7 @@ func TestDockerProvider_List_WithSSHPort(t *testing.T) {
 			{
 				ID:     "container-ssh",
 				Status: "running",
-				Labels: map[string]string{"vendetta.session.id": "session-ssh"},
+				Labels: map[string]string{"nexus.session.id": "session-ssh"},
 				Ports: []types.Port{
 					{PrivatePort: 22, PublicPort: 2222},
 				},
@@ -651,8 +651,8 @@ func TestSessionStruct(t *testing.T) {
 			"8080": 8080,
 		},
 		Labels: map[string]string{
-			"vendetta.session.id": "session-123",
-			"project":             "myproject",
+			"nexus.session.id": "session-123",
+			"project":          "myproject",
 		},
 	}
 

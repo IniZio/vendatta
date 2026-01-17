@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/vibegear/vendetta/pkg/coordination"
+	"github.com/nexus/nexus/pkg/coordination"
 )
 
 func main() {

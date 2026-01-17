@@ -8,22 +8,22 @@ Implement CLI commands for automatic SSH key generation and management to stream
 
 ## 🛠 Implementation Details
 
-### **CLI Commands** (`cmd/vendatta/user.go`)
-1. **vendatta user keygen**: Generate SSH key pair
+### **CLI Commands** (`cmd/mochi/user.go`)
+1. **mochi user keygen**: Generate SSH key pair
    - Options: --type (rsa, ed25519), --bits, --output-dir
-   - Automatic naming: id_ed25519_vendatta_{timestamp}
+   - Automatic naming: id_ed25519_mochi_{timestamp}
    - Secure permissions (600 for private key)
 
-2. **vendatta user register**: Register user with generated key
+2. **mochi user register**: Register user with generated key
    - Reads public key from standard location
    - Calls user registration API
    - Stores user ID and server connection info
 
-3. **vendatta user list-keys**: List user's SSH keys
+3. **mochi user list-keys**: List user's SSH keys
    - Shows key fingerprints and creation dates
    - Integration with coordination server
 
-4. **vendatta user key-rotate**: Rotate SSH keys
+4. **mochi user key-rotate**: Rotate SSH keys
    - Generates new key pair
    - Updates registration with new public key
    - Secure cleanup of old private keys

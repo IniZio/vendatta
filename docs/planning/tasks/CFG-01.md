@@ -10,39 +10,39 @@ Implement config pull and sync commands for sharing templates and configurations
 
 ### **Config Pull Command**
 ```bash
-vendetta config pull <url> [--branch=branch]
+mochi config pull <url> [--branch=branch]
 ```
 
 **Functionality:**
-- Clone remote Git repository into `.vendetta/remotes/`
+- Clone remote Git repository into `.mochi/remotes/`
 - Extract templates from repository
 - Merge with existing templates (remote overrides base)
 - Support branch specification for template versioning
 
 ### **Config Sync Commands**
 ```bash
-vendetta config sync <target>      # Sync to specific target
-vendetta config sync-all          # Sync to all configured targets
+mochi config sync <target>      # Sync to specific target
+mochi config sync-all          # Sync to all configured targets
 ```
 
 **Functionality:**
-- Read sync targets from `.vendetta/config.yaml`
-- Create filtered Git branch with only `.vendetta` directory
+- Read sync targets from `.mochi/config.yaml`
+- Create filtered Git branch with only `.mochi` directory
 - Push to remote repository
 - Clean up temporary branches
 
 ### **Configuration Schema**
 ```yaml
-# .vendetta/config.yaml
+# .mochi/config.yaml
 sync_targets:
   - name: "team-templates"
-    url: "https://github.com/company/vendetta-templates.git"
+    url: "https://github.com/company/mochi-templates.git"
   - name: "project-configs"
-    url: "https://github.com/project/vendetta-configs.git"
+    url: "https://github.com/project/mochi-configs.git"
 ```
 
 ### **Template Merging**
-- **Remote Ref Tracking**: Store latest commit SHA for each remote in `.vendetta/state.json`
+- **Remote Ref Tracking**: Store latest commit SHA for each remote in `.mochi/state.json`
 - **Fast-Forward Merging**: When remote has linear history from stored ref, prefer remote templates
 - **Conflict Resolution**: Use chezmoi-style interactive reconciliation for merge conflicts
 - **Precedence Order**: remote (fast-forward) > local modifications > base templates
@@ -64,24 +64,24 @@ sync_targets:
 ### **E2E Scenarios**
 ```bash
 # Test config pulling
-vendetta config pull https://github.com/company/templates.git --branch=main
+mochi config pull https://github.com/company/templates.git --branch=main
 
 # Verify templates merged
-ls .vendetta/templates/
+ls .mochi/templates/
 # Should contain both base and remote templates
 
 # Test config syncing
-cat > .vendetta/config.yaml << EOF
+cat > .mochi/config.yaml << EOF
 sync_targets:
   - name: test-sync
     url: https://github.com/test/repo.git
 EOF
 
 # Create some config
-echo "test config" > .vendetta/test.txt
+echo "test config" > .mochi/test.txt
 
-vendetta config sync test-sync
-# Verify: .vendetta directory pushed to remote repo
+mochi config sync test-sync
+# Verify: .mochi directory pushed to remote repo
 ```
 
 ## 📋 Implementation Steps

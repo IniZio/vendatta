@@ -1,8 +1,8 @@
-# vendetta
+# nexus
 
 **Isolated development environments with remote SSH access**
 
-Vendatta creates isolated development environments (Docker/LXC/QEMU) on a coordination server. Each workspace gets its own SSH access with your public key seeded, so you can SSH directly into your workspace from anywhere.
+Nexus creates isolated development environments (Docker/LXC/QEMU) on a coordination server. Each branch gets its own SSH access with your public key seeded, so you can SSH directly into your branch from anywhere.
 
 ## Architecture
 
@@ -11,36 +11,36 @@ Vendatta creates isolated development environments (Docker/LXC/QEMU) on a coordi
 │                  Coordination Server (Your Dev Host)             │
 │                                                                 │
 │  ┌───────────────────────────────────────────────────────────┐  │
-│  │  vendetta coordination start                              │  │
+│  │  nexus coordination start                               │  │
 │  │  - Runs on port 3001                                      │  │
-│  │  - Manages workspace lifecycle                            │  │
-│  │  - Maps SSH ports to workspaces                           │  │
+│  │  - Manages branch lifecycle                               │  │
+│  │  - Maps SSH ports to branches                             │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │                            │                                    │
 │                            ▼                                    │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │  Providers (Docker/LXC/QEMU)                              │  │
-│  │  - Spawn workspaces locally on this host                  │  │
-│  │  - Configure SSH with user's public key                   │  │
+│  │  - Spawn branches locally on this host                     │  │
+│  │  - Configure SSH with user's public key                    │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │                            │                                    │
 │            ┌───────────────┼───────────────┐                    │
 │            ▼               ▼               ▼                    │
 │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐           │
-│  │ Workspace 1 │   │ Workspace 2 │   │ Workspace 3 │           │
+│  │ Branch 1    │   │ Branch 2    │   │ Branch 3    │           │
 │  │ SSH: :2222  │   │ SSH: :2223  │   │ SSH: :2224  │           │
 │  │ User: alice │   │ User: bob   │   │ User: carol │           │
 │  └─────────────┘   └─────────────┘   └─────────────┘           │
 └─────────────────────────────────────────────────────────────────┘
-                            │
-                            │ SSH (your key grants access)
-                            ▼
-                  ┌─────────────────┐
-                  │  You (Anywhere) │
-                  │  SSH Client     │
-                  └─────────────────┘
+                             │
+                             │ SSH (your key grants access)
+                             ▼
+                   ┌─────────────────┐
+                   │  You (Anywhere) │
+                   │  SSH Client     │
+                   └─────────────────┘
 
-# Example: SSH into your workspace
+# Example: SSH into your branch
 ssh -p 2222 dev@your-server.com
 ```
 
@@ -49,18 +49,18 @@ ssh -p 2222 dev@your-server.com
 ### Step 1: Generate Your SSH Key
 
 ```bash
-# Generate an SSH key for vendetta (if you don't have one)
-vendetta ssh generate
+# Generate an SSH key for nexus (if you don't have one)
+nexus ssh generate
 
-# This creates ~/.ssh/id_ed25519_vendetta
+# This creates ~/.ssh/id_ed25519_nexus
 # Your public key will be displayed - share it with your admin
 ```
 
-### Step 2: Get Access to a Workspace
+### Step 2: Get Access to a Branch
 
 **Option A: Register with the coordination server (if enabled)**
 ```bash
-vendetta ssh register your-server.com:3001
+nexus ssh register your-server.com:3001
 ```
 
 **Option B: Share your public key with your administrator**
@@ -69,22 +69,22 @@ Your public key:
 ssh-ed25519 AAAA... your-email@example.com
 ```
 
-Your admin will add this key to your workspace and tell you:
+Your admin will add this key to your branch and tell you:
 - Server address (e.g., `dev.company.com`)
 - SSH port (e.g., `2222`)
 - Username (e.g., `alice`)
 
-### Step 3: Connect to Your Workspace
+### Step 3: Connect to Your Branch
 
 ```bash
 # Get connection info including deep links
-vendetta workspace connect my-feature
+nexus branch connect my-feature
 
 # Example output:
-# 🔗 Workspace Connection Info
+# 🔗 Branch Connection Info
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Workspace: my-feature
-# Path:      /home/user/my-app/.vendetta/worktrees/my-feature
+# Branch: my-feature
+# Path:      /home/user/my-app/.nexus/worktrees/my-feature
 #
 # 🐚 SSH Access:
 #   ssh -p 2222 alice@dev.company.com
@@ -121,10 +121,10 @@ ssh -p 2222 alice@dev.company.com
 
 ```bash
 # List all services and their URLs
-vendetta workspace services my-feature
+nexus branch services my-feature
 
 # Output:
-# 📦 Services for workspace 'my-feature'
+# 📦 Services for branch 'my-feature'
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Service     Port     Local Port  URL
 # web         3000     23000       http://localhost:23000
@@ -140,35 +140,35 @@ vendetta workspace services my-feature
 
 | Command | Description |
 |---------|-------------|
-| `vendetta ssh generate` | Generate SSH key for vendetta access |
-| `vendetta ssh register <server>` | Register your public key with coordination server |
-| `vendetta ssh info <workspace>` | Show connection info for a workspace |
+| `nexus ssh generate` | Generate SSH key for nexus access |
+| `nexus ssh register <server>` | Register your public key with coordination server |
+| `nexus ssh info <branch>` | Show connection info for a branch |
 
-### Workspace Management
+### Branch Management
 
 | Command | Description |
 |---------|-------------|
-| `vendetta workspace create <name>` | Create a new workspace |
-| `vendetta workspace up <name>` | Start a workspace |
-| `vendetta workspace down <name>` | Stop a workspace |
-| `vendetta workspace list` | List all workspaces |
-| `vendetta workspace rm <name>` | Remove a workspace |
-| `vendetta workspace connect <name>` | Show connection info and deep links |
-| `vendetta workspace services <name>` | List services and their URLs |
+| `nexus branch create <name>` | Create a new branch |
+| `nexus branch up <name>` | Start a branch |
+| `nexus branch down <name>` | Stop a branch |
+| `nexus branch list` | List all branches |
+| `nexus branch rm <name>` | Remove a branch |
+| `nexus branch connect <name>` | Show connection info and deep links |
+| `nexus branch services <name>` | List services and their URLs |
 
 ### Server Administration
 
 | Command | Description |
 |---------|-------------|
-| `vendetta coordination start` | Start the coordination server |
-| `vendetta coordination stop` | Stop the coordination server |
-| `vendetta coordination status` | Show server status |
+| `nexus coordination start` | Start the coordination server |
+| `nexus coordination stop` | Stop the coordination server |
+| `nexus coordination status` | Show server status |
 
 ---
 
 ## 🔧 Configuration
 
-### Server Configuration (`.vendetta/coordination.yaml`)
+### Server Configuration (`.nexus/coordination.yaml`)
 
 ```yaml
 server:
@@ -186,10 +186,10 @@ auth:
   jwt_secret: "your-secure-secret"
 ```
 
-### Workspace Configuration (`.vendetta/config.yaml`)
+### Branch Configuration (`.nexus/config.yaml`)
 
 ```yaml
-name: my-workspace
+name: my-branch
 provider: docker
 
 services:
@@ -218,7 +218,7 @@ curl -X POST http://localhost:3001/api/v1/users \
   -d '{
     "username": "alice",
     "public_key": "ssh-ed25519 AAAA... alice@example.com",
-    "workspace": "my-feature"
+    "branch": "my-feature"
   }'
 ```
 
@@ -234,8 +234,8 @@ curl http://localhost:3001/api/v1/users
 ## ✨ Features
 
 - **🔒 Isolated Environments**: Docker/LXC/QEMU containers and VMs
-- **🔑 SSH Key Authentication**: Users access workspaces via SSH with their keys
-- **🌐 Remote Access**: SSH to workspaces from anywhere
+- **🔑 SSH Key Authentication**: Users access branches via SSH with their keys
+- **🌐 Remote Access**: SSH to branches from anywhere
 - **💻 Editor Integration**: Deep links for VSCode and Cursor
 - **📦 Single Binary**: Zero dependencies on the coordination server
 - **🔌 Plugin System**: Extensible rules, skills, and commands

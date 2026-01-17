@@ -19,7 +19,7 @@ for name, svc := range cfg.Services {
         pStr := fmt.Sprintf("%d/tcp", svc.Port)
         if bindings, ok := json.NetworkSettings.Ports[nat.Port(pStr)]; ok && len(bindings) > 0 {
             url := fmt.Sprintf("http://localhost:%s", bindings[0].HostPort)
-            env = append(env, fmt.Sprintf("vendetta_SERVICE_%s_URL=%s", name, url))
+            env = append(env, fmt.Sprintf("mochi_SERVICE_%s_URL=%s", name, url))
         }
     }
 }
@@ -32,7 +32,7 @@ resp, err := p.cli.ContainerCreate(ctx, &container.Config{
     Image: imgName,
     Tty:   true,
     Labels: map[string]string{
-        "vendetta.session.id": sessionID,
+        "mochi.session.id": sessionID,
     },
     Cmd:          []string{"/bin/bash"},
     Env:          env,  // ✅ ADD THIS: Pass environment variables
@@ -51,11 +51,11 @@ resp, err := p.cli.ContainerCreate(ctx, &container.Config{
 - **Protocol Guessing**: postgres → `postgresql://`, web services → `http://`
 
 ### **Environment Variable Format**
-- **Pattern**: `vendetta_SERVICE_{SERVICE_NAME}_URL={PROTOCOL}://localhost:{PORT}`
+- **Pattern**: `mochi_SERVICE_{SERVICE_NAME}_URL={PROTOCOL}://localhost:{PORT}`
 - **Examples**:
-  - `vendetta_SERVICE_WEB_URL=http://localhost:3000`
-  - `vendetta_SERVICE_API_URL=http://localhost:8080`
-  - `vendetta_SERVICE_DB_URL=postgresql://localhost:5432`
+  - `mochi_SERVICE_WEB_URL=http://localhost:3000`
+  - `mochi_SERVICE_API_URL=http://localhost:8080`
+  - `mochi_SERVICE_DB_URL=postgresql://localhost:5432`
 - **Service Name**: Uppercased service key from config.yaml
 
 ## 🧪 Testing Requirements
@@ -68,16 +68,16 @@ resp, err := p.cli.ContainerCreate(ctx, &container.Config{
 
 ### **Integration Tests**
 - ✅ Container receives environment variables on creation
-- ✅ Variables accessible in container shell: `env | grep vendetta_SERVICE`
+- ✅ Variables accessible in container shell: `env | grep mochi_SERVICE`
 - ✅ Variables available in hook scripts during execution
 
 ### **E2E Scenarios**
 ```bash
 # Test service discovery
-vendetta workspace create discovery-test
+mochi workspace create discovery-test
 
 # Configure services with commands (ports auto-detected)
-cat > .vendetta/config.yaml << EOF
+cat > .mochi/config.yaml << EOF
 services:
   web:
     command: "cd client && npm run dev"
@@ -88,15 +88,15 @@ services:
 EOF
 
 # Start workspace - environment variables injected before services start
-vendetta workspace up discovery-test
+mochi workspace up discovery-test
 
 # Verify environment variables available in container
-vendetta workspace shell discovery-test
-env | grep vendetta_SERVICE
+mochi workspace shell discovery-test
+env | grep mochi_SERVICE
 # Expected output:
-# vendetta_SERVICE_WEB_URL=http://localhost:3000
-# vendetta_SERVICE_API_URL=http://localhost:8080
-# vendetta_SERVICE_DB_URL=postgresql://localhost:5432
+# mochi_SERVICE_WEB_URL=http://localhost:3000
+# mochi_SERVICE_API_URL=http://localhost:8080
+# mochi_SERVICE_DB_URL=postgresql://localhost:5432
 ```
 
 ## 📋 Implementation Steps
@@ -107,7 +107,7 @@ env | grep vendetta_SERVICE
 4. **Add Tests**: Create comprehensive tests for service discovery
 
 ## 🎯 Success Criteria
-- ✅ `vendetta_SERVICE_*_URL` variables available in running containers
+- ✅ `mochi_SERVICE_*_URL` variables available in running containers
 - ✅ Variables accessible in hook scripts
 - ✅ Multiple services work correctly
 - ✅ Existing E2E tests pass

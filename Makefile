@@ -1,11 +1,11 @@
-# vendetta - Development Environment Manager
+# mochi - Development Environment Manager
 # Makefile for development, testing, and CI workflows
 
 .PHONY: help build install clean test test-unit test-integration test-e2e test-all lint fmt fmt-check docker-build docker-push release
 
 # Default target
 help: ## Show this help message
-	@echo "vendetta Development Makefile"
+	@echo "mochi Development Makefile"
 	@echo ""
 	@echo "Development targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
@@ -27,20 +27,20 @@ BUILDDATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS := -X main.version=$(VERSION) -X main.buildDate=$(BUILDDATE)
 
 # Development
-build: ## Build vendetta binary
-	go build -ldflags "$(LDFLAGS)" -o bin/vendetta ./cmd/vendetta
+build: ## Build mochi binary
+	go build -ldflags "$(LDFLAGS)" -o bin/mochi ./cmd/mochi
 
-install: build ## Install vendetta to ~/.local/bin
-	cp bin/vendetta ~/.local/bin/vendetta
-	chmod +x ~/.local/bin/vendetta
+install: build ## Install mochi to ~/.local/bin
+	cp bin/mochi ~/.local/bin/mochi
+	chmod +x ~/.local/bin/mochi
 
 ci-build: ## Build for multiple platforms
 	mkdir -p dist
-	GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-linux-amd64 ./cmd/vendetta
-	GOOS=linux GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-linux-arm64 ./cmd/vendetta
-	GOOS=darwin GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-darwin-amd64 ./cmd/vendetta
-	GOOS=darwin GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-darwin-arm64 ./cmd/vendetta
-	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/vendetta-windows-amd64.exe ./cmd/vendetta
+	GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-linux-amd64 ./cmd/mochi
+	GOOS=linux GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-linux-arm64 ./cmd/mochi
+	GOOS=darwin GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-darwin-amd64 ./cmd/mochi
+	GOOS=darwin GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-darwin-arm64 ./cmd/mochi
+	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-windows-amd64.exe ./cmd/mochi
 
 ci-docker: docker-build docker-push ## Build and push Docker image
 

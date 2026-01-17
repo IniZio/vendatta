@@ -39,9 +39,9 @@ Implement deep link generation system for IDEs and editors to enable seamless co
 - IDE-specific configuration generation
 - Project structure analysis
 
-### **CLI Integration** (`cmd/vendatta/workspace.go`)
-- `vendatta workspace link --ide vscode`: Generate IDE-specific links
-- `vendatta workspace open --ide cursor`: Open workspace in specified IDE
+### **CLI Integration** (`cmd/mochi/workspace.go`)
+- `mochi workspace link --ide vscode`: Generate IDE-specific links
+- `mochi workspace open --ide cursor`: Open workspace in specified IDE
 - Link sharing and export functionality
 
 ## 🧪 Proof of Work

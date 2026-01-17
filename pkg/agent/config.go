@@ -25,7 +25,7 @@ func LoadConfig(path string) (NodeConfig, error) {
 	config.RetryPolicy.Backoff = time.Second
 	config.RetryPolicy.MaxBackoff = 30 * time.Second
 	config.OfflineMode = false
-	config.CacheDir = "/tmp/vendetta-agent"
+	config.CacheDir = "/tmp/nexus-agent"
 	config.LogLevel = "info"
 
 	// Load from file if exists
@@ -76,8 +76,8 @@ func SaveConfig(config NodeConfig, path string) error {
 // GetConfigPath returns the default agent config path
 func GetConfigPath() string {
 	if home, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(home, ".config", "vendetta", "agent.yaml")
+		return filepath.Join(home, ".config", "mochi", "agent.yaml")
 	}
 
-	return "/etc/vendetta/agent.yaml"
+	return "/etc/mochi/agent.yaml"
 }

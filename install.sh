@@ -2,7 +2,7 @@
 
 set -e
 
-REPO="IniZio/vendetta"
+REPO="IniZio/mochi"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 # Detect OS and architecture
@@ -36,7 +36,7 @@ detect_platform() {
             ;;
     esac
 
-    BINARY_NAME="vendetta-${OS}-${ARCH}"
+    BINARY_NAME="mochi-${OS}-${ARCH}"
     if [ "$OS" = "windows" ]; then
         BINARY_NAME="${BINARY_NAME}.exe"
     fi
@@ -59,21 +59,21 @@ install_binary() {
     echo "Downloading $BINARY_NAME from $DOWNLOAD_URL"
 
     if command -v curl >/dev/null 2>&1; then
-        curl -L -o "/tmp/vendetta" "$DOWNLOAD_URL"
+        curl -L -o "/tmp/mochi" "$DOWNLOAD_URL"
     elif command -v wget >/dev/null 2>&1; then
-        wget -O "/tmp/vendetta" "$DOWNLOAD_URL"
+        wget -O "/tmp/mochi" "$DOWNLOAD_URL"
     else
         echo "Neither curl nor wget found. Please install one of them."
         exit 1
     fi
 
-    chmod +x "/tmp/vendetta"
+    chmod +x "/tmp/mochi"
 
     mkdir -p "$INSTALL_DIR"
-    mv "/tmp/vendetta" "$INSTALL_DIR/vendetta"
+    mv "/tmp/mochi" "$INSTALL_DIR/mochi"
 
-    echo "Vendetta $TAG installed successfully to $INSTALL_DIR/vendetta"
-    echo "Run 'vendetta --help' to get started"
+    echo "Vendetta $TAG installed successfully to $INSTALL_DIR/mochi"
+    echo "Run 'mochi --help' to get started"
 }
 
 # Build and install from source with version info
@@ -81,7 +81,7 @@ install_from_source() {
     TAG=$1
     BINARY_NAME=$(detect_platform)
     
-    echo "Building vendetta from source..."
+    echo "Building mochi from source..."
     
     # Get version and date
     VERSION=${TAG#v}
@@ -100,28 +100,28 @@ install_from_source() {
     cd "$TEMP_DIR"
     
     # Clone if repo not present, otherwise use existing
-    if [ -d "/tmp/vendetta-repo" ]; then
-        cp -r /tmp/vendetta-repo/* .
+    if [ -d "/tmp/mochi-repo" ]; then
+        cp -r /tmp/mochi-repo/* .
     else
         git clone --depth 1 --branch "$TAG" "https://github.com/$REPO.git" .
     fi
     
     echo "Building for $GOOS/$GOARCH..."
-    GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "/tmp/vendetta" ./cmd/vendetta
+    GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "/tmp/mochi" ./cmd/mochi
     
     mkdir -p "$INSTALL_DIR"
-    mv "/tmp/vendetta" "$INSTALL_DIR/vendetta"
-    chmod +x "$INSTALL_DIR/vendetta"
+    mv "/tmp/mochi" "$INSTALL_DIR/mochi"
+    chmod +x "$INSTALL_DIR/mochi"
     
     cd - > /dev/null
     rm -rf "$TEMP_DIR"
     
-    echo "Vendetta $TAG installed successfully to $INSTALL_DIR/vendetta"
-    echo "Run 'vendetta --help' to get started"
+    echo "Vendetta $TAG installed successfully to $INSTALL_DIR/mochi"
+    echo "Run 'mochi --help' to get started"
 }
 
 main() {
-    echo "Installing vendetta..."
+    echo "Installing mochi..."
 
     TAG=$(get_latest_release)
     BINARY_NAME=$(detect_platform)

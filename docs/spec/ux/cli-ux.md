@@ -1,4 +1,4 @@
-# CLI UX Specification: Project vendetta
+# CLI UX Specification: Project mochi
 
 ## 1. Design Philosophy
 - **Speed**: Commands should provide immediate feedback (sub-second for information, clear progress for IO).
@@ -10,19 +10,19 @@
 
 | Command | Usage | Feedback Pattern |
 | :--- | :--- | :--- |
-| `init` | `vendetta init` | Interactive prompts + Success checklist. |
-| `workspace create <name>` | `vendetta workspace create <branch>` | Progress bars for worktree creation & config generation. |
-| `workspace up [name]` | `vendetta workspace up [branch]` | Starts container + runs hooks + port forwarding. Blocks for logs unless `-d`. |
-| `workspace shell [name]` | `vendetta workspace shell [branch]` | Opens interactive shell in workspace container. |
-| `workspace stop [name]` | `vendetta workspace stop [branch]` | Stops container but preserves state. |
-| `workspace down [name]` | `vendetta workspace down [branch]` | Stops and removes container/network. |
-| `workspace list` | `vendetta workspace list` | Tabular data with color-coded status (Active=Green, Stopped=Yellow). |
-| `workspace rm <name>` | `vendetta workspace rm <branch>` | Deletes worktree and associated resources. |
-| `config pull <url>` | `vendetta config pull <url>` [--branch=branch] | Pulls shared templates/capabilities from Git repo. |
-| `config sync <target>` | `vendetta config sync <target>` | Syncs .vendetta directory to configured remote target. |
-| `config sync-all` | `vendetta config sync-all` | Syncs .vendetta to all configured remote targets. |
-| `version update` | `vendetta version update` | Updates CLI binary to latest version. |
-| `internal mcp <id>` | `vendetta internal mcp <session-id>` | Hidden: MCP server for AI agent tool execution. |
+| `init` | `mochi init` | Interactive prompts + Success checklist. |
+| `workspace create <name>` | `mochi workspace create <branch>` | Progress bars for worktree creation & config generation. |
+| `workspace up [name]` | `mochi workspace up [branch]` | Starts container + runs hooks + port forwarding. Blocks for logs unless `-d`. |
+| `workspace shell [name]` | `mochi workspace shell [branch]` | Opens interactive shell in workspace container. |
+| `workspace stop [name]` | `mochi workspace stop [branch]` | Stops container but preserves state. |
+| `workspace down [name]` | `mochi workspace down [branch]` | Stops and removes container/network. |
+| `workspace list` | `mochi workspace list` | Tabular data with color-coded status (Active=Green, Stopped=Yellow). |
+| `workspace rm <name>` | `mochi workspace rm <branch>` | Deletes worktree and associated resources. |
+| `config pull <url>` | `mochi config pull <url>` [--branch=branch] | Pulls shared templates/capabilities from Git repo. |
+| `config sync <target>` | `mochi config sync <target>` | Syncs .mochi directory to configured remote target. |
+| `config sync-all` | `mochi config sync-all` | Syncs .mochi to all configured remote targets. |
+| `version update` | `mochi version update` | Updates CLI binary to latest version. |
+| `internal mcp <id>` | `mochi internal mcp <session-id>` | Hidden: MCP server for AI agent tool execution. |
 
 ## 3. Command Groups
 
@@ -83,7 +83,7 @@ Solution: Add this directory to Docker Desktop > Settings > Resources > File Sha
 - Shared templates ensure consistency across agents
 
 ### **MCP Gateway**
-- `vendetta agent <session-id>` starts the MCP server for the session
+- `mochi agent <session-id>` starts the MCP server for the session
 - Robust connection handling with automatic recovery
 - Secure tool execution within isolated environments
 

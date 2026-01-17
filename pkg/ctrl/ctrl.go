@@ -13,11 +13,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/vibegear/vendetta/pkg/config"
-	"github.com/vibegear/vendetta/pkg/lock"
-	"github.com/vibegear/vendetta/pkg/provider"
-	"github.com/vibegear/vendetta/pkg/templates"
-	"github.com/vibegear/vendetta/pkg/worktree"
+	"github.com/nexus/nexus/pkg/config"
+	"github.com/nexus/nexus/pkg/lock"
+	"github.com/nexus/nexus/pkg/provider"
+	"github.com/nexus/nexus/pkg/templates"
+	"github.com/nexus/nexus/pkg/worktree"
 )
 
 // PortMapping represents a service port mapping for a workspace
@@ -60,7 +60,7 @@ func NewBaseController(providers []provider.Provider, wtManager worktree.Manager
 		pMap[p.Name()] = p
 	}
 	if wtManager == nil {
-		wtManager = worktree.NewManager(".", ".vendetta/worktrees")
+		wtManager = worktree.NewManager(".", ".nexus/worktrees")
 	}
 	return &BaseController{
 		Providers:       pMap,
@@ -84,7 +84,7 @@ func (c *BaseController) WorkspaceCreate(_ context.Context, name string) error {
 		root = "."
 	}
 
-	worktreesDir := filepath.Join(root, ".vendetta/worktrees")
+	worktreesDir := filepath.Join(root, ".nexus/worktrees")
 	if _, err := os.Stat(filepath.Join(worktreesDir, name)); err == nil {
 		return fmt.Errorf("workspace '%s' already exists", name)
 	}
@@ -94,7 +94,7 @@ func (c *BaseController) WorkspaceCreate(_ context.Context, name string) error {
 		return fmt.Errorf("failed to create worktree: %w", err)
 	}
 
-	cfg, err := config.LoadConfig(filepath.Join(root, ".vendetta/config.yaml"))
+	cfg, err := config.LoadConfig(filepath.Join(root, ".nexus/config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -108,19 +108,19 @@ func (c *BaseController) WorkspaceCreate(_ context.Context, name string) error {
 		return fmt.Errorf("failed to generate agent configs: %w", err)
 	}
 
-	fmt.Printf("✅ Workspace created at .vendetta/worktrees/%s/\n", name)
+	fmt.Printf("✅ Workspace created at .nexus/worktrees/%s/\n", name)
 	return nil
 }
 
 func (c *BaseController) WorkspaceUp(ctx context.Context, name string) error {
 	fmt.Printf("🚀 Starting workspace '%s'...\n", name)
 
-	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	cfg, err := config.LoadConfig(".nexus/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	workspacePath, err := filepath.Abs(filepath.Join(".vendetta/worktrees", name))
+	workspacePath, err := filepath.Abs(filepath.Join(".nexus/worktrees", name))
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path for workspace: %w", err)
 	}
@@ -158,7 +158,7 @@ func (c *BaseController) WorkspaceUp(ctx context.Context, name string) error {
 
 	fmt.Println("▶️  Starting session...")
 
-	hookPath := filepath.Join(workspacePath, ".vendetta/hooks/up.sh")
+	hookPath := filepath.Join(workspacePath, ".nexus/hooks/up.sh")
 	if _, err := os.Stat(hookPath); err == nil {
 		fmt.Printf("🔧 Running setup hook: %s\n", hookPath)
 		if err := c.runHook(ctx, hookPath, cfg, workspacePath); err != nil {
@@ -177,7 +177,7 @@ func (c *BaseController) WorkspaceUp(ctx context.Context, name string) error {
 func (c *BaseController) WorkspaceDown(ctx context.Context, name string) error {
 	fmt.Printf("🛑 Stopping workspace '%s'...\n", name)
 
-	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	cfg, err := config.LoadConfig(".nexus/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -187,7 +187,7 @@ func (c *BaseController) WorkspaceDown(ctx context.Context, name string) error {
 	for _, p := range c.Providers {
 		sessions, _ := p.List(ctx)
 		for _, s := range sessions {
-			if s.Labels["vendetta.session.id"] == sessionID {
+			if s.Labels["nexus.session.id"] == sessionID {
 				if err := p.Destroy(ctx, s.ID); err != nil {
 					return fmt.Errorf("failed to stop session: %w", err)
 				}
@@ -207,7 +207,7 @@ func (c *BaseController) WorkspaceDown(ctx context.Context, name string) error {
 func (c *BaseController) WorkspaceShell(ctx context.Context, name string) error {
 	fmt.Printf("🐚 Opening shell in workspace '%s'...\n", name)
 
-	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	cfg, err := config.LoadConfig(".nexus/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -216,7 +216,7 @@ func (c *BaseController) WorkspaceShell(ctx context.Context, name string) error 
 	for _, p := range c.Providers {
 		sessions, _ := p.List(ctx)
 		for _, s := range sessions {
-			if s.Labels["vendetta.session.id"] == sessionID {
+			if s.Labels["nexus.session.id"] == sessionID {
 				return p.Exec(ctx, s.ID, provider.ExecOptions{
 					Cmd:    []string{"/bin/bash"},
 					Stdout: true,
@@ -230,14 +230,14 @@ func (c *BaseController) WorkspaceShell(ctx context.Context, name string) error 
 func (c *BaseController) WorkspaceList(ctx context.Context) error {
 	fmt.Println("📋 Active workspaces:")
 
-	worktreesDir := ".vendetta/worktrees"
+	worktreesDir := ".nexus/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		fmt.Println("  No active workspaces")
 		return nil
 	}
 
-	cfg, _ := config.LoadConfig(".vendetta/config.yaml")
+	cfg, _ := config.LoadConfig(".nexus/config.yaml")
 
 	found := false
 	for _, entry := range entries {
@@ -251,7 +251,7 @@ func (c *BaseController) WorkspaceList(ctx context.Context) error {
 				for _, p := range c.Providers {
 					sessions, _ := p.List(ctx)
 					for _, s := range sessions {
-						if s.Labels["vendetta.session.id"] == sessionID {
+						if s.Labels["nexus.session.id"] == sessionID {
 							status = "running"
 							var portList []string
 							for pPort, hPort := range s.Services {
@@ -288,7 +288,7 @@ func (c *BaseController) WorkspaceRm(_ context.Context, name string) error {
 }
 
 func (c *BaseController) WorkspaceServices(ctx context.Context, name string) ([]PortMapping, error) {
-	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	cfg, err := config.LoadConfig(".nexus/config.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
@@ -299,7 +299,7 @@ func (c *BaseController) WorkspaceServices(ctx context.Context, name string) ([]
 	for _, p := range c.Providers {
 		sessions, _ := p.List(ctx)
 		for _, s := range sessions {
-			if s.Labels["vendetta.session.id"] == sessionID {
+			if s.Labels["nexus.session.id"] == sessionID {
 				for serviceName, port := range s.Services {
 					services = append(services, PortMapping{
 						WorkspaceID: name,
@@ -318,13 +318,13 @@ func (c *BaseController) WorkspaceServices(ctx context.Context, name string) ([]
 }
 
 func (c *BaseController) WorkspaceConnect(ctx context.Context, name string) error {
-	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	cfg, err := config.LoadConfig(".nexus/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	sessionID := fmt.Sprintf("%s-%s", cfg.Name, name)
-	workspacePath, _ := filepath.Abs(filepath.Join(".vendetta/worktrees", name))
+	workspacePath, _ := filepath.Abs(filepath.Join(".nexus/worktrees", name))
 
 	fmt.Println("🔗 Workspace Connection Info")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -336,7 +336,7 @@ func (c *BaseController) WorkspaceConnect(ctx context.Context, name string) erro
 	for _, p := range c.Providers {
 		sessions, _ := p.List(ctx)
 		for _, s := range sessions {
-			if s.Labels["vendetta.session.id"] == sessionID {
+			if s.Labels["nexus.session.id"] == sessionID {
 				sshPort := 22
 				for _, port := range s.Services {
 					sshPort = port
@@ -365,22 +365,22 @@ func (c *BaseController) WorkspaceConnect(ctx context.Context, name string) erro
 	fmt.Println("  ssh -p <port> dev@localhost")
 	fmt.Println("")
 	fmt.Println("💡 Workspace is not running. Start it with:")
-	fmt.Printf("  vendetta workspace up %s\n", name)
+	fmt.Printf("  mochi workspace up %s\n", name)
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	return nil
 }
 
 func (c *BaseController) Init(_ context.Context) error {
 	dirs := []string{
-		".vendetta/hooks",
-		".vendetta/worktrees",
-		".vendetta/agents/rules",
-		".vendetta/agents/skills",
-		".vendetta/agents/commands",
-		".vendetta/templates/skills",
-		".vendetta/templates/rules",
-		".vendetta/templates/commands",
-		".vendetta/remotes",
+		".nexus/hooks",
+		".nexus/worktrees",
+		".nexus/agents/rules",
+		".nexus/agents/skills",
+		".nexus/agents/commands",
+		".nexus/templates/skills",
+		".nexus/templates/rules",
+		".nexus/templates/commands",
+		".nexus/remotes",
 	}
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
@@ -391,7 +391,7 @@ func (c *BaseController) Init(_ context.Context) error {
 	configYaml := `name: my-project
 provider: docker
 extends:
-  - inizio/vendetta-config-inizio
+  - inizio/%s-config-inizio
 plugins:
   - golang
   - node
@@ -402,13 +402,13 @@ docker:
   image: ubuntu:22.04
   dind: true
 hooks:
-  setup: .vendetta/hooks/up.sh
+  setup: .nexus/hooks/up.sh
 `
-	if err := os.WriteFile(".vendetta/config.yaml", []byte(configYaml), 0644); err != nil {
+	if err := os.WriteFile(".nexus/config.yaml", []byte(configYaml), 0644); err != nil {
 		return err
 	}
 
-	vendettaAgentRule := `# vendetta Agent Rules
+	mochiAgentRule := `# mochi Agent Rules
 
 ## Core Principles
 - Work in isolated environments to ensure reproducibility
@@ -417,18 +417,18 @@ hooks:
 - Follow established patterns in the codebase
 
 ## Development Workflow
-1. Create a workspace for each feature branch: 'vendetta workspace create <branch-name>'
-2. Start the workspace: 'vendetta workspace up <branch-name>'
+1. Create a workspace for each feature branch: 'mochi workspace create <branch-name>'
+2. Start the workspace: 'mochi workspace up <branch-name>'
 3. Work in the isolated environment with full AI agent support
 4. Commit changes and merge when ready
-5. Clean up: 'vendetta workspace down <branch-name>' and 'vendetta workspace rm <branch-name>'
+5. Clean up: 'mochi workspace down <branch-name>' and 'mochi workspace rm <branch-name>'
 
 ## AI Agent Integration
 - Cursor, OpenCode, Claude, and other agents are auto-configured
 - MCP server provides context and capabilities
 - Rules and skills are automatically loaded from templates
 `
-	if err := os.WriteFile(".vendetta/templates/rules/vendetta-agent.md", []byte(vendettaAgentRule), 0644); err != nil {
+	if err := os.WriteFile(".nexus/templates/rules/nexus-agent.md", []byte(mochiAgentRule), 0644); err != nil {
 		return err
 	}
 
@@ -452,13 +452,13 @@ hooks:
 - Provides safety net for refactoring
 - Documents expected behavior through tests
 `
-	if err := os.WriteFile(".vendetta/templates/rules/tdd.md", []byte(tddRule), 0644); err != nil {
+	if err := os.WriteFile(".nexus/templates/rules/tdd.md", []byte(tddRule), 0644); err != nil {
 		return err
 	}
 
 	// Create local skills
-	vendettaOpsSkill := `name: vendetta-ops
-description: vendetta workspace management operations
+	mochiOpsSkill := `name: %s-ops
+description: mochi workspace management operations
 capabilities:
   - workspace_create: Create new isolated workspaces
   - workspace_up: Start workspace environment
@@ -482,7 +482,7 @@ parameters:
     description: Git branch for workspace creation
     required: false
 `
-	if err := os.WriteFile(".vendetta/templates/skills/vendetta-ops.yaml", []byte(vendettaOpsSkill), 0644); err != nil {
+	if err := os.WriteFile(".nexus/templates/skills/%s-ops.yaml", []byte(mochiOpsSkill), 0644); err != nil {
 		return err
 	}
 
@@ -512,7 +512,7 @@ echo "Services starting... PIDs: API($API_PID), WEB($WEB_PID)"
 echo "Development environment ready."
 wait
 `
-	if err := os.WriteFile(".vendetta/hooks/up.sh", []byte(upSh), 0755); err != nil {
+	if err := os.WriteFile(".nexus/hooks/up.sh", []byte(upSh), 0755); err != nil {
 		return err
 	}
 
@@ -520,16 +520,16 @@ wait
 - Follow existing code patterns.
 - Ensure type safety.
 `
-	if err := os.WriteFile(".vendetta/agents/rules/base.md", []byte(baseRule), 0644); err != nil {
+	if err := os.WriteFile(".nexus/agents/rules/base.md", []byte(baseRule), 0644); err != nil {
 		return err
 	}
 
 	agentDirs := []string{
-		".vendetta/agents/cursor",
-		".vendetta/agents/opencode",
-		".vendetta/agents/claude-desktop",
-		".vendetta/agents/claude-code",
-		".vendetta/agents/codex",
+		".nexus/agents/cursor",
+		".nexus/agents/opencode",
+		".nexus/agents/claude-desktop",
+		".nexus/agents/claude-code",
+		".nexus/agents/codex",
 	}
 	for _, dir := range agentDirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
@@ -564,7 +564,7 @@ wait
   }
 }
 `
-	if err := os.WriteFile(".vendetta/agents/codex/settings.json.tpl", []byte(codexTpl), 0644); err != nil {
+	if err := os.WriteFile(".nexus/agents/codex/settings.json.tpl", []byte(codexTpl), 0644); err != nil {
 		return err
 	}
 
@@ -578,33 +578,33 @@ wait
   ]
 }
 `
-	if err := os.WriteFile(".vendetta/agents/opencode/opencode.json.tpl", []byte(opencodeTpl), 0644); err != nil {
+	if err := os.WriteFile(".nexus/agents/opencode/opencode.json.tpl", []byte(opencodeTpl), 0644); err != nil {
 		return err
 	}
 
 	claudeDesktopTpl := `{
   "mcpServers": {
-    "vendetta": {
+    "mochi": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-everything", "{{.ProjectName}}"]
     }
   }
 }
 `
-	if err := os.WriteFile(".vendetta/agents/claude-desktop/claude_desktop_config.json.tpl", []byte(claudeDesktopTpl), 0644); err != nil {
+	if err := os.WriteFile(".nexus/agents/claude-desktop/claude_desktop_config.json.tpl", []byte(claudeDesktopTpl), 0644); err != nil {
 		return err
 	}
 
 	claudeCodeTpl := `{
   "mcpServers": {
-    "vendetta": {
+    "mochi": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-everything", "{{.ProjectName}}"]
     }
   }
 }
 `
-	if err := os.WriteFile(".vendetta/agents/claude-code/claude_code_config.json.tpl", []byte(claudeCodeTpl), 0644); err != nil {
+	if err := os.WriteFile(".nexus/agents/claude-code/claude_code_config.json.tpl", []byte(claudeCodeTpl), 0644); err != nil {
 		return err
 	}
 
@@ -614,14 +614,14 @@ wait
 func (c *BaseController) Apply(ctx context.Context) error {
 	fmt.Println("🔄 Applying latest configuration to agent configs...")
 
-	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	cfg, err := config.LoadConfig(".nexus/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	agents := config.DetectInstalledAgents()
 	if len(agents) == 0 {
-		fmt.Println("⚠️  No AI agents detected. Install Cursor, OpenCode, or Claude to use vendetta.")
+		fmt.Println("⚠️  No AI agents detected. Install Cursor, OpenCode, or Claude to use mochi.")
 		return nil
 	}
 
@@ -682,7 +682,7 @@ func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
 		_ = c.createCursorRules(cursorDir)
 	}
 
-	worktreesDir := ".vendetta/worktrees"
+	worktreesDir := ".nexus/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		return nil
@@ -706,14 +706,14 @@ func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
 }
 
 func (c *BaseController) createCursorRules(cursorDir string) error {
-	rulesDir := filepath.Join(cursorDir, "rules", "vibegear")
+	rulesDir := filepath.Join(cursorDir, "rules", "mochi")
 	if err := os.MkdirAll(rulesDir, 0755); err != nil {
 		return err
 	}
 
 	rules := map[string]string{
-		"code-quality.md": "# Code Quality Standards\n\nThis rule defines coding standards from the vibegear/standard plugin.",
-		"security.md":     "# Security Guidelines\n\nThis rule defines security guidelines from the vibegear/standard plugin.",
+		"code-quality.md": "# Code Quality Standards\n\nThis rule defines coding standards from the mochi/standard plugin.",
+		"security.md":     "# Security Guidelines\n\nThis rule defines security guidelines from the mochi/standard plugin.",
 	}
 
 	for filename, content := range rules {
@@ -746,7 +746,7 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 		fmt.Printf("⚠️  Warning: failed to write opencode.json: %v\n", err)
 	}
 
-	worktreesDir := ".vendetta/worktrees"
+	worktreesDir := ".nexus/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		return nil
@@ -771,9 +771,9 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) error {
 	// Copy capabilities from project templates to .opencode directory
 	dirMappings := map[string]string{
-		filepath.Join(".opencode", "rules", "vibegear"):    ".vendetta/templates/rules",
-		filepath.Join(".opencode", "skills", "vibegear"):   ".vendetta/templates/skills",
-		filepath.Join(".opencode", "commands", "vibegear"): ".vendetta/templates/commands",
+		filepath.Join(".opencode", "rules", "mochi"):    ".nexus/templates/rules",
+		filepath.Join(".opencode", "skills", "mochi"):   ".nexus/templates/skills",
+		filepath.Join(".opencode", "commands", "mochi"): ".nexus/templates/commands",
 	}
 
 	// Create render data for template variables
@@ -817,12 +817,12 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) er
 }
 
 func (c *BaseController) downloadPluginCapabilities(plugin config.TemplateRepo, baseDir string) error {
-	pluginName := "vibegear"
+	pluginName := "mochi"
 
 	dirMappings := map[string]string{
-		filepath.Join(baseDir, "rules"):    ".vendetta/templates/rules",
-		filepath.Join(baseDir, "skills"):   ".vendetta/templates/skills",
-		filepath.Join(baseDir, "commands"): ".vendetta/templates/commands",
+		filepath.Join(baseDir, "rules"):    ".nexus/templates/rules",
+		filepath.Join(baseDir, "skills"):   ".nexus/templates/skills",
+		filepath.Join(baseDir, "commands"): ".nexus/templates/commands",
 	}
 
 	for localDir, repoPath := range dirMappings {
@@ -862,7 +862,7 @@ func (c *BaseController) fetchPluginFiles(repoURL, repoPath, branch string) ([]G
 	}
 
 	// Clone the repository to a temporary directory
-	tmpDir, err := os.MkdirTemp("", "vendetta-plugin-*")
+	tmpDir, err := os.MkdirTemp("", "nexus-plugin-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
@@ -968,12 +968,12 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCodeWorktree(cfg *config.Co
 	}
 
 	for _, baseDir := range baseDirs {
-		worktreePluginDir := filepath.Join(worktreePath, ".opencode", baseDir, "vibegear")
+		worktreePluginDir := filepath.Join(worktreePath, ".opencode", baseDir, "mochi")
 		if err := os.MkdirAll(worktreePluginDir, 0755); err != nil {
 			continue
 		}
 
-		projectPluginDir := filepath.Join(".opencode", baseDir, "vibegear")
+		projectPluginDir := filepath.Join(".opencode", baseDir, "mochi")
 		entries, err := os.ReadDir(projectPluginDir)
 		if err != nil {
 			continue
@@ -1014,7 +1014,7 @@ func (c *BaseController) generateClaudeDesktopConfig(cfg *config.Config) error {
 		fmt.Printf("⚠️  Warning: failed to write claude_desktop_config.json: %v\n", err)
 	}
 
-	worktreesDir := ".vendetta/worktrees"
+	worktreesDir := ".nexus/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		return nil
@@ -1049,7 +1049,7 @@ func (c *BaseController) generateClaudeCodeConfig(cfg *config.Config) error {
 		fmt.Printf("⚠️  Warning: failed to write claude_code_config.json: %v\n", err)
 	}
 
-	worktreesDir := ".vendetta/worktrees"
+	worktreesDir := ".nexus/worktrees"
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		return nil
@@ -1128,13 +1128,13 @@ func (c *BaseController) PluginUpdate(ctx context.Context) error {
 		Version: "1.0",
 		Plugins: make(map[string]*lock.LockEntry),
 		Metadata: lock.LockMetadata{
-			Generator: "vendetta",
+			Generator: "mochi",
 			Extra:     make(map[string]string),
 		},
 	}
 
-	vendettaDir := ".vendetta"
-	remotesDir := filepath.Join(vendettaDir, "remotes")
+	mochiDir := ".mochi"
+	remotesDir := filepath.Join(mochiDir, "remotes")
 	entries, err := os.ReadDir(remotesDir)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to read remotes dir: %w", err)
@@ -1183,14 +1183,14 @@ func (c *BaseController) PluginUpdate(ctx context.Context) error {
 			return fmt.Errorf("failed to save lockfile: %w", err)
 		}
 
-		fmt.Println("✅ Updated vendetta.lock")
+		fmt.Println("✅ Updated mochi.lock")
 	}
 
 	fmt.Println("✅ All plugins updated successfully")
 
 	// TODO: Implement lockfile generation
 
-	fmt.Println("✅ Updated vendetta.lock")
+	fmt.Println("✅ Updated mochi.lock")
 	fmt.Println("✅ All plugins updated successfully")
 
 	return nil
@@ -1199,7 +1199,7 @@ func (c *BaseController) PluginUpdate(ctx context.Context) error {
 func (c *BaseController) PluginList(ctx context.Context) error {
 	fmt.Println("📦 Loaded remote templates:")
 
-	cfg, err := config.LoadConfig(".vendetta/config.yaml")
+	cfg, err := config.LoadConfig(".nexus/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -1231,7 +1231,7 @@ func (c *BaseController) Kill(ctx context.Context, sessionID string) error {
 	for _, p := range c.Providers {
 		sessions, _ := p.List(ctx)
 		for _, s := range sessions {
-			if s.ID == sessionID || s.Labels["vendetta.session.id"] == sessionID {
+			if s.ID == sessionID || s.Labels["nexus.session.id"] == sessionID {
 				return p.Destroy(ctx, s.ID)
 			}
 		}
@@ -1255,7 +1255,7 @@ func (c *BaseController) Exec(ctx context.Context, sessionID string, cmd []strin
 	for _, p := range c.Providers {
 		sessions, _ := p.List(ctx)
 		for _, s := range sessions {
-			if s.ID == sessionID || s.Labels["vendetta.session.id"] == sessionID {
+			if s.ID == sessionID || s.Labels["nexus.session.id"] == sessionID {
 				return p.Exec(ctx, s.ID, provider.ExecOptions{
 					Cmd:    cmd,
 					Stdout: true,
@@ -1332,12 +1332,12 @@ func (c *BaseController) findProjectRoot() (string, error) {
 		return "", err
 	}
 	for {
-		if _, err := os.Stat(filepath.Join(curr, ".vendetta")); err == nil {
+		if _, err := os.Stat(filepath.Join(curr, ".mochi")); err == nil {
 			return curr, nil
 		}
 		parent := filepath.Dir(curr)
 		if parent == curr {
-			return "", fmt.Errorf("could not find project root (no .vendetta directory)")
+			return "", fmt.Errorf("could not find project root (no .mochi directory)")
 		}
 		curr = parent
 	}
@@ -1352,7 +1352,7 @@ func (c *BaseController) detectWorkspaceFromCWD() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	rel, err := filepath.Rel(filepath.Join(root, ".vendetta/worktrees"), curr)
+	rel, err := filepath.Rel(filepath.Join(root, ".nexus/worktrees"), curr)
 	if err != nil {
 		return "", err
 	}
@@ -1378,7 +1378,7 @@ func (c *BaseController) runHook(ctx context.Context, hookPath string, cfg *conf
 		if port > 0 {
 			protocol := detectProtocol(name, svc.Command)
 			url := fmt.Sprintf("%s://localhost:%d", protocol, port)
-			envLines = append(envLines, fmt.Sprintf("vendetta_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
+			envLines = append(envLines, fmt.Sprintf("loom_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
 	if err := os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644); err != nil {
@@ -1390,7 +1390,7 @@ func (c *BaseController) runHook(ctx context.Context, hookPath string, cfg *conf
 	cmd := exec.CommandContext(ctx, "bash", absHookPath)
 	cmd.Dir = workspacePath
 	cmd.Env = append(os.Environ(), envLines...)
-	cmd.Env = append(cmd.Env, "WORKSPACE_NAME="+filepath.Base(workspacePath))
+	cmd.Env = append(cmd.Env, "BRANCH_NAME="+filepath.Base(workspacePath))
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -1430,7 +1430,7 @@ func (c *BaseController) setupWorkspaceEnvironment(ctx context.Context, session 
 			}
 			protocol := detectProtocol(name, svc.Command)
 			url := fmt.Sprintf("%s://localhost:%d", protocol, externalPort)
-			envLines = append(envLines, fmt.Sprintf("vendetta_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
+			envLines = append(envLines, fmt.Sprintf("loom_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
 	if err := os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644); err != nil {

@@ -7,10 +7,10 @@ echo "=== M3 Implementation End-to-End Verification ==="
 echo "Testing against specification: provider-agnostic remote nodes with coordination server"
 echo ""
 
-# Build vendetta
-echo "🔨 Building vendetta..."
-cd /home/newman/magic/vibegear
-go build -o bin/vendetta ./cmd/vendetta/
+# Build mochi
+echo "🔨 Building mochi..."
+cd /home/newman/magic/mochi
+go build -o bin/mochi ./cmd/mochi/
 
 # Create test environment
 TEST_DIR="/tmp/m3-verification-$(date +%s)"
@@ -31,13 +31,13 @@ git commit -m "Initial commit"
 # Test 1: Basic functionality
 echo ""
 echo "🧪 Test 1: Basic Initialization"
-/home/newman/magic/vibegear/bin/vendetta init
+/home/newman/magic/mochi/bin/mochi init
 echo "✅ Basic initialization works"
 
 # Test 2: Remote Configuration Support
 echo ""
 echo "🧪 Test 2: Remote Configuration Support"
-cat > .vendetta/config.yaml << 'EOF'
+cat > .mochi/config.yaml << 'EOF'
 name: m3-verification-test
 provider: qemu
 remote:
@@ -64,7 +64,7 @@ echo "✅ Remote configuration file created"
 # Test 3: Configuration Parsing
 echo ""
 echo "🧪 Test 3: Configuration Parsing"
-if grep -q "remote:" .vendetta/config.yaml; then
+if grep -q "remote:" .mochi/config.yaml; then
     echo "✅ Remote configuration structure parsed"
 else
     echo "❌ Remote configuration parsing failed"
@@ -73,8 +73,8 @@ fi
 # Test 4: Workspace Creation with Remote Config
 echo ""
 echo "🧪 Test 4: Workspace Creation with Remote Config"
-/home/newman/magic/vibegear/bin/vendetta workspace create remote-test
-if [ -d ".vendetta/worktrees/remote-test" ]; then
+/home/newman/magic/mochi/bin/mochi workspace create remote-test
+if [ -d ".mochi/worktrees/remote-test" ]; then
     echo "✅ Workspace created with remote configuration"
 else
     echo "❌ Workspace creation failed"
@@ -83,10 +83,10 @@ fi
 # Test 5: QEMU Provider Local Support
 echo ""
 echo "🧪 Test 5: QEMU Provider Local Support (QEMU should work without remote node)"
-cd .vendetta/worktrees/remote-test
+cd .mochi/worktrees/remote-test
 
 # Create local config for QEMU test
-cat > .vendetta/config.yaml << 'EOF'
+cat > .mochi/config.yaml << 'EOF'
 name: m3-local-qemu-test
 provider: qemu
 services:
@@ -107,7 +107,7 @@ cd ../..
 if command -v qemu-system-x86_64 >/dev/null 2>&1; then
     echo "✅ QEMU provider available for local testing"
     # Try to start QEMU workspace (will likely fail without proper image but tests provider init)
-    /home/newman/magic/vibegear/bin/vendetta workspace up remote-test 2>/dev/null || echo "⚠️  QEMU startup requires proper image setup"
+    /home/newman/magic/mochi/bin/mochi workspace up remote-test 2>/dev/null || echo "⚠️  QEMU startup requires proper image setup"
 else
     echo "⚠️  QEMU not available - skipping provider test"
 fi
@@ -117,7 +117,7 @@ echo ""
 echo "🧪 Test 6: Provider-Agnostic Support Gap Analysis"
 
 # Test Docker provider remote support
-cat > .vendetta/config.yaml << 'EOF'
+cat > .mochi/config.yaml << 'EOF'
 name: docker-remote-test
 provider: docker
 remote:
@@ -130,10 +130,10 @@ services:
 EOF
 
 echo "Testing Docker provider with remote config..."
-/home/newman/magic/vibegear/bin/vendetta workspace create docker-remote-test 2>/dev/null || echo "❌ Docker provider lacks remote support"
+/home/newman/magic/mochi/bin/mochi workspace create docker-remote-test 2>/dev/null || echo "❌ Docker provider lacks remote support"
 
 # Test LXC provider remote support
-cat > .vendetta/config.yaml << 'EOF'
+cat > .mochi/config.yaml << 'EOF'
 name: lxc-remote-test
 provider: lxc
 remote:
@@ -146,14 +146,14 @@ services:
 EOF
 
 echo "Testing LXC provider with remote config..."
-/home/newman/magic/vibegear/bin/vendetta workspace create lxc-remote-test 2>/dev/null || echo "❌ LXC provider lacks remote support"
+/home/newman/magic/mochi/bin/mochi workspace create lxc-remote-test 2>/dev/null || echo "❌ LXC provider lacks remote support"
 
 # Test 7: Coordination Server Commands Gap
 echo ""
 echo "🧪 Test 7: Coordination Server Commands Gap"
 echo "Testing for coordination server commands..."
-/home/newman/magic/vibegear/bin/vendetta node list 2>/dev/null || echo "❌ Coordination server commands (node list/add/status) missing"
-/home/newman/magic/vibegear/bin/vendetta server start 2>/dev/null || echo "❌ Coordination server commands (server start/stop) missing"
+/home/newman/magic/mochi/bin/mochi node list 2>/dev/null || echo "❌ Coordination server commands (node list/add/status) missing"
+/home/newman/magic/mochi/bin/mochi server start 2>/dev/null || echo "❌ Coordination server commands (server start/stop) missing"
 
 # Test 8: Service Discovery Gap
 echo ""
@@ -161,7 +161,7 @@ echo "🧪 Test 8: Service Discovery Gap Analysis"
 echo "Testing service discovery capabilities..."
 
 # Create config with multiple services
-cat > .vendetta/config.yaml << 'EOF'
+cat > .mochi/config.yaml << 'EOF'
 name: service-discovery-test
 provider: qemu
 services:
@@ -187,7 +187,7 @@ echo ""
 echo "🧪 Test 9: Error Handling Validation"
 
 # Test invalid remote config
-cat > .vendetta/config.yaml << 'EOF'
+cat > .mochi/config.yaml << 'EOF'
 name: error-test
 provider: qemu
 remote:
@@ -197,13 +197,13 @@ services:
     command: "sleep infinity"
 EOF
 
-/home/newman/magic/vibegear/bin/vendetta workspace create error-test 2>/dev/null && echo "⚠️  Should reject invalid remote config" || echo "✅ Invalid remote config properly rejected"
+/home/newman/magic/mochi/bin/mochi workspace create error-test 2>/dev/null && echo "⚠️  Should reject invalid remote config" || echo "✅ Invalid remote config properly rejected"
 
 # Test 10: CLI Commands Completeness
 echo ""
 echo "🧪 Test 10: CLI Commands Completeness Check"
 echo "Current available commands:"
-/home/newman/magic/vibegear/bin/vendetta --help | grep -E "(workspace|init|plugin)" || echo "❌ Basic commands missing"
+/home/newman/magic/mochi/bin/mochi --help | grep -E "(workspace|init|plugin)" || echo "❌ Basic commands missing"
 
 echo ""
 echo "=== M3 VERIFICATION SUMMARY ==="
@@ -246,7 +246,7 @@ echo "  5. Enhance SSH auto-handling"
 # Cleanup
 echo ""
 echo "🧹 Cleaning up test environment..."
-cd /home/newman/magic/vibegear
+cd /home/newman/magic/mochi
 rm -rf "$TEST_DIR"
 
 echo ""

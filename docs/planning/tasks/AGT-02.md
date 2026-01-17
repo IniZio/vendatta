@@ -10,7 +10,7 @@ Replace complex YAML variable selection with simple file-based agent configurati
 
 ### **Override System Architecture**
 ```
-.vendetta/
+.mochi/
 ├── templates/           # Base templates (built-in + remote)
 │   ├── rules/
 │   │   └── typescript.md
@@ -39,7 +39,7 @@ Replace complex YAML variable selection with simple file-based agent configurati
 
 ### **Merging Logic**
 1. **Base Layer**: Load built-in templates + remote templates
-2. **Override Layer**: Apply project-specific files from `.vendetta/agents/{agent}/`
+2. **Override Layer**: Apply project-specific files from `.mochi/agents/{agent}/`
 3. **Suppression**: Empty files in override layer prevent generation
 4. **Generation**: Create final configs in worktree during `workspace create`
 
@@ -48,7 +48,7 @@ Replace complex YAML variable selection with simple file-based agent configurati
 // Pseudocode for template resolution
 func resolveTemplate(agent, templatePath string) (content string, shouldGenerate bool) {
 // Check for override (highest priority)
-overridePath := filepath.Join(".vendetta", "agents", agent, templatePath)
+overridePath := filepath.Join(".mochi", "agents", agent, templatePath)
 if fileExists(overridePath) {
     if isEmptyFile(overridePath) {
         return "", false  // Suppress generation
@@ -59,13 +59,13 @@ if fileExists(overridePath) {
     }
 
     // Check remote templates
-    remotePath := filepath.Join(".vendetta", "remotes", remoteName, templatePath)
+    remotePath := filepath.Join(".mochi", "remotes", remoteName, templatePath)
     if fileExists(remotePath) {
         return readFile(remotePath), true
     }
 
     // Fall back to base template
-    basePath := filepath.Join(".vendetta", "templates", templatePath)
+    basePath := filepath.Join(".mochi", "templates", templatePath)
     if fileExists(basePath) {
         return readFile(basePath), true
     }
@@ -107,11 +107,11 @@ if fileExists(overridePath) {
 ### **E2E Scenarios**
 ```bash
 # Test override mechanism
-vendetta workspace create override-test
+mochi workspace create override-test
 
 # Create custom rule override using modern .mdc format
-mkdir -p .vendetta/agents/cursor/rules
-cat > .vendetta/agents/cursor/rules/typescript.mdc << EOF
+mkdir -p .mochi/agents/cursor/rules
+cat > .mochi/agents/cursor/rules/typescript.mdc << EOF
 ---
 description: Custom TypeScript coding standards
 globs:
@@ -126,8 +126,8 @@ alwaysApply: false
 EOF
 
 # Create custom command override
-mkdir -p .vendetta/agents/cursor/commands
-cat > .vendetta/agents/cursor/commands/pr-create.md << EOF
+mkdir -p .mochi/agents/cursor/commands
+cat > .mochi/agents/cursor/commands/pr-create.md << EOF
 # Create Pull Request
 
 ## Overview
@@ -141,19 +141,19 @@ Standardized PR creation workflow for our team.
 EOF
 
 # Create suppression
-touch .vendetta/agents/cursor/rules/legacy.md  # Empty = suppress
+touch .mochi/agents/cursor/rules/legacy.md  # Empty = suppress
 
 # Generate configs
-vendetta workspace create override-test
+mochi workspace create override-test
 
 # Verify results
-ls .vendetta/worktrees/override-test/.cursor/rules/
+ls .mochi/worktrees/override-test/.cursor/rules/
 # Should contain: typescript.mdc (custom) but NOT legacy.md
 
-ls .vendetta/worktrees/override-test/.cursor/commands/
+ls .mochi/worktrees/override-test/.cursor/commands/
 # Should contain: pr-create.md (custom override)
 
-cat .vendetta/worktrees/override-test/.cursor/rules/typescript.mdc
+cat .mochi/worktrees/override-test/.cursor/rules/typescript.mdc
 # Should contain YAML frontmatter + custom content
 ```
 

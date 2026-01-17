@@ -123,15 +123,15 @@ func LoadConfig(path string) (*Config, error) {
 func GetConfigPath() string {
 	// Fallback to user config
 	if home, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(home, ".config", "vendetta", "coordination.yaml")
+		return filepath.Join(home, ".config", "mochi", "coordination.yaml")
 	}
 
 	// Current directory fallback
 	if cwd, err := os.Getwd(); err == nil {
-		return filepath.Join(cwd, ".vendetta", "coordination.yaml")
+		return filepath.Join(cwd, ".mochi", "coordination.yaml")
 	}
 
-	return ".vendetta/coordination.yaml"
+	return ".nexus/coordination.yaml"
 }
 
 // SaveConfig saves configuration to file

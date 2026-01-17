@@ -1,13 +1,13 @@
-# Technical Architecture: Project vendetta
+# Technical Architecture: Project mochi
 
 ## 1. Overview
-vendetta is a developer-centric, single-binary dev environment manager. It abstracts complex infrastructure (Docker, LXC, Worktrees) into a simple CLI interface, providing isolated, reproducible, and agent-friendly codespaces.
+mochi is a developer-centric, single-binary dev environment manager. It abstracts complex infrastructure (Docker, LXC, Worktrees) into a simple CLI interface, providing isolated, reproducible, and agent-friendly codespaces.
 
 ## 2. Component Diagram
 
 ```mermaid
 graph TD
-    CLI[vendetta CLI] --> CP[Control Plane]
+    CLI[mochi CLI] --> CP[Control Plane]
     CP --> WM[Worktree Manager]
     CP --> P[Provider Interface]
     CP --> PR[Plugin Registry]
@@ -26,10 +26,10 @@ graph TD
     end
 
     subgraph "Filesystem"
-        WM --> WT[.vendetta/worktrees/]
-        CP --> CFG[.vendetta/config.yaml]
-        PR --> PS[.vendetta/plugins/]
-        LM --> LF[vendetta.lock]
+        WM --> WT[.mochi/worktrees/]
+        CP --> CFG[.mochi/config.yaml]
+        PR --> PS[.mochi/plugins/]
+        LM --> LF[mochi.lock]
     end
 ```
 
@@ -37,19 +37,19 @@ graph TD
 
 ### **Control Plane (`pkg/ctrl`)**
 The central coordinator. It is responsible for:
-- Parsing `.vendetta/config.yaml`.
+- Parsing `.mochi/config.yaml`.
 - Orchestrating the sequence: `Plugin Resolve` -> `Worktree Create` -> `Provider Create` -> `Setup Hook` -> `Agent Gateway`.
 - Maintaining session state through Docker labels and filesystem markers.
 
 ### **Plugin Registry (`pkg/plugins`)**
 Manages the lifecycle of namespaced capabilities.
-- **Discovery**: Recursively scans `.vendetta/plugins/` for local capabilities.
+- **Discovery**: Recursively scans `.mochi/plugins/` for local capabilities.
 - **Resolution**: Builds a Directed Acyclic Graph (DAG) of dependencies.
 - **Parallel Fetching**: Uses Go routines to pull remote plugins simultaneously.
 
 ### **Lockfile Manager (`pkg/lock`)**
 Ensures environment reproducibility (inspired by `uv`).
-- **Determinism**: Freezes plugin versions and Git SHAs in `vendetta.lock`.
+- **Determinism**: Freezes plugin versions and Git SHAs in `mochi.lock`.
 - **Integrity**: Verifies checksums of fetched plugins to prevent supply-chain tampering.
 - **Speed**: Enables immediate parallel cloning by skipping remote branch resolution.
 
@@ -69,21 +69,21 @@ Implements the **Model Context Protocol (MCP)**.
 - **Interoperability**: Designed to be the standard interface for Cursor-agent, OpenCode, and Claude.
 
 ## 4. Environment Injection & Networking
-vendetta solves the API discovery problem by injecting environment variables:
+mochi solves the API discovery problem by injecting environment variables:
 - **Port Discovery**: Host-mapped ports are discovered dynamically.
-- **Injection**: Variables like `vendetta_SERVICE_[NAME]_URL` are passed to the container, allowing seamless CORS and endpoint configuration.
+- **Injection**: Variables like `mochi_SERVICE_[NAME]_URL` are passed to the container, allowing seamless CORS and endpoint configuration.
 
 ## 5. Agent Scaffold
-The `.vendetta/agents/` directory acts as the **Single Source of Truth** for agent behavior.
+The `.mochi/agents/` directory acts as the **Single Source of Truth** for agent behavior.
 - **Rules**: Markdown-based instructions.
 - **Skills**: YAML tool definitions.
 - **Sync**: CLI command `sync-agents` generates agent-specific configurations (e.g., `.cursorrules`).
 
 ## 6. Remote Repository Management
-vendetta provides native CLI commands for advanced multi-remote Git operations:
-- **Remote Sync**: `vendetta remote sync <target>` syncs `.vendetta` directory to a configured remote target.
-- **Config-Driven Sync**: `vendetta remote sync-all` syncs `.vendetta` to all targets defined in `.vendetta/config.yaml` under `sync_targets`.
+mochi provides native CLI commands for advanced multi-remote Git operations:
+- **Remote Sync**: `mochi remote sync <target>` syncs `.mochi` directory to a configured remote target.
+- **Config-Driven Sync**: `mochi remote sync-all` syncs `.mochi` to all targets defined in `.mochi/config.yaml` under `sync_targets`.
 - **Implementation**: Uses Go `exec.Command` for Git operations with comprehensive error handling.
-- **Use Case**: Rare scenarios requiring synchronization of `.vendetta` configs to additional repositories.
+- **Use Case**: Rare scenarios requiring synchronization of `.mochi` configs to additional repositories.
 
 This ensures users never need direct Git commands for remote management while maintaining standard Git workflows for normal operations.

@@ -1,11 +1,11 @@
-# Remote Development with vendetta M3
+# Remote Development with mochi M3
 
 ## OIDC Authentication with Authgear
 
-For production use, vendetta supports OIDC authentication via Authgear:
+For production use, mochi supports OIDC authentication via Authgear:
 
 ```yaml
-# .vendetta/config.yaml
+# .mochi/config.yaml
 auth:
   enabled: true
   issuer: "https://certain-thing-311.authgear.cloud"
@@ -28,11 +28,11 @@ This guide covers setting up both **local** and **remote** transport testing to 
 ### On Both Machines (Host & Remote)
 
 ```bash
-# 1. Install vendetta
-curl -fsSL https://raw.githubusercontent.com/IniZio/vendetta/main/install.sh | bash
+# 1. Install mochi
+curl -fsSL https://raw.githubusercontent.com/IniZio/mochi/main/install.sh | bash
 
 # 2. Verify installation
-vendetta --version
+mochi --version
 
 # 3. Check available providers
 # On Linux:
@@ -65,22 +65,22 @@ sudo systemctl start sshd
 
 ```bash
 # Create a test project directory
-mkdir -p ~/vendetta-test
-cd ~/vendetta-test
+mkdir -p ~/mochi-test
+cd ~/mochi-test
 
-# Initialize vendetta
-vendetta init
+# Initialize mochi
+mochi init
 
 # Verify structure
 ls -la
-# Should show: .vendetta/ directory
+# Should show: .mochi/ directory
 ```
 
 ### Step 1.2: Create a Local Workspace (Docker Provider)
 
 ```bash
 # Create config.yaml for local Docker workspace
-cat > .vendetta/config.yaml << 'EOF'
+cat > .mochi/config.yaml << 'EOF'
 name: local-test-project
 provider: docker
 
@@ -97,14 +97,14 @@ docker:
 EOF
 
 # Create workspace
-vendetta workspace create local-demo
+mochi workspace create local-demo
 
 # Verify workspace created
-vendetta workspace list
+mochi workspace list
 # Should show: local-demo (status: created)
 
 # Start workspace
-vendetta workspace up local-demo
+mochi workspace up local-demo
 # Wait for Docker container to start...
 ```
 
@@ -144,7 +144,7 @@ go test ./pkg/transport/... -run TestPool -v
 **On LOCAL machine:**
 ```bash
 # Generate SSH key if not exists
-ls ~/.ssh/id_rsa 2>/dev/null || ssh-keygen -t ed25519 -C "vendetta@local"
+ls ~/.ssh/id_rsa 2>/dev/null || ssh-keygen -t ed25519 -C "mochi@local"
 
 # Copy public key to remote machine
 ssh-copy-id user@192.168.1.100
@@ -159,18 +159,18 @@ ssh user@192.168.1.100 "echo 'SSH connection successful'"
 
 **On REMOTE machine (192.168.1.100):**
 ```bash
-# Install vendetta
-curl -fsSL https://raw.githubusercontent.com/IniZio/vendetta/main/install.sh | bash
+# Install mochi
+curl -fsSL https://raw.githubusercontent.com/IniZio/mochi/main/install.sh | bash
 
 # Create a shared directory for workspaces
-mkdir -p ~/vendetta-shared
-cd ~/vendetta-shared
+mkdir -p ~/mochi-shared
+cd ~/mochi-shared
 
-# Initialize vendetta
-vendetta init
+# Initialize mochi
+mochi init
 
 # Create minimal config
-cat > .vendetta/config.yaml << 'EOF'
+cat > .mochi/config.yaml << 'EOF'
 name: remote-test
 provider: docker
 docker:
@@ -180,7 +180,7 @@ EOF
 
 ### Step 2.3: Configure Remote Access in Local Project
 
-**On LOCAL machine, edit `~/vendetta-test/.vendetta/config.yaml`:**
+**On LOCAL machine, edit `~/mochi-test/.mochi/config.yaml`:**
 
 ```yaml
 name: remote-test-project
@@ -206,13 +206,13 @@ docker:
 ### Step 2.4: Create Remote Workspace
 
 ```bash
-cd ~/vendetta-test
+cd ~/mochi-test
 
 # Create workspace (will connect to remote via SSH)
-vendetta workspace create remote-demo
+mochi workspace create remote-demo
 
 # Verify it connected
-vendetta workspace list
+mochi workspace list
 # Should show: remote-demo (status: created or running on remote)
 ```
 
@@ -220,7 +220,7 @@ vendetta workspace list
 
 ```bash
 # Execute command on remote via transport layer
-vendetta workspace shell remote-demo
+mochi workspace shell remote-demo
 # This should SSH into the remote container/VM
 
 # Inside remote shell:
@@ -240,8 +240,8 @@ The coordination server enables provider-agnostic remote node management.
 **On LOCAL machine:**
 ```bash
 # Create coordination config
-mkdir -p ~/.config/vendetta
-cat > ~/.config/vendetta/coordination.yaml << 'EOF'
+mkdir -p ~/.config/mochi
+cat > ~/.config/mochi/coordination.yaml << 'EOF'
 server:
   host: "0.0.0.0"
   port: 3001
@@ -275,10 +275,10 @@ EOF
 
 ```bash
 # Start in background
-vendetta coordination start --config ~/.config/vendetta/coordination.yaml
+mochi coordination start --config ~/.config/mochi/coordination.yaml
 
 # Or run with specific port
-vendetta coordination start --host 0.0.0.0 --port 3001
+mochi coordination start --host 0.0.0.0 --port 3001
 
 # Verify server is running
 curl http://localhost:3001/health
@@ -296,7 +296,7 @@ curl http://localhost:3001/metrics
 export VENDETTA_COORD_HOST="192.168.1.100"  # or localhost if same machine
 export VENDETTA_COORD_PORT="3001"
 
-vendetta agent start --coordination-url http://192.168.1.100:3001
+mochi agent start --coordination-url http://192.168.1.100:3001
 ```
 
 **On LOCAL machine:**
@@ -314,7 +314,7 @@ curl -H "Authorization: Bearer your-secure-token" http://localhost:3001/api/v1/n
 
 ### Step 4.1: Create Complete Remote Configuration
 
-**On LOCAL machine, `~/vendetta-test/.vendetta/config.yaml`:**
+**On LOCAL machine, `~/mochi-test/.mochi/config.yaml`:**
 
 ```yaml
 name: full-remote-demo
@@ -350,19 +350,19 @@ docker:
 ### Step 4.2: Create and Start Remote Workspace
 
 ```bash
-cd ~/vendetta-test
+cd ~/mochi-test
 
 # Create workspace (prepares remote environment)
-vendetta workspace create full-remote
+mochi workspace create full-remote
 
 # Start workspace (bootstraps provider on remote)
-vendetta workspace up full-remote
+mochi workspace up full-remote
 
 # Monitor startup
-vendetta workspace status full-remote
+mochi workspace status full-remote
 
 # Connect to remote workspace shell
-vendetta workspace shell full-remote
+mochi workspace shell full-remote
 ```
 
 ### Step 4.3: Verify Remote Services
@@ -401,8 +401,8 @@ ssh user@192.168.1.100 "echo 'SSH works'"
 
 ```bash
 # 1. Check if server is running
-ps aux | grep vendetta
-pgrep -a vendetta
+ps aux | grep mochi
+pgrep -a mochi
 
 # 2. Check port is listening
 netstat -tlnp | grep 3001
@@ -422,7 +422,7 @@ curl http://192.168.1.100:3001/health
 ```bash
 # 1. Check node agent logs
 # On remote machine:
-journalctl -u vendetta-agent -n 100
+journalctl -u mochi-agent -n 100
 
 # 2. Verify auth token matches
 # coordination.yaml: auth_token: "your-secure-token"
@@ -455,7 +455,7 @@ docker run --rm hello-world
 ### Enable Authentication
 
 ```yaml
-# ~/.config/vendetta/coordination.yaml
+# ~/.config/mochi/coordination.yaml
 auth:
   enabled: true
   jwt_secret: "your-secure-minimum-16-char-secret"
@@ -473,10 +473,10 @@ server:
 # Configure nginx as reverse proxy:
 # server {
 #     listen 443 ssl;
-#     server_name vendetta.example.com;
+#     server_name mochi.example.com;
 #     
-#     ssl_certificate /etc/letsencrypt/live/vendetta.example.com/fullchain.pem;
-#     ssl_certificate_key /etc/letsencrypt/live/vendetta.example.com/privkey.pem;
+#     ssl_certificate /etc/letsencrypt/live/mochi.example.com/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/mochi.example.com/privkey.pem;
 #     
 #     location / {
 #         proxy_pass http://localhost:3001;
@@ -493,15 +493,15 @@ server:
 
 | Action | Command |
 |--------|---------|
-| Initialize project | `vendetta init` |
-| Create workspace | `vendetta workspace create <name>` |
-| Start workspace | `vendetta workspace up <name>` |
-| Stop workspace | `vendetta workspace down <name>` |
-| List workspaces | `vendetta workspace list` |
-| Connect to workspace | `vendetta workspace shell <name>` |
-| Remove workspace | `vendetta workspace rm <name>` |
-| Start coordination server | `vendetta coordination start` |
-| Start node agent | `vendetta agent start` |
+| Initialize project | `mochi init` |
+| Create workspace | `mochi workspace create <name>` |
+| Start workspace | `mochi workspace up <name>` |
+| Stop workspace | `mochi workspace down <name>` |
+| List workspaces | `mochi workspace list` |
+| Connect to workspace | `mochi workspace shell <name>` |
+| Remove workspace | `mochi workspace rm <name>` |
+| Start coordination server | `mochi coordination start` |
+| Start node agent | `mochi agent start` |
 | Check health | `curl http://localhost:3001/health` |
 | List nodes | `curl http://localhost:3001/api/v1/nodes` |
 | List services | `curl http://localhost:3001/api/v1/services` |
@@ -528,7 +528,7 @@ After completing all steps, you should have:
 ┌─────────────────────────────────────────────────────────────────┐
 │                        LOCAL MACHINE                             │
 │  ┌─────────────────┐    ┌──────────────────┐                    │
-│  │  vendetta CLI   │───>│ Coordination     │                    │
+│  │  mochi CLI   │───>│ Coordination     │                    │
 │  │                 │    │ Server (3001)    │                    │
 │  └─────────────────┘    └────────┬─────────┘                    │
 │                                  │                               │
@@ -544,7 +544,7 @@ After completing all steps, you should have:
 ┌─────────────────────────────────────────────────────────────────┐
 │                       REMOTE MACHINE                             │
 │  ┌─────────────────┐    ┌──────────────────┐                    │
-│  │ SSH Server      │<───│ vendetta Node    │                    │
+│  │ SSH Server      │<───│ mochi Node    │                    │
 │  │ (port 22)       │    │ Agent            │                    │
 │  └─────────────────┘    └────────┬─────────┘                    │
 │                                  │                               │

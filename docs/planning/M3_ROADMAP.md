@@ -75,7 +75,7 @@ M3 delivers provider-agnostic remote development environments through a centrali
 - ✅ Node agent with local provider execution
 - ✅ Coordination server with SSH transport layer
 - ✅ Agent command dispatch interface
-- ✅ Node management CLI (`vendetta node add/list/status/remove`)
+- ✅ Node management CLI (`mochi node add/list/status/remove`)
 - ✅ Agent installation and setup automation
 
 **Success Criteria**:
@@ -94,7 +94,7 @@ pkg/coordination/
 ├── dispatcher.go      # Universal provider dispatch
 └── ssh_manager.go     # SSH key handling & proxy
 
-cmd/vendetta/node.go    # Node management CLI
+cmd/mochi/node.go    # Node management CLI
 ```
 
 ### Phase 2: Provider Completeness (Weeks 3-4)

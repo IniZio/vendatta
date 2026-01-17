@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/vibegear/vendetta/pkg/config"
-	"github.com/vibegear/vendetta/pkg/provider"
-	"github.com/vibegear/vendetta/pkg/transport"
+	"github.com/nexus/nexus/pkg/config"
+	"github.com/nexus/nexus/pkg/provider"
+	"github.com/nexus/nexus/pkg/transport"
 )
 
 type LXCProvider struct {
@@ -77,7 +77,7 @@ func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePat
 }
 
 func (p *LXCProvider) Start(ctx context.Context, sessionID string) error {
-	containerName := fmt.Sprintf("vendetta-%s", sessionID)
+	containerName := fmt.Sprintf("nexus-%s", sessionID)
 
 	if p.remote != "" {
 		t, err := p.CreateTransport("remote-lxc")
@@ -113,7 +113,7 @@ func (p *LXCProvider) Start(ctx context.Context, sessionID string) error {
 }
 
 func (p *LXCProvider) Stop(ctx context.Context, sessionID string) error {
-	containerName := fmt.Sprintf("vendetta-%s", sessionID)
+	containerName := fmt.Sprintf("nexus-%s", sessionID)
 
 	if p.remote != "" {
 		t, err := p.CreateTransport("remote-lxc")
@@ -149,7 +149,7 @@ func (p *LXCProvider) Stop(ctx context.Context, sessionID string) error {
 }
 
 func (p *LXCProvider) Destroy(ctx context.Context, sessionID string) error {
-	containerName := fmt.Sprintf("vendetta-%s", sessionID)
+	containerName := fmt.Sprintf("nexus-%s", sessionID)
 
 	if p.remote != "" {
 		t, err := p.CreateTransport("remote-lxc")
@@ -193,7 +193,7 @@ func (p *LXCProvider) List(ctx context.Context) ([]provider.Session, error) {
 
 func (p *LXCProvider) Exec(ctx context.Context, sessionID string, opts provider.ExecOptions) error {
 	if p.remote != "" {
-		containerName := fmt.Sprintf("vendetta-%s", sessionID)
+		containerName := fmt.Sprintf("nexus-%s", sessionID)
 		lxcCmd := append([]string{"lxc", "exec", containerName, "--"}, opts.Cmd...)
 
 		t, err := p.CreateTransport("remote-lxc")
@@ -231,7 +231,7 @@ func (p *LXCProvider) Exec(ctx context.Context, sessionID string, opts provider.
 		return nil
 	}
 
-	containerName := fmt.Sprintf("vendetta-%s", sessionID)
+	containerName := fmt.Sprintf("nexus-%s", sessionID)
 
 	args := []string{"exec", containerName, "--"}
 	args = append(args, opts.Cmd...)
@@ -265,7 +265,7 @@ func (p *LXCProvider) Exec(ctx context.Context, sessionID string, opts provider.
 }
 
 func (p *LXCProvider) createLocal(ctx context.Context, sessionID string, workspacePath string, cfg *config.Config) (*provider.Session, error) {
-	containerName := fmt.Sprintf("vendetta-%s", sessionID)
+	containerName := fmt.Sprintf("nexus-%s", sessionID)
 
 	cmd := exec.CommandContext(ctx, "lxc", "init", "ubuntu:22.04", containerName, "--config", "limits.memory=512MB")
 	output, err := cmd.CombinedOutput()
@@ -290,7 +290,7 @@ func (p *LXCProvider) createLocal(ctx context.Context, sessionID string, workspa
 		Provider: p.name,
 		Status:   "",
 		Labels: map[string]string{
-			"vendetta.session.id": sessionID,
+			"nexus.session.id": sessionID,
 		},
 	}
 
@@ -298,7 +298,7 @@ func (p *LXCProvider) createLocal(ctx context.Context, sessionID string, workspa
 }
 
 func (p *LXCProvider) createRemote(ctx context.Context, sessionID string, workspacePath string, cfg *config.Config) (*provider.Session, error) {
-	containerName := fmt.Sprintf("vendetta-%s", sessionID)
+	containerName := fmt.Sprintf("nexus-%s", sessionID)
 
 	t, err := p.CreateTransport("remote-lxc")
 	if err != nil {
@@ -345,7 +345,7 @@ func (p *LXCProvider) createRemote(ctx context.Context, sessionID string, worksp
 		Provider: p.name,
 		Status:   "",
 		Labels: map[string]string{
-			"vendetta.session.id": sessionID,
+			"nexus.session.id": sessionID,
 		},
 	}, nil
 }
@@ -365,8 +365,8 @@ func (p *LXCProvider) listLocal(ctx context.Context) ([]provider.Session, error)
 			continue
 		}
 		parts := strings.Split(line, ",")
-		if len(parts) >= 2 && strings.HasPrefix(parts[0], "vendetta-") {
-			sessionID := strings.TrimPrefix(parts[0], "vendetta-")
+		if len(parts) >= 2 && strings.HasPrefix(parts[0], "nexus-") {
+			sessionID := strings.TrimPrefix(parts[0], "nexus-")
 			status := strings.ToLower(parts[1])
 
 			sessions = append(sessions, provider.Session{
@@ -374,7 +374,7 @@ func (p *LXCProvider) listLocal(ctx context.Context) ([]provider.Session, error)
 				Provider: p.name,
 				Status:   status,
 				Labels: map[string]string{
-					"vendetta.session.id": sessionID,
+					"nexus.session.id": sessionID,
 				},
 			})
 		}
@@ -411,8 +411,8 @@ func (p *LXCProvider) listRemote(ctx context.Context) ([]provider.Session, error
 			continue
 		}
 		parts := strings.Split(line, ",")
-		if len(parts) >= 2 && strings.HasPrefix(parts[0], "vendetta-") {
-			sessionID := strings.TrimPrefix(parts[0], "vendetta-")
+		if len(parts) >= 2 && strings.HasPrefix(parts[0], "nexus-") {
+			sessionID := strings.TrimPrefix(parts[0], "nexus-")
 			status := strings.ToLower(parts[1])
 
 			sessions = append(sessions, provider.Session{
@@ -420,7 +420,7 @@ func (p *LXCProvider) listRemote(ctx context.Context) ([]provider.Session, error
 				Provider: p.name,
 				Status:   status,
 				Labels: map[string]string{
-					"vendetta.session.id": sessionID,
+					"nexus.session.id": sessionID,
 				},
 			})
 		}

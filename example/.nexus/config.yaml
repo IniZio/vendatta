@@ -1,0 +1,59 @@
+name: my-project
+provider: docker
+services:
+  db:
+    command: docker-compose up -d postgres
+    port: 5432
+    healthcheck:
+      url: http://localhost:5432/health
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  api:
+    command: cd server && npm install && npm run dev
+    port: 5000
+    healthcheck:
+      url: http://localhost:5000/api/health
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      - db
+  web:
+    command: cd client && npm install && npm run dev
+    port: 3000
+    healthcheck:
+      url: http://localhost:3000
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      - api
+
+remotes:
+  - url: "https://github.com/IniZio/mochi-config"
+    branch: "main"
+agents:
+  - name: opencode
+    enabled: true
+    plugins: ["core", "node", "docker"]
+  - name: cursor
+    enabled: true
+    plugins: ["core", "node", "docker"]
+  - name: claude-desktop
+    enabled: true
+    plugins: ["core", "node", "docker"]
+  - name: claude-code
+    enabled: true
+    plugins: ["core", "node", "docker"]
+
+mcp:
+  enabled: true
+  port: 3001
+  host: localhost
+
+docker:
+  image: ubuntu:22.04
+  dind: true
+hooks:
+  setup: .mochi/hooks/setup.sh

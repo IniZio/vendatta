@@ -27,7 +27,7 @@
    - ✅ Error handling for invalid configs
 
 3. **Basic Workspace Lifecycle**
-   - ✅ `vendetta init`, `workspace create/up/down/list/rm`
+   - ✅ `mochi init`, `workspace create/up/down/list/rm`
    - ✅ Git worktree isolation
    - ✅ Service environment variable injection
 
@@ -35,7 +35,7 @@
 
 1. **Coordination Server (0% Complete)**
    - ❌ No central management server
-   - ❌ Missing `vendetta node *` commands
+   - ❌ Missing `mochi node *` commands
    - ❌ No multi-node coordination
    - ❌ No status monitoring
 
@@ -92,11 +92,11 @@ type CoordinationServer struct {
 ### Missing CLI Commands
 ```bash
 # These commands don't exist
-vendetta node add <name> <address>
-vendetta node list
-vendetta node status <name>
-vendetta server start
-vendetta server stop
+mochi node add <name> <address>
+mochi node list
+mochi node status <name>
+mochi server start
+mochi server stop
 ```
 
 ---
@@ -133,7 +133,7 @@ The current implementation provides solid local development but falls short of t
    - Update provider interfaces
 
 3. **Implement Node Management CLI**
-   - Add `vendetta node add/list/status/remove`
+   - Add `mochi node add/list/status/remove`
    - Remote node configuration
    - Connection validation
 

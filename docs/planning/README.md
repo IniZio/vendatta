@@ -1,6 +1,6 @@
 # Project Planning
 
-vendetta uses a **Milestone > Project > Task** hierarchy.
+mochi uses a **Milestone > Project > Task** hierarchy.
 
 ## 🏷 Projects Legend
 

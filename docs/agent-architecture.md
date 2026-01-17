@@ -101,7 +101,7 @@ retry_policy:
   backoff: 1s
   max_backoff: 30s
 offline_mode: false
-cache_dir: "/tmp/vendetta-agent"
+cache_dir: "/tmp/mochi-agent"
 log_level: "info"
 ```
 
@@ -110,22 +110,22 @@ log_level: "info"
 ### Agent Commands
 ```bash
 # Install agent to remote node
-vendetta agent install user@remote-host
+mochi agent install user@remote-host
 
 # Start agent daemon
-vendetta agent start
+mochi agent start
 
 # Stop agent daemon  
-vendetta agent stop
+mochi agent stop
 
 # Check agent status
-vendetta agent status
+mochi agent status
 
 # Connect to coordination server
-vendetta agent connect http://coord-server:3001
+mochi agent connect http://coord-server:3001
 
 # Generate configuration
-vendetta agent config
+mochi agent config
 ```
 
 ## Production Deployment
@@ -138,9 +138,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=vendetta
-ExecStart=/usr/local/bin/vendetta agent start
-ExecStop=/usr/local/bin/vendetta agent stop
+User=mochi
+ExecStart=/usr/local/bin/mochi agent start
+ExecStop=/usr/local/bin/mochi agent stop
 Restart=always
 RestartSec=5
 
@@ -153,13 +153,13 @@ WantedBy=multi-user.target
 FROM golang:1.24-alpine AS builder
 WORKDIR /app
 COPY . .
-RUN go build -o vendetta-agent ./cmd/vendetta
+RUN go build -o mochi-agent ./cmd/mochi
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-COPY --from=builder /app/vendetta-agent /usr/local/bin/
+COPY --from=builder /app/mochi-agent /usr/local/bin/
 EXPOSE 8080
-CMD ["vendetta", "agent", "start"]
+CMD ["mochi", "agent", "start"]
 ```
 
 ## Security Considerations
@@ -201,10 +201,10 @@ CMD ["vendetta", "agent", "start"]
 ### Debug Mode
 ```bash
 # Enable debug logging
-VENDETTA_LOG_LEVEL=debug vendetta agent start
+VENDETTA_LOG_LEVEL=debug mochi agent start
 
 # Enable profiling
-VENDETTA_DEBUG_PPROF=true vendetta agent start
+VENDETTA_DEBUG_PPROF=true mochi agent start
 ```
 
 ## Testing

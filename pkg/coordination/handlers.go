@@ -570,9 +570,9 @@ func (s *Server) handleGetWorkspaceUsers(w http.ResponseWriter, r *http.Request,
 }
 func (s *Server) handleGetWorkspaceServices(w http.ResponseWriter, r *http.Request, workspaceID string) {
 	// For now, return mock services. In a real implementation, this would query
-	// the workspace services from the local vendatta instance or coordination registry
+	// the workspace services from the local mochi instance or coordination registry
 	services := []map[string]interface{}{}
-	
+
 	// Mock services for demonstration
 	services = append(services, map[string]interface{}{
 		"name":       "web",
@@ -586,14 +586,13 @@ func (s *Server) handleGetWorkspaceServices(w http.ResponseWriter, r *http.Reque
 		"local_port": 23001,
 		"url":        "http://localhost:23001",
 	})
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"workspace": workspaceID,
 		"services":  services,
 	})
 }
-
 
 // responseWriter is a wrapper to capture status code
 type responseWriter struct {

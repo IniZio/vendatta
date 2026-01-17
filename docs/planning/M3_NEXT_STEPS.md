@@ -37,7 +37,7 @@ pkg/coordination/
 ├── dispatcher.go      # Provider dispatch interface
 └── status.go          # Status monitoring
 
-cmd/vendetta/
+cmd/mochi/
 └── node.go            # Node management CLI commands
 ```
 
@@ -53,11 +53,11 @@ type Server interface {
 }
 
 // Node management CLI commands
-// vendetta node add <name> <address> [--user <user>] [--port <port>]
-// vendetta node list
-// vendetta node status <name>
-// vendetta node test <name>
-// vendetta node remove <name>
+// mochi node add <name> <address> [--user <user>] [--port <port>]
+// mochi node list
+// mochi node status <name>
+// mochi node test <name>
+// mochi node remove <name>
 ```
 
 **Success Criteria**:

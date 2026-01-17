@@ -130,8 +130,8 @@ func CoordinationServerExample() {
 
 	// Register node configurations
 	nodeConfigs := map[string]*Config{
-		"node1": CreateDefaultSSHConfig("node1.example.com:22", "vendetta", "/home/vendetta/.ssh/id_rsa"),
-		"node2": CreateDefaultSSHConfig("node2.example.com:22", "vendetta", "/home/vendetta/.ssh/id_rsa"),
+		"node1": CreateDefaultSSHConfig("node1.example.com:22", "mochi", "/home/mochi/.ssh/id_rsa"),
+		"node2": CreateDefaultSSHConfig("node2.example.com:22", "mochi", "/home/mochi/.ssh/id_rsa"),
 		"api":   CreateDefaultHTTPConfig("https://coordinator.example.com:3001", "coordination-token"),
 	}
 

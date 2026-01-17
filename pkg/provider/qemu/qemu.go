@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vibegear/vendetta/pkg/config"
-	"github.com/vibegear/vendetta/pkg/provider"
-	"github.com/vibegear/vendetta/pkg/transport"
+	"github.com/nexus/nexus/pkg/config"
+	"github.com/nexus/nexus/pkg/provider"
+	"github.com/nexus/nexus/pkg/transport"
 )
 
 type QEMUProvider struct {
@@ -29,7 +29,7 @@ func NewQEMUProvider() (*QEMUProvider, error) {
 	}
 	return &QEMUProvider{
 		Manager: *transport.NewManager(),
-		baseDir: filepath.Join(os.Getenv("HOME"), ".vendetta", "qemu"),
+		baseDir: filepath.Join(os.Getenv("HOME"), ".mochi", "qemu"),
 	}, nil
 }
 
@@ -128,10 +128,10 @@ func (p *QEMUProvider) Create(ctx context.Context, sessionID string, workspacePa
 		SSHPort:  sshPort,
 		Services: p.extractServicePorts(cfg),
 		Labels: map[string]string{
-			"vendetta.session.id": sessionID,
-			"vendetta.vm.dir":     vmDir,
-			"vendetta.workspace":  workspacePath,
-			"vendetta.remote":     p.remote,
+			"nexus.session.id": sessionID,
+			"mochi.vm.dir":     vmDir,
+			"mochi.workspace":  workspacePath,
+			"mochi.remote":     p.remote,
 		},
 	}, nil
 }
@@ -211,9 +211,9 @@ func (p *QEMUProvider) Exec(ctx context.Context, sessionID string, opts provider
 	return nil
 }
 
-// List returns all QEMU VMs managed by vendetta
+// List returns all QEMU VMs managed by mochi
 func (p *QEMUProvider) List(ctx context.Context) ([]provider.Session, error) {
-	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep -oE 'vendetta-[a-z0-9_-]+' | sort -u")
+	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep -oE '%s-[a-z0-9_-]+' | sort -u")
 	if err != nil {
 		return []provider.Session{}, nil // No VMs running
 	}
@@ -226,7 +226,7 @@ func (p *QEMUProvider) List(ctx context.Context) ([]provider.Session, error) {
 				ID:       id,
 				Provider: p.Name(),
 				Status:   "running",
-				Labels:   map[string]string{"vendetta.session.id": id},
+				Labels:   map[string]string{"nexus.session.id": id},
 			})
 		}
 	}
@@ -360,7 +360,7 @@ func (p *QEMUProvider) waitForSSH(ctx context.Context, sessionID string, timeout
 }
 
 func (p *QEMUProvider) killVM(ctx context.Context, sessionID string) error {
-	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep 'vendetta-"+sessionID+"' | awk '{print $2}'")
+	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep '%s-"+sessionID+"' | awk '{print $2}'")
 	if err != nil {
 		return err
 	}

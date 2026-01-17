@@ -42,8 +42,8 @@ jobs:
            sudo systemctl start docker
            docker version
 
-       # Build vendetta binary for testing
-       - name: Build vendetta
+       # Build mochi binary for testing
+       - name: Build mochi
          run: make build
 
        # Run e2e tests

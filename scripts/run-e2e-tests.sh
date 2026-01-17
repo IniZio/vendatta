@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🚀 Running Comprehensive vendetta E2E Tests"
+echo "🚀 Running Comprehensive mochi E2E Tests"
 
 # Colors for output
 RED='\033[0;31m'
@@ -71,14 +71,14 @@ check_prerequisites() {
     log_success "Prerequisites check passed"
 }
 
-# Build vendetta binary
-build_vendetta() {
-    log_info "Building vendetta binary..."
-    if ! go build -o vendetta ./cmd/vendetta; then
-        log_error "Failed to build vendetta binary"
+# Build mochi binary
+build_mochi() {
+    log_info "Building mochi binary..."
+    if ! go build -o mochi ./cmd/mochi; then
+        log_error "Failed to build mochi binary"
         exit 1
     fi
-    log_success "vendetta binary built successfully"
+    log_success "mochi binary built successfully"
 }
 
 # Run a single test
@@ -199,11 +199,11 @@ analyze_results() {
 # Main execution
 main() {
     echo "========================================"
-    echo "🧪 vendetta E2E Test Suite"
+    echo "🧪 mochi E2E Test Suite"
     echo "========================================"
 
     check_prerequisites
-    build_vendetta
+    build_mochi
     run_e2e_tests
     analyze_results
 

@@ -9,17 +9,17 @@ Implement comprehensive agent configuration generation system using templates, s
 ## 🛠 Implementation Details
 
 ### **Template System Architecture**
-1. **Shared Templates** (`.vendetta/templates/`):
+1. **Shared Templates** (`.mochi/templates/`):
    - `skills/` - agentskills.io compliant YAML skills
    - `commands/` - Standardized command definitions
    - `rules/` - agents.md compliant markdown rules
 
-2. **Agent-Specific Templates** (`.vendetta/agents/{agent}/`):
+2. **Agent-Specific Templates** (`.mochi/agents/{agent}/`):
    - Template files with `.tpl` extension
    - Variable substitution for dynamic config generation
 
 3. **Config-Driven Generation**:
-   - Read `.vendetta/config.yaml` for enabled agents
+   - Read `.mochi/config.yaml` for enabled agents
    - Generate configs using Go templates with variable substitution
    - Copy referenced shared templates to agent directories
 

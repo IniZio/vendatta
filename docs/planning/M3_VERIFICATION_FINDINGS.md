@@ -1,7 +1,7 @@
 # M3 Verification Findings and Lessons Learned
 
 **Verification Date**: January 13, 2026  
-**Project**: vendetta M3 - Provider-Agnostic Remote Nodes  
+**Project**: mochi M3 - Provider-Agnostic Remote Nodes  
 **Current Status**: 33% Complete  
 **Critical Finding**: Coordination server completely missing
 
@@ -104,7 +104,7 @@ This finding shifts M3 from assumed 80%+ completion to verified 33% completion, 
 #### 8. Node Management CLI (0% Complete)
 **Impact**: No way to manage remote nodes from CLI  
 **Missing Commands**:
-- `vendetta node add/list/status/remove`
+- `mochi node add/list/status/remove`
 - Connection testing and validation
 - Node configuration management
 

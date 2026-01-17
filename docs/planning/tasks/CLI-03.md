@@ -10,34 +10,34 @@ Implement the complete workspace command group with context awareness, proper is
 
 ### **Command Structure**
 ```bash
-vendetta workspace create <name>     # Create workspace + configs
-vendetta workspace up [name] [-d]    # Start services (detached optional)
-vendetta workspace shell [name]      # Interactive shell
-vendetta workspace stop [name]       # Stop services
-vendetta workspace down [name]       # Stop + cleanup
-vendetta workspace list              # List all workspaces
-vendetta workspace rm <name>         # Remove workspace
+mochi workspace create <name>     # Create workspace + configs
+mochi workspace up [name] [-d]    # Start services (detached optional)
+mochi workspace shell [name]      # Interactive shell
+mochi workspace stop [name]       # Stop services
+mochi workspace down [name]       # Stop + cleanup
+mochi workspace list              # List all workspaces
+mochi workspace rm <name>         # Remove workspace
 # Note: 'agent' command removed per latest spec
 ```
 
 ### **Context Awareness**
-- If inside `.vendetta/worktrees/<name>/`, auto-detect workspace name
+- If inside `.mochi/worktrees/<name>/`, auto-detect workspace name
 - Commands accept optional `[name]` parameter for explicit specification
 - Validate workspace existence before operations
 
 ### **Workspace Isolation**
-- **Worktree Creation**: `git worktree add .vendetta/worktrees/<name>`
+- **Worktree Creation**: `git worktree add .mochi/worktrees/<name>`
 - **Branch Handling**: Auto-create branch if doesn't exist; for conflicts: stash changes, create/checkout branch, stash pop
-- **Container Naming**: `vendetta-workspace-<name>` for easy identification
+- **Container Naming**: `mochi-workspace-<name>` for easy identification
 
 ### **Agent Config Generation**
 - Generate configs during `workspace create`
 - Place configs in worktree root (`.cursor/mcp.json`, `opencode.json`, etc.)
-- Support file-based overrides from `.vendetta/agents/`
+- Support file-based overrides from `.mochi/agents/`
 
 ### **Service Discovery Integration**
 - Collect port mappings during container startup
-- Inject `vendetta_SERVICE_*_URL` environment variables
+- Inject `mochi_SERVICE_*_URL` environment variables
 - Make variables available in hooks and container shell
 
 ## 🧪 Testing Requirements
@@ -58,16 +58,16 @@ vendetta workspace rm <name>         # Remove workspace
 ### **E2E Scenarios**
 ```bash
 # Happy path
-vendetta workspace create feature-x
-vendetta workspace up
+mochi workspace create feature-x
+mochi workspace up
 # Verify: Worktree created, container running, configs generated
 
 # Context awareness
-cd .vendetta/worktrees/feature-x
-vendetta workspace up  # Should work without specifying name
+cd .mochi/worktrees/feature-x
+mochi workspace up  # Should work without specifying name
 
 # Error handling
-vendetta workspace up nonexistent  # Should fail gracefully
+mochi workspace up nonexistent  # Should fail gracefully
 ```
 
 ## 📋 Implementation Steps

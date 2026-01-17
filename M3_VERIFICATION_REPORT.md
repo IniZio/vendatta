@@ -44,7 +44,7 @@ The M3 implementation shows solid foundation work but has significant gaps in co
 ### 1. Service Discovery (40%)
 **Implemented**:
 - ✅ Port detection from service commands (`detectPortFromCommand`)
-- ✅ Environment variable injection (`vendetta_SERVICE_*_URL`)
+- ✅ Environment variable injection (`mochi_SERVICE_*_URL`)
 - ✅ Service definition parsing with dependencies
 
 **Missing**:
@@ -90,9 +90,9 @@ The M3 implementation shows solid foundation work but has significant gaps in co
 - ❌ Session management across nodes
 
 **Expected Commands (Not Implemented)**:
-- ❌ `vendetta server start/stop`
-- ❌ `vendetta node add/list/status/remove`
-- ❌ `vendetta cluster status`
+- ❌ `mochi server start/stop`
+- ❌ `mochi node add/list/status/remove`
+- ❌ `mochi cluster status`
 
 ### 2. Provider-Agnostic Remote Dispatch (0%)
 **Critical Gap**:
@@ -150,7 +150,7 @@ The M3 implementation shows solid foundation work but has significant gaps in co
 ## 🧪 VERIFICATION RESULTS
 
 ### Basic Functionality Tests
-- ✅ **Initialization**: `vendetta init` works correctly
+- ✅ **Initialization**: `mochi init` works correctly
 - ✅ **Configuration**: Remote configuration structure parsed properly
 - ✅ **Workspace Creation**: Remote workspaces created successfully
 - ✅ **QEMU Provider**: Local QEMU operations functional
@@ -161,8 +161,8 @@ The M3 implementation shows solid foundation work but has significant gaps in co
 - ✅ **QEMU Remote**: Remote execution via SSH works
 
 ### Coordination Server Tests
-- ❌ **Node Management**: No `vendetta node *` commands
-- ❌ **Server Commands**: No `vendetta server *` commands
+- ❌ **Node Management**: No `mochi node *` commands
+- ❌ **Server Commands**: No `mochi server *` commands
 - ❌ **Multi-node Coordination**: No coordination capabilities
 
 ### Service Management Tests
@@ -192,7 +192,7 @@ The M3 implementation shows solid foundation work but has significant gaps in co
    - Unified remote execution interface
 
 3. **Implement Node Management CLI**
-   - `vendetta node add/list/status/remove` commands
+   - `mochi node add/list/status/remove` commands
    - Remote node configuration
    - Connection validation
 

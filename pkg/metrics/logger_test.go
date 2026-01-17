@@ -134,5 +134,5 @@ func TestLogger_SaveAndLoad(t *testing.T) {
 }
 
 func loggerFilePath(basePath string) string {
-	return basePath + "/.vendetta/logs/usage.json"
+	return basePath + "/.nexus/logs/usage.json"
 }

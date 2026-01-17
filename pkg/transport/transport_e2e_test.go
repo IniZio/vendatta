@@ -207,7 +207,7 @@ func TestSSHTransportE2EUploadDownload(t *testing.T) {
 	// Test upload
 	localContent := []byte("test content for upload " + time.Now().Format(time.RFC3339))
 	localPath := filepath.Join(t.TempDir(), "upload_test.txt")
-	remotePath := "/tmp/vendetta_transport_test.txt"
+	remotePath := "/tmp/mochi_transport_test.txt"
 
 	err = os.WriteFile(localPath, localContent, 0644)
 	require.NoError(t, err)
