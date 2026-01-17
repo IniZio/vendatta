@@ -39,7 +39,7 @@ func main() {
 			"docker": true,
 			"test":   true,
 		},
-		Services: map[string]coordination.Service{
+		Services: map[string]coordination.NodeService{
 			"web": {
 				ID:       "web-service",
 				Name:     "Web Server",

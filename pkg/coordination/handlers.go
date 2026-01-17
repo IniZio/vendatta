@@ -217,10 +217,10 @@ func (s *Server) handleListServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	services := make(map[string][]Service)
+	services := make(map[string][]NodeService)
 	for _, node := range nodes {
 		if len(node.Services) > 0 {
-			services[node.ID] = make([]Service, 0, len(node.Services))
+			services[node.ID] = make([]NodeService, 0, len(node.Services))
 			for _, service := range node.Services {
 				services[node.ID] = append(services[node.ID], service)
 			}

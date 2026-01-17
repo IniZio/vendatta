@@ -14,20 +14,19 @@ type Node struct {
 	ID           string                 `json:"id"`
 	Name         string                 `json:"name"`
 	Provider     string                 `json:"provider"`
-	Status       string                 `json:"status"` // active, inactive, error, unknown
+	Status       string                 `json:"status"`
 	Address      string                 `json:"address"`
 	Port         int                    `json:"port"`
 	LastSeen     time.Time              `json:"last_seen"`
 	Labels       map[string]string      `json:"labels,omitempty"`
 	Capabilities map[string]interface{} `json:"capabilities,omitempty"`
-	Services     map[string]Service     `json:"services,omitempty"`
+	Services     map[string]NodeService `json:"services,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 	CreatedAt    time.Time              `json:"created_at"`
 	UpdatedAt    time.Time              `json:"updated_at"`
 }
 
-// Service represents a service running on a node
-type Service struct {
+type NodeService struct {
 	ID       string            `json:"id"`
 	Name     string            `json:"name"`
 	Type     string            `json:"type"`
@@ -190,7 +189,7 @@ func (r *InMemoryRegistry) Update(id string, updates map[string]interface{}) err
 				node.Capabilities = m
 			}
 		case "services":
-			if m, ok := value.(map[string]Service); ok {
+			if m, ok := value.(map[string]NodeService); ok {
 				node.Services = m
 			}
 		case "metadata":
@@ -362,17 +361,18 @@ func (s *Server) setupRoutes() {
 	// Service discovery
 	s.router.HandleFunc("/api/v1/services", s.handleListServices)
 
-	// User management
 	s.router.HandleFunc("/api/v1/users", s.handleUsersRequest)
 	s.router.HandleFunc("/api/v1/users/", s.handleUserRequest)
-	s.router.HandleFunc("/api/v1/workspaces/", s.handleWorkspaceUsersRequest)
+	s.router.HandleFunc("/api/v1/workspaces/", s.handleM4WorkspacesRouter)
 
-	// Health and monitoring
 	s.router.HandleFunc("/health", s.handleHealth)
 	s.router.HandleFunc("/metrics", s.handleMetrics)
 
-	// WebSocket endpoint (simplified - upgrade not available in stdlib)
 	s.router.HandleFunc("/ws", s.handleWebSocket)
+
+	s.router.HandleFunc("/api/v1/users/register-github", s.handleM4RegisterGitHub)
+	s.router.HandleFunc("/api/v1/workspaces/create-from-repo", s.handleM4CreateWorkspace)
+	s.router.HandleFunc("/api/v1/workspaces", s.handleM4ListWorkspacesRouter)
 }
 
 // Request routing helpers
