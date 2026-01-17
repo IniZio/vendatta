@@ -34,8 +34,11 @@ func generateEd25519Key(t *testing.T) (privateKeyPath string, publicKey string) 
 		Bytes: privateKeyBytes,
 	}
 
-	// Save private key to temp file
-	privateKeyPath = filepath.Join(t.TempDir(), "id_ed25519")
+	// Save private key to isolated test directory (not in ~/.ssh)
+	testKeyDir := filepath.Join(t.TempDir(), ".nexus", "test-ssh")
+	require.NoError(t, os.MkdirAll(testKeyDir, 0700))
+
+	privateKeyPath = filepath.Join(testKeyDir, "id_ed25519_test")
 	err = os.WriteFile(privateKeyPath, pem.EncodeToMemory(privateKeyPEM), 0600)
 	require.NoError(t, err)
 
@@ -46,15 +49,19 @@ func generateEd25519Key(t *testing.T) (privateKeyPath string, publicKey string) 
 	return privateKeyPath, string(ssh.MarshalAuthorizedKey(sshPublicKey))
 }
 
-// setupSSHServerForTest configures the local SSH server to accept our test key
+// setupSSHServerForTest configures SSH to accept our test key (isolated to test directory)
 func setupSSHServerForTest(t *testing.T, publicKey string) {
 	t.Helper()
 
-	authorizedKeysPath := filepath.Join(os.Getenv("HOME"), ".ssh", "authorized_keys")
+	// Create isolated test SSH configuration directory (never touches user's ~/.ssh)
+	testSSHDir := filepath.Join(t.TempDir(), ".nexus", "test-ssh")
+	require.NoError(t, os.MkdirAll(testSSHDir, 0700))
+
+	authorizedKeysPath := filepath.Join(testSSHDir, "authorized_keys_test")
 
 	existingContent, err := os.ReadFile(authorizedKeysPath)
 	if err != nil && !os.IsNotExist(err) {
-		t.Fatalf("Failed to read authorized_keys: %v", err)
+		t.Fatalf("Failed to read test authorized_keys: %v", err)
 	}
 
 	// Normalize for comparison (ssh.MarshalAuthorizedKey adds trailing newline)
@@ -65,7 +72,7 @@ func setupSSHServerForTest(t *testing.T, publicKey string) {
 	if !strings.Contains(normalizedExisting, normalizedKey) {
 		f, err := os.OpenFile(authorizedKeysPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
-			t.Fatalf("Failed to open authorized_keys: %v", err)
+			t.Fatalf("Failed to open test authorized_keys: %v", err)
 		}
 		defer f.Close()
 
@@ -77,11 +84,13 @@ func setupSSHServerForTest(t *testing.T, publicKey string) {
 	}
 }
 
-// cleanupSSHServerForTest removes our test key from authorized_keys
+// cleanupSSHServerForTest removes our test key from isolated test authorized_keys
 func cleanupSSHServerForTest(t *testing.T, publicKey string) {
 	t.Helper()
 
-	authorizedKeysPath := filepath.Join(os.Getenv("HOME"), ".ssh", "authorized_keys")
+	testSSHDir := filepath.Join(t.TempDir(), ".nexus", "test-ssh")
+	authorizedKeysPath := filepath.Join(testSSHDir, "authorized_keys_test")
+
 	content, err := os.ReadFile(authorizedKeysPath)
 	if err != nil {
 		return

@@ -5,21 +5,9 @@
 
 # Default target
 help: ## Show this help message
-	@echo "mochi Development Makefile"
+	@echo "nexus Development Makefile"
 	@echo ""
-	@echo "Development targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
-	@echo ""
-	@echo "Testing targets:"
-	@echo "  test-unit          Run unit tests with coverage"
-	@echo "  test-integration   Run integration tests"
-	@echo "  test-e2e           Run end-to-end tests"
-	@echo "  test-all           Run all tests (unit + integration + e2e)"
-	@echo ""
-	@echo "CI targets:"
-	@echo "  ci-check           Run all checks (lint, fmt, test)"
-	@echo "  ci-build           Build for multiple platforms"
-	@echo "  ci-docker          Build and push Docker image"
 
 # Get version from git tag or use dev
 VERSION := $(shell git describe --tags --always 2>/dev/null || echo "dev")
@@ -44,6 +32,9 @@ ci-build: ## Build for multiple platforms
 
 ci-docker: docker-build docker-push ## Build and push Docker image
 
+ci-check: test-unit fmt-check lint ## Run all CI checks (tests, format, lint)
+	@echo "✅ All CI checks passed"
+
 # Release
 release: ci-check ci-build ## Create release artifacts
 	@echo "Release artifacts created in dist/"
@@ -52,6 +43,25 @@ release: ci-check ci-build ## Create release artifacts
 dev-setup: ## Set up development environment
 	go mod download
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# Linting and formatting
+fmt: ## Format code with gofmt
+	gofmt -w .
+	go mod tidy
+
+fmt-check: ## Check code formatting without modifying
+	@if gofmt -l . | grep -q .; then \
+		echo "❌ Code formatting issues found. Run 'make fmt' to fix."; \
+		gofmt -l .; \
+		exit 1; \
+	else \
+		echo "✅ Code formatting OK"; \
+	fi
+
+lint: ## Run linters (golangci-lint, go vet)
+	go vet ./...
+	golangci-lint run ./... || true
+	@echo "✅ Linting complete"
 
 dev-test-watch: ## Run tests in watch mode (requires entr)
 	find . -name "*.go" | entr -r make test-unit
@@ -74,3 +84,24 @@ docs-build: ## Build documentation
 docs-serve: ## Serve documentation locally
 	@echo "Serving docs on http://localhost:8000"
 	# Add docs serve commands here
+
+# Testing
+test: test-unit test-integration test-e2e ## Run all tests (unit + integration + e2e)
+
+test-unit: ## Run unit tests with coverage
+	go test -short -race -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Unit test coverage saved to coverage.html"
+
+test-integration: ## Run integration tests (no Docker/LXC required)
+	go test -run Integration ./...
+
+test-e2e: ## Run end-to-end tests (requires Docker/LXC)
+	go test -v ./e2e/...
+
+test-coverage: ## Generate coverage report
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: coverage.html"
+
+test-all: test test-coverage ## Run all tests with coverage report

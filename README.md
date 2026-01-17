@@ -246,10 +246,11 @@ curl http://localhost:3001/api/v1/users
 
 ## 📚 Documentation
 
-- [Configuration Guide](docs/spec/product/configuration.md)
-- [Plugin System](docs/spec/technical/plugins.md)
-- [Architecture](docs/spec/technical/architecture.md)
+- [Configuration Guide](docs/specs/product/configuration.md)
+- [Plugin System](docs/specs/technical/plugins.md)
+- [Architecture](docs/specs/technical/architecture.md)
 - [Coordination API](docs/coordination-api.md)
+- [Sprint Planning Framework](docs/sprints/SPRINT_FRAMEWORK.md)
 
 ---
 

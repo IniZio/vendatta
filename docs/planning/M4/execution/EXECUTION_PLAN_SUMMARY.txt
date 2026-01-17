@@ -1,0 +1,341 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║                    M4 EXECUTION PLAN - COMPLETE PACKAGE                      ║
+║                     Created: January 17, 2026 by Sisyphus                    ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ WHAT WAS DELIVERED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You requested: "Create execution plan so you delegate to subagents and ensure
+the direction is correct and all details are extremely well-tested"
+
+DELIVERED:
+
+1. ✅ M4_STRATEGIC_PLAN.md
+   - 4-phase execution plan (6 weeks total)
+   - 8 parallel work streams with specific deliverables
+   - Quality gates at each phase (Sisyphus oversight)
+   - Risk assessment & mitigation strategies
+   - Complete team structure & effort allocation
+   → Use this for: Overall direction, timeline, resources
+
+2. ✅ M4_EXECUTION_SUMMARY.md
+   - Executive summary & current state assessment
+   - Codebase maturity analysis (⭐⭐⭐⭐ STRONG)
+   - Critical blockers identified & resolution plan
+   - Success metrics & acceptance criteria
+   → Use this for: Quick reference, stakeholder communication
+
+3. ✅ DELEGATION_GUIDE.md
+   - Ready-to-use delegation prompts for each work stream
+   - Specific task definitions (MUST IMPLEMENT, MUST NOT DO)
+   - Success criteria checkboxes
+   - Testing requirements
+   → Use this for: Delegating to subagents (copy-paste prompts)
+
+4. ✅ M4_EXECUTION_PLAN.md (in docs/planning/M4/)
+   - Comprehensive 4-phase breakdown
+   - Per-stream deliverables & responsibilities
+   - Verification strategy & gate criteria
+   - Code review checklist & quality standards
+   → Use this for: Reference during implementation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ HOW DELEGATION WORKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+YOUR ROLE (Sisyphus):
+  1. Select a Phase 1 work stream from DELEGATION_GUIDE.md
+  2. Copy the delegation prompt → Customize slightly if needed
+  3. Delegate to subagent (sisyphus-junior-high, sisyphus-junior, or qa-tester)
+  4. Monitor progress (daily standups)
+  5. Review code & tests when complete
+  6. Gate approval before next phase
+
+EXAMPLE DELEGATION FLOW:
+  
+  Step 1: You → "DELEGATE Stream 1.1 - Extended API Endpoints"
+  Step 2: Subagent → "Implementing POST /api/v1/users/register-github..."
+  Step 3: Subagent → "Created 80+ tests, 90% coverage, all passing"
+  Step 4: You → Code review, architecture check, test validation
+  Step 5: You → "Gate 1.1 Approved" (or "Needs Revision")
+  Step 6: Next stream begins
+
+YOUR OVERSIGHT RESPONSIBILITIES:
+  ✓ Direction correctness (architecture, API contracts)
+  ✓ Quality enforcement (90%+ test coverage)
+  ✓ Cross-stream coordination (no conflicts)
+  ✓ Risk management (blockers, timeline, team velocity)
+  ✓ Gate approvals (don't skip verification)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ CRITICAL BLOCKERS - MUST FIX FIRST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DO NOT START Phase 1 UNTIL THESE ARE FIXED:
+
+BLOCKER 1: E2E Tests Failing
+  Issue: 5 test files failing due to Docker/SSH/LXC environment issues
+  Impact: Can't verify code quality, CI/CD broken
+  Resolution: Systems Engineer (8-12 hours)
+    - Diagnose Docker daemon
+    - Fix SSH key generation in tests
+    - Resolve LXC memory/resource issues
+    - Verify all e2e tests pass
+  Deadline: Jan 20, 2026
+
+BLOCKER 2: Makefile Test Targets Missing
+  Issue: Makefile declares test targets with no implementation
+  Impact: TDD workflow broken, CI/CD can't run tests properly
+  Resolution: Systems Engineer (4-6 hours)
+    - Implement make test
+    - Implement make test-unit
+    - Implement make test-integration
+    - Implement make test-e2e
+    - Implement make test-coverage
+  Deadline: Jan 22, 2026
+
+After Jan 22: Verify `make test` runs all tests successfully in CI/CD
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ TIMELINE AT A GLANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Week 1 (Jan 17-22):      BLOCKERS RESOLUTION
+  - Fix E2E tests
+  - Implement Makefile targets
+  - Verify CI/CD ready
+
+Week 2-3 (Jan 27-Feb 10): PHASE 1 - Coordination Server
+  - 4 parallel work streams
+  - 240 engineering hours
+  - Gate 1 review (Feb 10)
+
+Week 3-4 (Feb 10-17):     PHASE 2 - GitHub Integration (overlaps Phase 1)
+  - 5 parallel work streams
+  - 300 engineering hours
+  - Gate 2 review (Feb 17)
+
+Week 4-5 (Feb 17-24):     PHASE 3 - Install Script
+  - 3 parallel work streams
+  - 120 engineering hours
+  - Gate 3 review (Feb 24)
+
+Week 6 (Feb 24-Mar 3):    PHASE 4 - Polish & Launch
+  - 5 parallel work streams
+  - 340 engineering hours
+  - Final Gate 4 (Mar 3) - GO/NO-GO
+
+TOTAL: 6 weeks | ~940 engineering hours | $35-50k cost
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ TEAM REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You need to acquire 4 engineers:
+
+1. Backend Engineer (Senior)          - 360 hours (~9 weeks FTE)
+   ├─ Coordination Server API endpoints
+   ├─ SQLite database & data models
+   ├─ GitHub CLI integration
+   └─ Final integration & launch
+
+2. Systems Engineer (Mid-level)       - 170 hours (~4 weeks FTE)
+   ├─ LXC container integration
+   ├─ Install script & binary distribution
+   ├─ Security review
+   └─ Infrastructure setup
+
+3. CLI/UX Engineer (Mid-level)        - 140 hours (~3.5 weeks FTE)
+   ├─ Editor detection & deep links
+   ├─ Service discovery UI
+   └─ UX polish & error messages
+
+4. QA Specialist (Mid-level)          - 270 hours (~6.5 weeks FTE)
+   ├─ Unit tests (all phases)
+   ├─ Integration tests
+   ├─ E2E tests & load testing
+   └─ Documentation review
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ QUALITY GATES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4 verification gates where Sisyphus reviews & approves:
+
+GATE 1 (Feb 10): Phase 1 Coordination Server
+  Review criteria:
+    ✓ Code architecture correctness
+    ✓ Test coverage 90%+ on all new code
+    ✓ Container startup <30 seconds
+    ✓ SSH latency <100ms
+    ✓ 10+ concurrent workspaces
+    ✓ All tests passing
+  Approval required: YES / NO / CONDITIONAL
+
+GATE 2 (Feb 17): Phase 2 GitHub Integration
+  Review criteria:
+    ✓ Full end-to-end user flow <3 minutes
+    ✓ All CLI commands working
+    ✓ Error handling bulletproof
+    ✓ Multi-OS testing passed
+    ✓ Test coverage 90%+
+  Approval required: YES / NO / CONDITIONAL
+
+GATE 3 (Feb 24): Phase 3 Install Script
+  Review criteria:
+    ✓ Installation works on all platforms
+    ✓ Binary signed & verifiable
+    ✓ Dependency detection robust
+    ✓ Documentation complete
+  Approval required: YES / NO / CONDITIONAL
+
+GATE 4 (Mar 3): FINAL - Launch Approval
+  Review criteria:
+    ✓ E2E test suite 95%+ pass rate
+    ✓ Load testing 10+ workspaces stable
+    ✓ Performance targets met
+    ✓ Security audit passed
+    ✓ Documentation complete
+    ✓ Staging environment ready
+  Final decision: GO / NO-GO for public launch
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SUCCESS METRICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+M4 is successful when users can do this:
+
+1. Install (20 seconds):
+   $ curl https://nexus.example.com/install.sh | bash
+
+2. Authenticate (30 seconds):
+   $ nexus auth github
+   [Browser opens, user approves]
+
+3. Setup SSH (15 seconds):
+   $ nexus ssh setup
+
+4. Create workspace (20 seconds):
+   $ nexus workspace create my-org/my-project
+
+5. Wait for container (60 seconds, automatic):
+   [Waiting for workspace to start...]
+
+6. Connect editor (10 seconds):
+   $ nexus workspace connect my-project
+   [Cursor opens automatically]
+
+TOTAL: ~3 MINUTES from zero to editing code
+
+Technical metrics that must be met:
+  ✓ First workspace: <3 minutes (user experience)
+  ✓ Container startup: <30 seconds (infrastructure)
+  ✓ SSH latency: <100ms (network performance)
+  ✓ Server uptime: 99.9% (reliability)
+  ✓ Code coverage: 90%+ (code quality)
+  ✓ Test pass rate: 95%+ (testing quality)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ HOW TO USE THIS PACKAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Review & Approve
+  [ ] Read M4_EXECUTION_SUMMARY.md (30 min)
+  [ ] Skim M4_STRATEGIC_PLAN.md (15 min)
+  [ ] Approve plan (or request changes)
+
+STEP 2: Fix Blockers
+  [ ] Assign Systems Engineer to fix E2E tests (Jan 18-20)
+  [ ] Assign Systems Engineer to fix Makefile (Jan 20-22)
+  [ ] Verify CI/CD passing (Jan 22)
+
+STEP 3: Start Phase 1
+  [ ] Recruit/assign 4 engineers (Jan 24-26)
+  [ ] Hold kickoff meeting (Jan 26)
+  [ ] Start Phase 1 (Jan 27)
+
+STEP 4: Delegate & Oversee
+  [ ] Use DELEGATION_GUIDE.md for each work stream
+  [ ] Hold daily standups (15 min)
+  [ ] Weekly checkpoints (progress review)
+  [ ] Code review when work submitted
+  [ ] Gate approvals before next phase
+
+STEP 5: Launch
+  [ ] Gate 4 approval (Mar 3)
+  [ ] Public launch
+  [ ] Beta user support
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DOCUMENT LOCATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In project root (/home/newman/magic/nexus/):
+  • M4_STRATEGIC_PLAN.md .................. Main execution plan
+  • M4_EXECUTION_SUMMARY.md .............. Executive summary
+  • DELEGATION_GUIDE.md .................. Task templates for subagents
+  • EXECUTION_PLAN_SUMMARY.txt ........... This file
+
+In /docs/planning/M4/:
+  • M4_OVERVIEW.md ....................... Executive overview
+  • M4_TECHNICAL_SPECIFICATION.md ........ Architecture details
+  • M4_USER_FLOW_SPECIFICATION.md ........ 7-step user journey
+  • M4_API_SPECIFICATION.md .............. REST API reference
+  • M4_IMPLEMENTATION_CHECKLIST.md ....... Task checklist
+  • M4_EXECUTION_PLAN.md ................. Comprehensive execution (already there)
+
+Reference (existing):
+  • /docs/planning/M3/ ................... M3 status & learnings
+  • /docs/specs/ ......................... System specifications
+  • README.md ............................ Project overview
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ FINAL CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Planning Complete:
+  ✅ 4-phase execution plan created
+  ✅ 8 work streams defined with deliverables
+  ✅ Team structure & effort estimated (~940 hours)
+  ✅ Quality gates designed (4 reviews)
+  ✅ Risk assessment completed
+  ✅ Delegation templates created
+  ✅ Success metrics defined
+  ✅ Timeline established (6 weeks)
+  ✅ Blockers identified & solutions planned
+
+Ready to Execute:
+  ⏳ Blocker fix (E2E tests) - Due Jan 20
+  ⏳ Blocker fix (Makefile) - Due Jan 22
+  ⏳ Team recruitment - Due Jan 26
+  ⏳ Phase 1 kickoff - Due Jan 27
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ APPROVAL REQUIRED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Do you approve this M4 execution plan to proceed?
+
+  [ ] YES - Proceed with blockers fix, then Phase 1
+  [ ] NO - I need changes (describe below)
+  [ ] MAYBE - Questions (describe below)
+
+Proceed immediately if YES:
+  1. Assign Systems Engineer to fix blockers (Jan 18)
+  2. Recruit other 3 engineers (Jan 24-26)
+  3. Start Phase 1 (Jan 27)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Status: ✅ READY FOR YOUR APPROVAL & EXECUTION
+
+Prepared by: Sisyphus
+Date: January 17, 2026
+Time spent: Strategic planning, codebase analysis, delegation design
+Next: Awaiting your approval to proceed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -83,18 +83,18 @@ func (env *TestEnvironment) CreateTestProject(t *testing.T, files map[string]str
 	return projectDir
 }
 
-// BuildmochiBinary builds the mochi binary for testing
+// BuildmochiBinary builds the nexus binary for testing
 func (env *TestEnvironment) BuildmochiBinary(t *testing.T) string {
 	if env.binaryPath != "" {
 		return env.binaryPath
 	}
 
-	// Find the mochi source directory by walking up from test executable
+	// Find the nexus source directory by walking up from test executable
 	// until we find a directory containing go.mod
 	repoRoot := findRepoRoot(t)
 
-	binaryPath := filepath.Join(env.tempDir, "mochi")
-	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/mochi/main.go")
+	binaryPath := filepath.Join(env.tempDir, "nexus")
+	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/nexus/main.go")
 	cmd.Dir = repoRoot
 	require.NoError(t, cmd.Run())
 
@@ -120,7 +120,7 @@ func findRepoRoot(t *testing.T) string {
 	}
 }
 
-// RunmochiCommand runs a mochi command and returns the output
+// RunmochiCommand runs a nexus command and returns the output
 func (env *TestEnvironment) RunmochiCommand(t *testing.T, binaryPath, projectDir string, args ...string) string {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = projectDir
@@ -140,7 +140,7 @@ func (env *TestEnvironment) RunmochiCommand(t *testing.T, binaryPath, projectDir
 	return output
 }
 
-// RunmochiCommandWithError runs a mochi command and returns output and error
+// RunmochiCommandWithError runs a nexus command and returns output and error
 func (env *TestEnvironment) RunmochiCommandWithError(binaryPath, projectDir string, args ...string) (string, error) {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = projectDir
