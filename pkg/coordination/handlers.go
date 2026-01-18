@@ -719,6 +719,23 @@ func (s *Server) handleGitHubOAuthCallback(w http.ResponseWriter, r *http.Reques
 	s.gitHubInstallationsMu.Unlock()
 	log.Printf("Stored GitHub installation for user: %s", installation.GitHubUsername)
 
+	userRegistry := s.registry.GetUserRegistry()
+	_, err = userRegistry.GetByUsername(installation.GitHubUsername)
+	if err != nil {
+		newUser := &User{
+			ID:        installation.GitHubUsername,
+			Username:  installation.GitHubUsername,
+			PublicKey: "",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		if err := userRegistry.Register(newUser); err != nil {
+			log.Printf("Warning: failed to auto-register user %s: %v", installation.GitHubUsername, err)
+		} else {
+			log.Printf("Auto-registered user: %s", installation.GitHubUsername)
+		}
+	}
+
 	// Success response
 	resp := GitHubOAuthCallbackResponse{
 		Success: true,

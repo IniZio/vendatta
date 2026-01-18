@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -239,6 +240,19 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	s.gitHubInstallationsMu.RLock()
+	installation, hasAuth := s.gitHubInstallations[req.GitHubUsername]
+	s.gitHubInstallationsMu.RUnlock()
+
+	if !hasAuth {
+		sendM4JSONError(w, http.StatusUnauthorized, "github_auth_required", "GitHub authorization required", map[string]interface{}{
+			"auth_url": fmt.Sprintf("https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&state=workspace_creation&scope=repo",
+				s.appConfig.ClientID,
+				url.QueryEscape(s.appConfig.RedirectURL)),
+		})
+		return
+	}
+
 	workspaceID := fmt.Sprintf("ws-%d", time.Now().UnixNano())
 	sshPort := 2222 + (time.Now().UnixNano() % 100)
 
@@ -260,7 +274,7 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	go s.provisionWorkspace(context.Background(), workspaceID, user.ID, req, int(sshPort))
+	go s.provisionWorkspace(context.Background(), workspaceID, user.ID, req, int(sshPort), installation.Token)
 
 	resp := M4CreateWorkspaceResponse{
 		WorkspaceID:       workspaceID,
@@ -276,7 +290,7 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(resp)
 }
 
-func (s *Server) provisionWorkspace(ctx context.Context, workspaceID, userID string, req M4CreateWorkspaceRequest, sshPort int) {
+func (s *Server) provisionWorkspace(ctx context.Context, workspaceID, userID string, req M4CreateWorkspaceRequest, sshPort int, githubToken string) {
 	if err := s.workspaceRegistry.UpdateStatus(workspaceID, "creating"); err != nil {
 		fmt.Printf("Failed to update workspace status to creating: %v\n", err)
 	}
@@ -284,6 +298,10 @@ func (s *Server) provisionWorkspace(ctx context.Context, workspaceID, userID str
 	if err := s.workspaceRegistry.UpdateSSHPort(workspaceID, sshPort, "localhost"); err != nil {
 		fmt.Printf("Failed to update SSH port: %v\n", err)
 	}
+
+	fmt.Printf("Provisioning workspace %s with GitHub token for user %s\n", workspaceID, userID)
+	fmt.Printf("Repository: %s/%s\n", req.Repository.Owner, req.Repository.Name)
+	fmt.Printf("GitHub token available: %v\n", githubToken != "")
 
 	if err := s.workspaceRegistry.UpdateStatus(workspaceID, "running"); err != nil {
 		fmt.Printf("Failed to update workspace status to running: %v\n", err)
