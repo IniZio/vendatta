@@ -252,6 +252,33 @@ func TestM4GetWorkspaceStatus(t *testing.T) {
 		},
 	})
 
+	ws1 := &DBWorkspace{
+		WorkspaceID:   "ws-123",
+		UserID:        "user-1",
+		WorkspaceName: "test-workspace-1",
+		Status:        "running",
+		Provider:      "lxc",
+		Image:         "ubuntu:22.04",
+		RepoOwner:     "oursky",
+		RepoName:      "epson-eshop",
+		RepoURL:       "git@github.com:oursky/epson-eshop.git",
+		RepoBranch:    "main",
+	}
+	ws2 := &DBWorkspace{
+		WorkspaceID:   "ws-999",
+		UserID:        "user-2",
+		WorkspaceName: "test-workspace-2",
+		Status:        "running",
+		Provider:      "lxc",
+		Image:         "ubuntu:22.04",
+		RepoOwner:     "oursky",
+		RepoName:      "oms",
+		RepoURL:       "git@github.com:oursky/oms.git",
+		RepoBranch:    "develop",
+	}
+	server.workspaceRegistry.Create(ws1)
+	server.workspaceRegistry.Create(ws2)
+
 	tests := []struct {
 		name           string
 		workspaceID    string
@@ -373,6 +400,33 @@ func TestM4StopWorkspace(t *testing.T) {
 		},
 	})
 
+	ws1 := &DBWorkspace{
+		WorkspaceID:   "ws-123",
+		UserID:        "user-1",
+		WorkspaceName: "test-workspace-1",
+		Status:        "running",
+		Provider:      "lxc",
+		Image:         "ubuntu:22.04",
+		RepoOwner:     "oursky",
+		RepoName:      "epson-eshop",
+		RepoURL:       "git@github.com:oursky/epson-eshop.git",
+		RepoBranch:    "main",
+	}
+	ws2 := &DBWorkspace{
+		WorkspaceID:   "ws-999",
+		UserID:        "user-2",
+		WorkspaceName: "test-workspace-2",
+		Status:        "running",
+		Provider:      "lxc",
+		Image:         "ubuntu:22.04",
+		RepoOwner:     "oursky",
+		RepoName:      "oms",
+		RepoURL:       "git@github.com:oursky/oms.git",
+		RepoBranch:    "develop",
+	}
+	server.workspaceRegistry.Create(ws1)
+	server.workspaceRegistry.Create(ws2)
+
 	tests := []struct {
 		name           string
 		workspaceID    string
@@ -425,6 +479,20 @@ func TestM4DeleteWorkspace(t *testing.T) {
 			Port: 3001,
 		},
 	})
+
+	ws := &DBWorkspace{
+		WorkspaceID:   "ws-123",
+		UserID:        "user-1",
+		WorkspaceName: "test-workspace",
+		Status:        "running",
+		Provider:      "lxc",
+		Image:         "ubuntu:22.04",
+		RepoOwner:     "oursky",
+		RepoName:      "epson-eshop",
+		RepoURL:       "git@github.com:oursky/epson-eshop.git",
+		RepoBranch:    "main",
+	}
+	server.workspaceRegistry.Create(ws)
 
 	tests := []struct {
 		name           string
