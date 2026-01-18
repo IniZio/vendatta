@@ -259,9 +259,11 @@ func TestBaseController_DetectWorkspaceFromCWD(t *testing.T) {
 
 	projectRoot := filepath.Join(tempDir, "project")
 	workspaceName := "my-workspace"
-	workspaceDir := filepath.Join(projectRoot, ".nexus/worktrees", workspaceName)
+	// Create config directory
+	os.MkdirAll(filepath.Join(projectRoot, ".nexus"), 0755)
+	// Create runtime worktrees directory with new structure
+	workspaceDir := filepath.Join(projectRoot, ".nexus-runtime/state/worktrees", workspaceName)
 	os.MkdirAll(workspaceDir, 0755)
-	os.Mkdir(filepath.Join(projectRoot, ".nexus"), 0755)
 
 	subDir := filepath.Join(workspaceDir, "src/components")
 	os.MkdirAll(subDir, 0755)
@@ -331,12 +333,15 @@ func TestBaseController_WorkspaceUp(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	projectRoot := filepath.Join(tempDir, "project")
-	os.MkdirAll(filepath.Join(projectRoot, ".nexus/worktrees/test-ws"), 0755)
-	os.WriteFile(filepath.Join(projectRoot, ".nexus/config.yaml"), []byte("name: test-project"), 0644)
+	// Create config directory with hook
+	configDir := filepath.Join(projectRoot, ".nexus")
+	os.MkdirAll(filepath.Join(configDir, "hooks"), 0755)
+	os.WriteFile(filepath.Join(configDir, "config.yaml"), []byte("name: test-project"), 0644)
+	os.WriteFile(filepath.Join(configDir, "hooks/up.sh"), []byte("#!/bin/bash\ntouch up_executed.txt"), 0755)
 
-	hookDir := filepath.Join(projectRoot, ".nexus/worktrees/test-ws/.nexus/hooks")
-	os.MkdirAll(hookDir, 0755)
-	os.WriteFile(filepath.Join(hookDir, "up.sh"), []byte("#!/bin/bash\ntouch up_executed.txt"), 0755)
+	// Create runtime worktrees directory
+	wtDir := filepath.Join(projectRoot, ".nexus-runtime/state/worktrees/test-ws")
+	os.MkdirAll(wtDir, 0755)
 
 	ctrl := NewBaseController([]provider.Provider{mockP}, nil)
 
@@ -347,7 +352,7 @@ func TestBaseController_WorkspaceUp(t *testing.T) {
 	err = ctrl.WorkspaceUp(context.Background(), "test-ws")
 
 	assert.NoError(t, err)
-	assert.FileExists(t, filepath.Join(projectRoot, ".nexus/worktrees/test-ws/up_executed.txt"))
+	assert.FileExists(t, filepath.Join(wtDir, "up_executed.txt"))
 }
 
 func TestBaseController_HandleBranchConflicts(t *testing.T) {
