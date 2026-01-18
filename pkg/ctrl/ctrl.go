@@ -15,6 +15,7 @@ import (
 
 	"github.com/nexus/nexus/pkg/config"
 	"github.com/nexus/nexus/pkg/lock"
+	"github.com/nexus/nexus/pkg/paths"
 	"github.com/nexus/nexus/pkg/provider"
 	"github.com/nexus/nexus/pkg/templates"
 	"github.com/nexus/nexus/pkg/worktree"
@@ -371,18 +372,31 @@ func (c *BaseController) WorkspaceConnect(ctx context.Context, name string) erro
 }
 
 func (c *BaseController) Init(_ context.Context) error {
-	dirs := []string{
-		".nexus/hooks",
-		".nexus/worktrees",
-		".nexus/agents/rules",
-		".nexus/agents/skills",
-		".nexus/agents/commands",
-		".nexus/templates/skills",
-		".nexus/templates/rules",
-		".nexus/templates/commands",
-		".nexus/remotes",
+	projectRoot := paths.GetProjectRoot()
+
+	configDirs := []string{
+		filepath.Join(paths.GetConfigDir(projectRoot), "hooks"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "agents", "rules"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "agents", "skills"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "agents", "commands"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "templates", "skills"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "templates", "rules"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "templates", "commands"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "remotes"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "plugins"),
 	}
-	for _, dir := range dirs {
+
+	runtimeDirs := []string{
+		paths.GetDataDir(projectRoot),
+		paths.GetStateDir(projectRoot),
+		paths.GetWorktreesDir(projectRoot),
+		paths.GetLogsDir(projectRoot),
+		paths.GetLogsArchiveDir(projectRoot),
+		paths.GetCacheDir(projectRoot),
+	}
+
+	allDirs := append(configDirs, runtimeDirs...)
+	for _, dir := range allDirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
 		}
@@ -402,7 +416,8 @@ docker:
 hooks:
   setup: .nexus/hooks/up.sh
 `
-	if err := os.WriteFile(".nexus/config.yaml", []byte(configYaml), 0644); err != nil {
+	configPath := filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml")
+	if err := os.WriteFile(configPath, []byte(configYaml), 0644); err != nil {
 		return err
 	}
 

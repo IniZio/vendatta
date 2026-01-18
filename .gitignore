@@ -7,11 +7,16 @@ coverage*.out
 coverage.html
 # Dependencies
 node_modules/
-# nexus artifacts (but keep config and templates)
+# nexus runtime artifacts
 .nexus/worktrees/
 .nexus/plugins/
 .nexus/*.lock
 .nexus/*.db
+.nexus/*.db-shm
+.nexus/*.db-wal
+.nexus/server.pid
+.nexus/server.log
+.nexus/coordination.yaml
 .cursor/
 .opencode/
 claude_desktop_config.json

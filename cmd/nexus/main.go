@@ -20,6 +20,7 @@ import (
 	"github.com/nexus/nexus/pkg/coordination"
 	"github.com/nexus/nexus/pkg/ctrl"
 	"github.com/nexus/nexus/pkg/metrics"
+	"github.com/nexus/nexus/pkg/paths"
 	"github.com/nexus/nexus/pkg/provider"
 	dockerProvider "github.com/nexus/nexus/pkg/provider/docker"
 	lxcProvider "github.com/nexus/nexus/pkg/provider/lxc"
@@ -310,7 +311,9 @@ Stops any running server, then starts a new instance with the same configuration
 	RunE: func(_ *cobra.Command, _ []string) error {
 		fmt.Println("=== Restarting Coordination Server ===")
 
-		pidFile := ".nexus/server.pid"
+		projectRoot := paths.GetProjectRoot()
+		pidFile := paths.GetPIDFilePath(projectRoot)
+
 		if data, err := os.ReadFile(pidFile); err == nil {
 			pidStr := strings.TrimSpace(string(data))
 			fmt.Printf("Stopping existing server (PID: %s)...\n", pidStr)
@@ -347,6 +350,9 @@ Stops any running server, then starts a new instance with the same configuration
 			return fmt.Errorf("failed to start server: %w", err)
 		}
 
+		if err := paths.EnsureDir(filepath.Dir(pidFile)); err != nil {
+			return fmt.Errorf("failed to create state directory: %w", err)
+		}
 		os.WriteFile(pidFile, []byte(fmt.Sprintf("%d", cmd.Process.Pid)), 0644)
 		fmt.Printf("Server started (PID: %d)\n", cmd.Process.Pid)
 

@@ -11,6 +11,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/nexus/nexus/pkg/paths"
 )
 
 // ServerInfo contains server runtime information
@@ -27,9 +29,15 @@ type ServerInfo struct {
 
 // StartServer starts the coordination server with proper lifecycle management
 func StartServer(configPath string) error {
+	projectRoot := paths.GetProjectRoot()
+
 	if dbPath := os.Getenv("DB_PATH"); dbPath == "" {
-		dbPath = ".nexus/nexus.db"
+		dbPath = paths.GetDatabasePath(projectRoot)
 		os.Setenv("DB_PATH", dbPath)
+
+		if err := paths.EnsureDir(paths.GetDataDir(projectRoot)); err != nil {
+			return fmt.Errorf("failed to create data directory: %w", err)
+		}
 	}
 
 	// Load configuration
