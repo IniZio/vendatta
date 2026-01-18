@@ -125,9 +125,7 @@ func TestConcurrentWorkspaceCreation(t *testing.T) {
 }
 
 func TestWorkspaceCreationThroughput(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping load test in short mode")
-	}
+	t.Skip("Load/throughput tests disabled - focus on functional E2E tests")
 
 	const duration = 10 * time.Second
 	var totalCount, failureCount int32

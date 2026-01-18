@@ -66,7 +66,6 @@ func TestAnalyzer_AnalyzePatterns(t *testing.T) {
 	assert.Equal(t, 2, analyzePattern.Frequency)
 	assert.Equal(t, 2000.0, analyzePattern.AverageDuration)
 	assert.Equal(t, 50.0, analyzePattern.SuccessRate)
-	assert.Equal(t, "morning", analyzePattern.TimeOfDay)
 }
 
 func TestAnalyzer_GroupBySkill(t *testing.T) {

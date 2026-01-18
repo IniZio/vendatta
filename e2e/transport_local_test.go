@@ -46,12 +46,14 @@ func TestLocalTransportManager(t *testing.T) {
 	defer s.TeardownTestSuite(t)
 
 	t.Run("create_ssh_transport_for_localhost", func(t *testing.T) {
+		testEnv := NewTestEnvironment(t)
+		defer testEnv.Cleanup()
+
 		cfg := transport.CreateDefaultSSHConfig(
 			"localhost:22",
 			"root",
-			"/dev/null",
+			testEnv.GenerateTestSSHKey(t),
 		)
-		cfg.Auth.KeyData = []byte{}
 
 		manager := transport.NewManager()
 		err := manager.RegisterConfig("local-ssh", cfg)
@@ -373,12 +375,17 @@ func TestLocalTransportIntegration(t *testing.T) {
 	}
 
 	t.Run("manager_lifecycle", func(t *testing.T) {
+		env := NewTestEnvironment(t)
+		defer env.Cleanup()
+
+		keyPath := env.GenerateTestSSHKey(t)
+
 		manager := transport.NewManager()
 
 		sshCfg := transport.CreateDefaultSSHConfig(
 			"host1:22",
 			"user1",
-			"/path/to/key1",
+			keyPath,
 		)
 		httpCfg := transport.CreateDefaultHTTPConfig(
 			"http://api1.example.com",
@@ -425,14 +432,18 @@ func TestLocalTransportIntegration(t *testing.T) {
 	})
 
 	t.Run("transport_factory", func(t *testing.T) {
+		env := NewTestEnvironment(t)
+		defer env.Cleanup()
+
+		keyPath := env.GenerateTestSSHKey(t)
+
 		manager := transport.NewManager()
 
 		sshCfg := transport.CreateDefaultSSHConfig(
 			"test:22",
 			"user",
-			"/dev/null",
+			keyPath,
 		)
-		sshCfg.Auth.KeyData = []byte{}
 
 		err := manager.RegisterConfig("factory-test", sshCfg)
 		require.NoError(t, err)

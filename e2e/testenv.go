@@ -2,6 +2,10 @@ package e2e
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"net/http"
 	"os"
 	"os/exec"
@@ -33,17 +37,35 @@ func NewTestEnvironment(t *testing.T) *TestEnvironment {
 
 // Cleanup removes the test environment
 func (env *TestEnvironment) Cleanup() {
-	// Clean up docker containers
-	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=nexus.session.id")
-	if output, err := cmd.Output(); err == nil {
-		containerIDs := strings.Fields(string(output))
-		for _, id := range containerIDs {
-			_ = exec.Command("docker", "rm", "-f", id).Run()
-		}
-	}
-
+	env.cleanupDockerContainers()
 	if env.tempDir != "" {
 		os.RemoveAll(env.tempDir)
+	}
+}
+
+func (env *TestEnvironment) cleanupDockerContainers() {
+	dockerContainerIDsByLabel := func(label string) []string {
+		cmd := exec.Command("docker", "ps", "-q", "--filter", "label="+label)
+		if output, err := cmd.Output(); err == nil {
+			return strings.Fields(string(output))
+		}
+		return nil
+	}
+
+	dockerContainerIDsByName := func(pattern string) []string {
+		cmd := exec.Command("docker", "ps", "-q", "--filter", "name="+pattern)
+		if output, err := cmd.Output(); err == nil {
+			return strings.Fields(string(output))
+		}
+		return nil
+	}
+
+	for _, id := range dockerContainerIDsByLabel("nexus.session.id") {
+		exec.Command("docker", "rm", "-f", id).Run()
+	}
+
+	for _, id := range dockerContainerIDsByName("my-project-") {
+		exec.Command("docker", "rm", "-f", id).Run()
 	}
 }
 
@@ -202,4 +224,22 @@ func (env *TestEnvironment) VerifyServiceDown(t *testing.T, url string, timeout 
 func (env *TestEnvironment) VerifyFileExists(t *testing.T, path string) {
 	_, err := os.Stat(path)
 	require.NoError(t, err, "File should exist: %s", path)
+}
+
+// GenerateTestSSHKey generates a test RSA private key and returns the path
+func (env *TestEnvironment) GenerateTestSSHKey(t *testing.T) string {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	privateKeyPem := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyBytes,
+	})
+
+	keyPath := filepath.Join(env.tempDir, "test_rsa")
+	err = os.WriteFile(keyPath, privateKeyPem, 0600)
+	require.NoError(t, err)
+
+	return keyPath
 }

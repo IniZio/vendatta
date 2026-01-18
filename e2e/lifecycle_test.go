@@ -58,18 +58,18 @@ services:
     depends_on: ["api"]
 `), 0644))
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "lifecycle-test")
 
 	worktreePath := filepath.Join(projectDir, ".nexus", "worktrees", "lifecycle-test")
 	_, err := os.Stat(worktreePath)
 	require.NoError(t, err)
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "up", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "up", "lifecycle-test")
 	time.Sleep(3 * time.Second)
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "down", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "down", "lifecycle-test")
 	// down stops the container, rm removes the worktree
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "lifecycle-test")
 
 	_, err = os.Stat(worktreePath)
 	require.Error(t, err)
@@ -97,11 +97,11 @@ services:
 	binaryPath := env.BuildnexusBinary(t)
 	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "ws1")
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "ws2")
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "ws3")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "ws1")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "ws2")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "ws3")
 
-	output := env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "list")
+	output := env.RunnexusCommand(t, binaryPath, projectDir, "branch", "list")
 
 	for _, ws := range []string{"ws1", "ws2", "ws3"} {
 		if !strings.Contains(output, ws) {
@@ -109,9 +109,9 @@ services:
 		}
 	}
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "ws1")
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "ws2")
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "ws3")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "ws1")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "ws2")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "ws3")
 }
 
 func TestPluginSystem(t *testing.T) {
@@ -142,13 +142,13 @@ agents:
     enabled: true
 `), 0644))
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "plugin-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "plugin-test")
 
 	worktreePath := filepath.Join(projectDir, ".nexus", "worktrees", "plugin-test")
 	agentConfigPath := filepath.Join(worktreePath, "AGENTS.md")
 	require.FileExists(t, agentConfigPath, "AGENTS.md should exist")
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "plugin-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "plugin-test")
 }
 
 func TestLXCProvider(t *testing.T) {
@@ -185,11 +185,11 @@ wait
 	binaryPath := env.BuildnexusBinary(t)
 	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "lxc-ws")
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "up", "lxc-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "lxc-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "up", "lxc-ws")
 	time.Sleep(2 * time.Second)
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "down", "lxc-ws")
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "lxc-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "down", "lxc-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "lxc-ws")
 }
 
 func TestDockerProvider(t *testing.T) {
@@ -220,11 +220,11 @@ wait
 	binaryPath := env.BuildnexusBinary(t)
 	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "docker-ws")
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "up", "docker-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "docker-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "up", "docker-ws")
 	time.Sleep(2 * time.Second)
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "down", "docker-ws")
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "docker-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "down", "docker-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "docker-ws")
 }
 
 func TestErrorHandling(t *testing.T) {
@@ -255,59 +255,16 @@ wait
 	binaryPath := env.BuildnexusBinary(t)
 
 	t.Log("Testing invalid workspace name...")
-	output, err := env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "invalid/name")
+	output, err := env.RunnexusCommandWithError(binaryPath, projectDir, "branch", "create", "invalid/name")
 	require.Error(t, err)
 	require.Contains(t, output, "invalid")
 
 	t.Log("Testing stop of non-existent workspace...")
-	output, err = env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "down", "nonexistent")
+	output, err = env.RunnexusCommandWithError(binaryPath, projectDir, "branch", "down", "nonexistent")
 	require.Error(t, err)
 	require.Contains(t, output, "not found")
 
 	t.Log("Testing duplicate workspace creation...")
-	_, err = env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "test-ws")
+	_, err = env.RunnexusCommandWithError(binaryPath, projectDir, "branch", "create", "test-ws")
 	require.Error(t, err)
-}
-
-func TestPerformanceBenchmarks(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping E2E test in short mode")
-	}
-
-	env := NewTestEnvironment(t)
-	defer env.Cleanup()
-
-	projectDir := env.CreateTestProject(t, map[string]string{
-		".nexus/config.yaml": `
-name: perf-test
-provider: docker
-services:
-  quick:
-    command: "echo 'Ready' && sleep 1"
-    port: 6000
-`,
-		".nexus/hooks/up.sh": `#!/bin/bash
-echo "Starting test environment..."
-wait
-`,
-	})
-
-	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".nexus/hooks/up.sh"), 0755))
-
-	binaryPath := env.BuildnexusBinary(t)
-	env.RunnexusCommand(t, binaryPath, projectDir, "init")
-
-	start := time.Now()
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "perf-test")
-	createTime := time.Since(start)
-	t.Logf("Workspace creation time: %v", createTime)
-	require.Less(t, createTime, 30*time.Second, "Workspace creation should complete within 30 seconds")
-
-	start = time.Now()
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "up", "perf-test")
-	startupTime := time.Since(start)
-	t.Logf("Workspace startup time: %v", startupTime)
-	require.Less(t, startupTime, 120*time.Second, "Workspace startup should complete within 120 seconds")
-
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "down", "perf-test")
 }

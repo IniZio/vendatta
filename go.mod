@@ -11,7 +11,6 @@ require (
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/go-jose/go-jose/v4 v4.0.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
-	github.com/mattn/go-sqlite3 v1.14.33
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1

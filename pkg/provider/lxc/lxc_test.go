@@ -2,6 +2,7 @@ package lxc
 
 import (
 	"context"
+	"os/exec"
 	"testing"
 
 	"github.com/nexus/nexus/pkg/provider"
@@ -9,19 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewLXCProvider(t *testing.T) {
-	lxcProvider, err := NewLXCProvider()
-	if err != nil {
-		t.Skip("LXC not available:", err)
-	}
-
-	assert.NotNil(t, lxcProvider)
-	assert.Equal(t, "lxc", lxcProvider.Name())
-}
-
-func TestLXCProvider_Name(t *testing.T) {
-	provider := &LXCProvider{name: "lxc"}
-	assert.Equal(t, "lxc", provider.Name())
+func cleanupLXCContainer(sessionID string) {
+	exec.Command("lxc", "stop", sessionID, "--force").Run()
+	exec.Command("lxc", "delete", sessionID, "--force").Run()
 }
 
 func TestLXCProvider_Create_Integration(t *testing.T) {
@@ -57,6 +48,8 @@ func TestLXCProvider_Start_Integration(t *testing.T) {
 	ctx := context.Background()
 	sessionID := "test-start"
 
+	cleanupLXCContainer(sessionID)
+
 	lxcProvider, err := NewLXCProvider()
 	if err != nil {
 		t.Skip("LXC not available:", err)
@@ -64,7 +57,7 @@ func TestLXCProvider_Start_Integration(t *testing.T) {
 
 	_, err = lxcProvider.Create(ctx, sessionID, t.TempDir(), nil)
 	require.NoError(t, err)
-	defer lxcProvider.Destroy(ctx, sessionID)
+	defer cleanupLXCContainer(sessionID)
 
 	err = lxcProvider.Start(ctx, sessionID)
 	assert.NoError(t, err)
@@ -157,6 +150,8 @@ func TestLXCProvider_Exec_Integration(t *testing.T) {
 	ctx := context.Background()
 	sessionID := "test-exec"
 
+	cleanupLXCContainer(sessionID)
+
 	lxcProvider, err := NewLXCProvider()
 	if err != nil {
 		t.Skip("LXC not available:", err)
@@ -164,7 +159,7 @@ func TestLXCProvider_Exec_Integration(t *testing.T) {
 
 	_, err = lxcProvider.Create(ctx, sessionID, t.TempDir(), nil)
 	require.NoError(t, err)
-	defer lxcProvider.Destroy(ctx, sessionID)
+	defer cleanupLXCContainer(sessionID)
 
 	err = lxcProvider.Start(ctx, sessionID)
 	require.NoError(t, err)

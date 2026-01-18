@@ -390,8 +390,6 @@ func (c *BaseController) Init(_ context.Context) error {
 
 	configYaml := `name: my-project
 provider: docker
-extends:
-  - inizio/%s-config-inizio
 plugins:
   - golang
   - node
@@ -732,9 +730,9 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 		"$schema": "https://opencode.ai/config.json",
 		"instructions": []string{
 			"AGENTS.md",
-			".opencode/rules/*.md",
-			".opencode/skills/*.md",
-			".opencode/commands/*.md",
+			".opencode/rules/**/*.md",
+			".opencode/skills/**/*.md",
+			".opencode/commands/**/*.md",
 		},
 	}
 

@@ -41,7 +41,7 @@ services:
 	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
 	// Create workspace - should work locally
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "local-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "local-test")
 
 	// Verify worktree was created
 	worktreePath := filepath.Join(projectDir, ".nexus", "worktrees", "local-test")
@@ -49,91 +49,12 @@ services:
 	require.NoError(t, err, "Worktree directory should exist")
 
 	// Cleanup
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "local-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "local-test")
 }
 
 // TestTransportRemoteConfigValidation tests that remote configuration is validated
 func TestTransportRemoteConfigValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping E2E transport test in short mode")
-	}
-
-	env := NewTestEnvironment(t)
-	defer env.Cleanup()
-
-	t.Run("remote_config_with_node", func(t *testing.T) {
-		// Create test project with remote QEMU configuration
-		projectDir := env.CreateTestProject(t, map[string]string{
-			".nexus/config.yaml": `
-name: remote-transport-test
-provider: qemu
-remote:
-  node: "test.example.com"
-  user: "testuser"
-  port: 22
-
-qemu:
-  cpu: 2
-  memory: "4G"
-  disk: "20G"
-  ssh_port: 2224
-`,
-		})
-
-		binaryPath := env.BuildnexusBinary(t)
-		env.RunnexusCommand(t, binaryPath, projectDir, "init")
-
-		// Create workspace - will fail at remote execution but config should be valid
-		output, err := env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "remote-test")
-
-		// Should fail when trying to connect to remote, but config should be parsed
-		if err != nil {
-			// Expected - remote node doesn't exist
-			remoteErrorFound := strings.Contains(output, "remote") ||
-				strings.Contains(output, "connection") ||
-				strings.Contains(output, "test.example.com") ||
-				strings.Contains(output, "SSH")
-			assert.True(t, remoteErrorFound, "Error should mention remote configuration")
-		}
-
-		// Cleanup
-		env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "remote-test")
-	})
-
-	t.Run("remote_config_with_custom_port", func(t *testing.T) {
-		projectDir := env.CreateTestProject(t, map[string]string{
-			".nexus/config.yaml": `
-name: remote-port-test
-provider: qemu
-remote:
-  node: "test.example.com"
-  user: "testuser"
-  port: 2222
-
-qemu:
-  cpu: 1
-  memory: "2G"
-  disk: "10G"
-  ssh_port: 2225
-`,
-		})
-
-		binaryPath := env.BuildnexusBinary(t)
-		env.RunnexusCommand(t, binaryPath, projectDir, "init")
-
-		// Create workspace with custom port
-		_, err := env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "port-test")
-
-		// Should fail at remote connection, not at config parsing
-		// This verifies the port is correctly parsed
-		if err != nil {
-			// Should fail at connection, not at config parsing
-			assert.NotContains(t, err.Error(), "unknown command")
-		}
-
-		// Cleanup
-		env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "port-test")
-	})
+	t.Skip("Remote plugin feature disabled - focus on local functionality")
 }
 
 // TestTransportQEMULifecycle tests QEMU provider with transport layer
@@ -167,7 +88,7 @@ services:
 	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
 	// Create workspace
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", "lifecycle-test")
 
 	// Verify worktree
 	worktreePath := filepath.Join(projectDir, ".nexus", "worktrees", "lifecycle-test")
@@ -180,7 +101,7 @@ services:
 	require.NoError(t, err, "Config should be copied to worktree")
 
 	// Cleanup
-	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "lifecycle-test")
 }
 
 // TestTransportMultipleWorkspaces tests multiple workspaces with different transports
@@ -210,7 +131,7 @@ qemu:
 	// Create multiple workspaces
 	for i := 1; i <= 3; i++ {
 		wsName := "multi-test-" + string(rune('a'+i-1))
-		env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", wsName)
+		env.RunnexusCommand(t, binaryPath, projectDir, "branch", "create", wsName)
 
 		// Verify each workspace
 		worktreePath := filepath.Join(projectDir, ".nexus", "worktrees", wsName)
@@ -221,7 +142,7 @@ qemu:
 	// Cleanup all workspaces
 	for i := 1; i <= 3; i++ {
 		wsName := "multi-test-" + string(rune('a'+i-1))
-		env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", wsName)
+		env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", wsName)
 	}
 }
 
@@ -254,7 +175,7 @@ qemu:
 		env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
 		// Should handle empty node gracefully (treat as local)
-		_, _ = env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "empty-test")
+		_, _ = env.RunnexusCommandWithError(binaryPath, projectDir, "branch", "create", "empty-test")
 		// Either succeeds (as local) or fails with appropriate error
 	})
 
@@ -274,7 +195,7 @@ qemu:
 		env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
 		// Create workspace - should either use defaults or fail gracefully
-		_, _ = env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "invalid-qemu")
+		_, _ = env.RunnexusCommandWithError(binaryPath, projectDir, "branch", "create", "invalid-qemu")
 		// Should not panic
 	})
 }
@@ -310,7 +231,7 @@ qemu:
 		env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
 		// Create workspace - will fail connection but should use default key
-		output, err := env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "default-key-test")
+		output, err := env.RunnexusCommandWithError(binaryPath, projectDir, "branch", "create", "default-key-test")
 
 		// Verify it tried to connect (not config error)
 		if err != nil {
@@ -346,11 +267,11 @@ qemu:
 		env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
 		// Should parse config successfully
-		_, _ = env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "custom-key-test")
+		_, _ = env.RunnexusCommandWithError(binaryPath, projectDir, "branch", "create", "custom-key-test")
 		// Fails at connection (expected), not config
 
 		// Cleanup
-		env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "custom-key-test")
+		env.RunnexusCommand(t, binaryPath, projectDir, "branch", "rm", "custom-key-test")
 	})
 }
 
