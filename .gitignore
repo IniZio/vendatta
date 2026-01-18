@@ -45,3 +45,26 @@ scripts/task_*.sh
 scripts/README_TASK_*.md
 # Temporary documentation
 mochi-config-inizio-README.md
+*_SUMMARY.md
+*_GUIDE.md
+*_PLAN.md
+*_ROADMAP.md
+*_REPORT.md
+ACTUAL_*.md
+FINAL_*.md
+STAGING_*.md
+QUICK_START_*.md
+RALPH_*.md
+M4_*.md
+
+# DAO and database implementation files (experimental)
+pkg/coordination/dao_*.go
+pkg/coordination/db.go
+pkg/coordination/db_test.go
+pkg/coordination/handlers_expanded_test.go
+
+# Test directory
+test/
+
+# Nexus configuration directory
+.nexus/

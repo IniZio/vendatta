@@ -40,7 +40,7 @@ func main() {
 			"test":   true,
 		},
 		Services: map[string]coordination.NodeService{
-			"web": {
+			"web": coordination.NodeService{
 				ID:       "web-service",
 				Name:     "Web Server",
 				Type:     "http",

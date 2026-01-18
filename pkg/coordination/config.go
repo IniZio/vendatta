@@ -51,6 +51,17 @@ type Config struct {
 		MaxBackups int    `yaml:"max_backups,omitempty"`
 		MaxAge     int    `yaml:"max_age,omitempty"`
 	} `yaml:"logging,omitempty"`
+
+	Provider struct {
+		Type string `yaml:"type,omitempty"`
+		LXC  struct {
+			Remote struct {
+				Node string `yaml:"node,omitempty"`
+				User string `yaml:"user,omitempty"`
+				Port int    `yaml:"port,omitempty"`
+			} `yaml:"remote,omitempty"`
+		} `yaml:"lxc,omitempty"`
+	} `yaml:"provider,omitempty"`
 }
 
 type StorageConfig struct {
@@ -88,6 +99,10 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.Logging.MaxSize = 100
 	cfg.Logging.MaxBackups = 3
 	cfg.Logging.MaxAge = 28
+
+	cfg.Provider.Type = "lxc"
+	cfg.Provider.LXC.Remote.User = "root"
+	cfg.Provider.LXC.Remote.Port = 22
 
 	// Load from file if exists
 	if _, err := os.Stat(path); err == nil {

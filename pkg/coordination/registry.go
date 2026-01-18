@@ -7,6 +7,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/nexus/nexus/pkg/provider"
+	"github.com/nexus/nexus/pkg/provider/lxc"
 )
 
 // Node represents a remote node in the coordination system
@@ -320,13 +323,15 @@ func (r *InMemoryUserRegistry) Delete(username string) error {
 
 // Server represents the coordination server
 type Server struct {
-	config    *Config
-	registry  Registry
-	httpSrv   *http.Server
-	router    *http.ServeMux
-	clients   map[chan Event]bool
-	clientsMu sync.Mutex
-	commandCh chan CommandResult
+	config            *Config
+	registry          Registry
+	workspaceRegistry WorkspaceRegistry
+	httpSrv           *http.Server
+	router            *http.ServeMux
+	clients           map[chan Event]bool
+	clientsMu         sync.Mutex
+	commandCh         chan CommandResult
+	provider          provider.Provider
 }
 
 // Event represents a server event for broadcasting
@@ -339,15 +344,40 @@ type Event struct {
 // NewServer creates a new coordination server
 func NewServer(cfg *Config) *Server {
 	srv := &Server{
-		config:    cfg,
-		registry:  NewInMemoryRegistry(),
-		router:    http.NewServeMux(),
-		clients:   make(map[chan Event]bool),
-		commandCh: make(chan CommandResult, 100),
+		config:            cfg,
+		registry:          NewInMemoryRegistry(),
+		workspaceRegistry: NewInMemoryWorkspaceRegistry(),
+		router:            http.NewServeMux(),
+		clients:           make(map[chan Event]bool),
+		commandCh:         make(chan CommandResult, 100),
+	}
+
+	if err := srv.initializeProvider(); err != nil {
+		fmt.Printf("Warning: failed to initialize provider: %v\n", err)
 	}
 
 	srv.setupRoutes()
 	return srv
+}
+
+func (s *Server) initializeProvider() error {
+	providerType := s.config.Provider.Type
+	if providerType == "" {
+		providerType = "lxc"
+	}
+
+	switch providerType {
+	case "lxc":
+		prv, err := lxc.NewLXCProvider()
+		if err != nil {
+			return fmt.Errorf("failed to initialize LXC provider: %w", err)
+		}
+		s.provider = prv
+	default:
+		return fmt.Errorf("unsupported provider type: %s", providerType)
+	}
+
+	return nil
 }
 
 func (s *Server) setupRoutes() {

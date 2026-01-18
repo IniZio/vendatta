@@ -1,6 +1,7 @@
 package coordination
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -232,7 +233,7 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 	}
 
 	userRegistry := s.registry.GetUserRegistry()
-	_, err := userRegistry.GetByUsername(req.GitHubUsername)
+	user, err := userRegistry.GetByUsername(req.GitHubUsername)
 	if err != nil {
 		sendM4JSONError(w, http.StatusBadRequest, "user_not_found", "User not registered", nil)
 		return
@@ -240,6 +241,26 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 
 	workspaceID := fmt.Sprintf("ws-%d", time.Now().UnixNano())
 	sshPort := 2222 + (time.Now().UnixNano() % 100)
+
+	ws := &DBWorkspace{
+		WorkspaceID:   workspaceID,
+		UserID:        user.ID,
+		WorkspaceName: req.WorkspaceName,
+		Status:        "creating",
+		Provider:      req.Provider,
+		Image:         req.Image,
+		RepoOwner:     req.Repository.Owner,
+		RepoName:      req.Repository.Name,
+		RepoURL:       req.Repository.URL,
+		RepoBranch:    req.Repository.Branch,
+	}
+
+	if err := s.workspaceRegistry.Create(ws); err != nil {
+		sendM4JSONError(w, http.StatusInternalServerError, "workspace_creation_failed", fmt.Sprintf("Failed to create workspace: %v", err), nil)
+		return
+	}
+
+	go s.provisionWorkspace(context.Background(), workspaceID, user.ID, req, int(sshPort))
 
 	resp := M4CreateWorkspaceResponse{
 		WorkspaceID:       workspaceID,
@@ -253,6 +274,20 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (s *Server) provisionWorkspace(ctx context.Context, workspaceID, userID string, req M4CreateWorkspaceRequest, sshPort int) {
+	if err := s.workspaceRegistry.UpdateStatus(workspaceID, "creating"); err != nil {
+		fmt.Printf("Failed to update workspace status to creating: %v\n", err)
+	}
+
+	if err := s.workspaceRegistry.UpdateSSHPort(workspaceID, sshPort, "localhost"); err != nil {
+		fmt.Printf("Failed to update SSH port: %v\n", err)
+	}
+
+	if err := s.workspaceRegistry.UpdateStatus(workspaceID, "running"); err != nil {
+		fmt.Printf("Failed to update workspace status to running: %v\n", err)
+	}
 }
 
 func (s *Server) handleM4GetWorkspaceStatus(w http.ResponseWriter, r *http.Request) {
@@ -269,15 +304,31 @@ func (s *Server) handleM4GetWorkspaceStatus(w http.ResponseWriter, r *http.Reque
 
 	workspaceID := parts[0]
 
+	ws, err := s.workspaceRegistry.Get(workspaceID)
+	if err != nil {
+		sendM4JSONError(w, http.StatusNotFound, "workspace_not_found", fmt.Sprintf("Workspace not found: %s", workspaceID), nil)
+		return
+	}
+
+	sshPort := 2222
+	if ws.SSHPort != nil {
+		sshPort = *ws.SSHPort
+	}
+
+	sshHost := "localhost"
+	if ws.SSHHost != nil {
+		sshHost = *ws.SSHHost
+	}
+
 	resp := M4WorkspaceStatusResponse{
-		WorkspaceID: workspaceID,
-		Owner:       "test-user",
-		Name:        "test-workspace",
-		Status:      "running",
-		Provider:    "lxc",
+		WorkspaceID: ws.WorkspaceID,
+		Owner:       ws.UserID,
+		Name:        ws.WorkspaceName,
+		Status:      ws.Status,
+		Provider:    ws.Provider,
 		SSH: M4SSHConnectionInfo{
-			Host:        "localhost",
-			Port:        2222,
+			Host:        sshHost,
+			Port:        sshPort,
 			User:        "dev",
 			KeyRequired: "~/.ssh/id_ed25519",
 		},
@@ -293,14 +344,14 @@ func (s *Server) handleM4GetWorkspaceStatus(w http.ResponseWriter, r *http.Reque
 			},
 		},
 		Repository: M4Repository{
-			Owner:  "test-org",
-			Name:   "test-repo",
-			Branch: "main",
-			URL:    "git@github.com:test-org/test-repo.git",
+			Owner:  ws.RepoOwner,
+			Name:   ws.RepoName,
+			Branch: ws.RepoBranch,
+			URL:    ws.RepoURL,
 		},
 		Node:      "lxc-node-1",
-		CreatedAt: time.Now().Add(-time.Hour),
-		UpdatedAt: time.Now(),
+		CreatedAt: ws.CreatedAt,
+		UpdatedAt: ws.UpdatedAt,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -322,9 +373,14 @@ func (s *Server) handleM4StopWorkspace(w http.ResponseWriter, r *http.Request) {
 
 	workspaceID := parts[0]
 
-	var req M4StopWorkspaceRequest
-	if r.Body != nil {
-		json.NewDecoder(r.Body).Decode(&req)
+	if _, err := s.workspaceRegistry.Get(workspaceID); err != nil {
+		sendM4JSONError(w, http.StatusNotFound, "workspace_not_found", fmt.Sprintf("Workspace not found: %s", workspaceID), nil)
+		return
+	}
+
+	if err := s.workspaceRegistry.UpdateStatus(workspaceID, "stopped"); err != nil {
+		sendM4JSONError(w, http.StatusInternalServerError, "stop_failed", fmt.Sprintf("Failed to stop workspace: %v", err), nil)
+		return
 	}
 
 	resp := M4StopWorkspaceResponse{
@@ -351,6 +407,16 @@ func (s *Server) handleM4DeleteWorkspace(w http.ResponseWriter, r *http.Request)
 	}
 
 	workspaceID := parts[0]
+
+	if _, err := s.workspaceRegistry.Get(workspaceID); err != nil {
+		sendM4JSONError(w, http.StatusNotFound, "workspace_not_found", fmt.Sprintf("Workspace not found: %s", workspaceID), nil)
+		return
+	}
+
+	if err := s.workspaceRegistry.Delete(workspaceID); err != nil {
+		sendM4JSONError(w, http.StatusInternalServerError, "delete_failed", fmt.Sprintf("Failed to delete workspace: %v", err), nil)
+		return
+	}
 
 	resp := M4DeleteWorkspaceResponse{
 		WorkspaceID: workspaceID,
@@ -383,22 +449,42 @@ func (s *Server) handleM4ListWorkspacesRouter(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	workspaces := []M4WorkspaceListItem{
-		{
-			WorkspaceID:   "ws-123",
-			Name:          "test-workspace",
-			Owner:         "alice",
-			Status:        "running",
-			Provider:      "lxc",
-			SSHPort:       2222,
-			CreatedAt:     time.Now().Add(-2 * time.Hour),
-			ServicesCount: 2,
-		},
+	allWorkspaces, err := s.workspaceRegistry.List()
+	if err != nil {
+		sendM4JSONError(w, http.StatusInternalServerError, "list_failed", fmt.Sprintf("Failed to list workspaces: %v", err), nil)
+		return
+	}
+
+	workspaceItems := make([]M4WorkspaceListItem, 0)
+	for i, ws := range allWorkspaces {
+		if i < offset {
+			continue
+		}
+		if len(workspaceItems) >= limit {
+			break
+		}
+
+		sshPort := 2222
+		if ws.SSHPort != nil {
+			sshPort = *ws.SSHPort
+		}
+
+		item := M4WorkspaceListItem{
+			WorkspaceID:   ws.WorkspaceID,
+			Name:          ws.WorkspaceName,
+			Owner:         ws.UserID,
+			Status:        ws.Status,
+			Provider:      ws.Provider,
+			SSHPort:       sshPort,
+			CreatedAt:     ws.CreatedAt,
+			ServicesCount: 1,
+		}
+		workspaceItems = append(workspaceItems, item)
 	}
 
 	resp := M4ListWorkspacesResponse{
-		Workspaces: workspaces,
-		Total:      1,
+		Workspaces: workspaceItems,
+		Total:      len(allWorkspaces),
 		Limit:      limit,
 		Offset:     offset,
 	}
