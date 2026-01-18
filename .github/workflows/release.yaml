@@ -22,19 +22,19 @@ jobs:
           mkdir -p dist
 
           # Linux AMD64
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/mochi-linux-amd64 ./cmd/mochi
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/nexus-linux-amd64 ./cmd/nexus
 
           # Linux ARM64
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o dist/mochi-linux-arm64 ./cmd/mochi
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o dist/nexus-linux-arm64 ./cmd/nexus
 
           # Darwin AMD64
-          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/mochi-darwin-amd64 ./cmd/mochi
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/nexus-darwin-amd64 ./cmd/nexus
 
           # Darwin ARM64
-          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/mochi-darwin-arm64 ./cmd/mochi
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/nexus-darwin-arm64 ./cmd/nexus
 
           # Windows AMD64
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/mochi-windows-amd64.exe ./cmd/mochi
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/nexus-windows-amd64.exe ./cmd/nexus
 
           # List binaries
           ls -lh dist/

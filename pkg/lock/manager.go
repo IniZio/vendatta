@@ -25,7 +25,7 @@ type LockEntry struct {
 	Metadata     map[string]string `yaml:"metadata,omitempty"`
 }
 
-// Lockfile represents the mochi.lock structure
+// Lockfile represents the nexus.lock structure
 type Lockfile struct {
 	Version  string                `yaml:"_version"`
 	Plugins  map[string]*LockEntry `yaml:"plugins"`
@@ -56,7 +56,7 @@ func (m *Manager) GenerateLockfile(registry *plugins.Registry, activePlugins []s
 		Version: "1.0",
 		Plugins: make(map[string]*LockEntry),
 		Metadata: LockMetadata{
-			Generator: "mochi",
+			Generator: "nexus",
 			Extra:     make(map[string]string),
 		},
 	}
@@ -103,7 +103,7 @@ func (m *Manager) GenerateLockfile(registry *plugins.Registry, activePlugins []s
 
 // LoadLockfile loads a lockfile from disk
 func (m *Manager) LoadLockfile() (*Lockfile, error) {
-	lockPath := filepath.Join(m.baseDir, "mochi.lock")
+	lockPath := filepath.Join(m.baseDir, "nexus.lock")
 	data, err := os.ReadFile(lockPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -122,7 +122,7 @@ func (m *Manager) LoadLockfile() (*Lockfile, error) {
 
 // SaveLockfile saves a lockfile to disk
 func (m *Manager) SaveLockfile(lockfile *Lockfile) error {
-	lockPath := filepath.Join(m.baseDir, "mochi.lock")
+	lockPath := filepath.Join(m.baseDir, "nexus.lock")
 	data, err := yaml.Marshal(lockfile)
 	if err != nil {
 		return fmt.Errorf("failed to marshal lockfile: %w", err)

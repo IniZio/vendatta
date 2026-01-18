@@ -796,7 +796,7 @@ func (dp *DockerProvider) createSecureContainerConfig(workspace Workspace) Docke
             "seccomp:default",
         },
         ReadOnly:   false, // Allow development
-        User:       "mochi", // Non-root user
+        User:       "nexus", // Non-root user
         CapDrop:    []string{"ALL"},
         CapAdd:     []string{"CHOWN", "DAC_OVERRIDE", "FSETID", "FOWNER", "MKNOD", "SETGID", "SETUID"},
     }

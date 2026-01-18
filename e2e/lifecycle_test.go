@@ -19,7 +19,7 @@ func TestWorkspaceLifecycle(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".mochi/config.yaml": `
+		".nexus/config.yaml": `
 name: lifecycle-test
 provider: docker
 services:
@@ -31,7 +31,7 @@ services:
     port: 23000
     depends_on: ["web"]
 `,
-		".mochi/hooks/up.sh": `#!/bin/bash
+		".nexus/hooks/up.sh": `#!/bin/bash
 echo "Starting test services..."
 timeout 60 /usr/bin/python3 -m http.server -b 0.0.0.0 18080 &
 timeout 60 /usr/bin/python3 -m http.server -b 0.0.0.0 13000 &
@@ -39,12 +39,12 @@ echo "Services started"
 `,
 	})
 
-	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".mochi/hooks/up.sh"), 0755))
+	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".nexus/hooks/up.sh"), 0755))
 
-	binaryPath := env.BuildmochiBinary(t)
-	env.RunmochiCommand(t, binaryPath, projectDir, "init")
+	binaryPath := env.BuildnexusBinary(t)
+	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
-	require.NoError(t, os.WriteFile(filepath.Join(projectDir, ".mochi/config.yaml"), []byte(`
+	require.NoError(t, os.WriteFile(filepath.Join(projectDir, ".nexus/config.yaml"), []byte(`
 name: lifecycle-test
 provider: docker
 services:
@@ -58,18 +58,18 @@ services:
     depends_on: ["api"]
 `), 0644))
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "create", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "lifecycle-test")
 
-	worktreePath := filepath.Join(projectDir, ".mochi", "worktrees", "lifecycle-test")
+	worktreePath := filepath.Join(projectDir, ".nexus", "worktrees", "lifecycle-test")
 	_, err := os.Stat(worktreePath)
 	require.NoError(t, err)
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "up", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "up", "lifecycle-test")
 	time.Sleep(3 * time.Second)
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "down", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "down", "lifecycle-test")
 	// down stops the container, rm removes the worktree
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "rm", "lifecycle-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "lifecycle-test")
 
 	_, err = os.Stat(worktreePath)
 	require.Error(t, err)
@@ -84,7 +84,7 @@ func TestWorkspaceList(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".mochi/config.yaml": `
+		".nexus/config.yaml": `
 name: list-test
 provider: docker
 services:
@@ -94,14 +94,14 @@ services:
 `,
 	})
 
-	binaryPath := env.BuildmochiBinary(t)
-	env.RunmochiCommand(t, binaryPath, projectDir, "init")
+	binaryPath := env.BuildnexusBinary(t)
+	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "create", "ws1")
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "create", "ws2")
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "create", "ws3")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "ws1")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "ws2")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "ws3")
 
-	output := env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "list")
+	output := env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "list")
 
 	for _, ws := range []string{"ws1", "ws2", "ws3"} {
 		if !strings.Contains(output, ws) {
@@ -109,9 +109,9 @@ services:
 		}
 	}
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "rm", "ws1")
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "rm", "ws2")
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "rm", "ws3")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "ws1")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "ws2")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "ws3")
 }
 
 func TestPluginSystem(t *testing.T) {
@@ -123,18 +123,18 @@ func TestPluginSystem(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".mochi/hooks/up.sh": `#!/bin/bash
+		".nexus/hooks/up.sh": `#!/bin/bash
 echo "Starting test environment..."
 wait
 `,
 	})
 
-	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".mochi/hooks/up.sh"), 0755))
+	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".nexus/hooks/up.sh"), 0755))
 
-	binaryPath := env.BuildmochiBinary(t)
-	env.RunmochiCommand(t, binaryPath, projectDir, "init")
+	binaryPath := env.BuildnexusBinary(t)
+	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
-	require.NoError(t, os.WriteFile(filepath.Join(projectDir, ".mochi/config.yaml"), []byte(`
+	require.NoError(t, os.WriteFile(filepath.Join(projectDir, ".nexus/config.yaml"), []byte(`
 name: plugin-test
 provider: docker
 agents:
@@ -142,13 +142,13 @@ agents:
     enabled: true
 `), 0644))
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "create", "plugin-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "plugin-test")
 
-	worktreePath := filepath.Join(projectDir, ".mochi", "worktrees", "plugin-test")
+	worktreePath := filepath.Join(projectDir, ".nexus", "worktrees", "plugin-test")
 	agentConfigPath := filepath.Join(worktreePath, "AGENTS.md")
 	require.FileExists(t, agentConfigPath, "AGENTS.md should exist")
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "rm", "plugin-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "plugin-test")
 }
 
 func TestLXCProvider(t *testing.T) {
@@ -164,7 +164,7 @@ func TestLXCProvider(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".mochi/config.yaml": `
+		".nexus/config.yaml": `
 name: lxc-test
 provider: lxc
 services:
@@ -174,22 +174,22 @@ services:
 lxc:
   image: ubuntu:22.04
 `,
-		".mochi/hooks/up.sh": `#!/bin/bash
+		".nexus/hooks/up.sh": `#!/bin/bash
 echo "Starting LXC test environment..."
 wait
 `,
 	})
 
-	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".mochi/hooks/up.sh"), 0755))
+	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".nexus/hooks/up.sh"), 0755))
 
-	binaryPath := env.BuildmochiBinary(t)
-	env.RunmochiCommand(t, binaryPath, projectDir, "init")
+	binaryPath := env.BuildnexusBinary(t)
+	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "create", "lxc-ws")
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "up", "lxc-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "lxc-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "up", "lxc-ws")
 	time.Sleep(2 * time.Second)
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "down", "lxc-ws")
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "rm", "lxc-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "down", "lxc-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "lxc-ws")
 }
 
 func TestDockerProvider(t *testing.T) {
@@ -201,7 +201,7 @@ func TestDockerProvider(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".mochi/config.yaml": `
+		".nexus/config.yaml": `
 name: docker-test
 provider: docker
 services:
@@ -209,22 +209,22 @@ services:
     command: "sleep infinity"
     port: 3000
 `,
-		".mochi/hooks/up.sh": `#!/bin/bash
+		".nexus/hooks/up.sh": `#!/bin/bash
 echo "Starting Docker test environment..."
 wait
 `,
 	})
 
-	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".mochi/hooks/up.sh"), 0755))
+	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".nexus/hooks/up.sh"), 0755))
 
-	binaryPath := env.BuildmochiBinary(t)
-	env.RunmochiCommand(t, binaryPath, projectDir, "init")
+	binaryPath := env.BuildnexusBinary(t)
+	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "create", "docker-ws")
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "up", "docker-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "docker-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "up", "docker-ws")
 	time.Sleep(2 * time.Second)
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "down", "docker-ws")
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "rm", "docker-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "down", "docker-ws")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "rm", "docker-ws")
 }
 
 func TestErrorHandling(t *testing.T) {
@@ -236,7 +236,7 @@ func TestErrorHandling(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".mochi/config.yaml": `
+		".nexus/config.yaml": `
 name: error-test
 provider: docker
 services:
@@ -244,28 +244,28 @@ services:
     command: "exit 1"
     port: 5000
 `,
-		".mochi/hooks/up.sh": `#!/bin/bash
+		".nexus/hooks/up.sh": `#!/bin/bash
 echo "Starting test environment..."
 wait
 `,
 	})
 
-	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".mochi/hooks/up.sh"), 0755))
+	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".nexus/hooks/up.sh"), 0755))
 
-	binaryPath := env.BuildmochiBinary(t)
+	binaryPath := env.BuildnexusBinary(t)
 
 	t.Log("Testing invalid workspace name...")
-	output, err := env.RunmochiCommandWithError(binaryPath, projectDir, "workspace", "create", "invalid/name")
+	output, err := env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "invalid/name")
 	require.Error(t, err)
 	require.Contains(t, output, "invalid")
 
 	t.Log("Testing stop of non-existent workspace...")
-	output, err = env.RunmochiCommandWithError(binaryPath, projectDir, "workspace", "down", "nonexistent")
+	output, err = env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "down", "nonexistent")
 	require.Error(t, err)
 	require.Contains(t, output, "not found")
 
 	t.Log("Testing duplicate workspace creation...")
-	_, err = env.RunmochiCommandWithError(binaryPath, projectDir, "workspace", "create", "test-ws")
+	_, err = env.RunnexusCommandWithError(binaryPath, projectDir, "workspace", "create", "test-ws")
 	require.Error(t, err)
 }
 
@@ -278,7 +278,7 @@ func TestPerformanceBenchmarks(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".mochi/config.yaml": `
+		".nexus/config.yaml": `
 name: perf-test
 provider: docker
 services:
@@ -286,28 +286,28 @@ services:
     command: "echo 'Ready' && sleep 1"
     port: 6000
 `,
-		".mochi/hooks/up.sh": `#!/bin/bash
+		".nexus/hooks/up.sh": `#!/bin/bash
 echo "Starting test environment..."
 wait
 `,
 	})
 
-	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".mochi/hooks/up.sh"), 0755))
+	require.NoError(t, os.Chmod(filepath.Join(projectDir, ".nexus/hooks/up.sh"), 0755))
 
-	binaryPath := env.BuildmochiBinary(t)
-	env.RunmochiCommand(t, binaryPath, projectDir, "init")
+	binaryPath := env.BuildnexusBinary(t)
+	env.RunnexusCommand(t, binaryPath, projectDir, "init")
 
 	start := time.Now()
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "create", "perf-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "create", "perf-test")
 	createTime := time.Since(start)
 	t.Logf("Workspace creation time: %v", createTime)
 	require.Less(t, createTime, 30*time.Second, "Workspace creation should complete within 30 seconds")
 
 	start = time.Now()
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "up", "perf-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "up", "perf-test")
 	startupTime := time.Since(start)
 	t.Logf("Workspace startup time: %v", startupTime)
 	require.Less(t, startupTime, 120*time.Second, "Workspace startup should complete within 120 seconds")
 
-	env.RunmochiCommand(t, binaryPath, projectDir, "workspace", "down", "perf-test")
+	env.RunnexusCommand(t, binaryPath, projectDir, "workspace", "down", "perf-test")
 }

@@ -1,20 +1,20 @@
 # Technical Specification: Lifecycle & Config
 
-## 1. Project Configuration (`.mochi/config.yaml`)
+## 1. Project Configuration (`.nexus/config.yaml`)
 
-mochi uses a declarative YAML configuration system with full JSON schema validation and IDE support.
+nexus uses a declarative YAML configuration system with full JSON schema validation and IDE support.
 
 ### Schema Validation
 - **Auto-generated schema**: JSON schema is automatically generated from Go structs
 - **IDE integration**: VSCode, Cursor, and other editors provide autocomplete and validation
 - **Validation commands**:
   ```bash
-  mochi config generate-schema  # Generate .mochi/schema/config.schema.json
-  mochi config validate         # Validate current config.yaml
+  nexus config generate-schema  # Generate .nexus/schema/config.schema.json
+  nexus config validate         # Validate current config.yaml
   ```
 
 ### Schema Location
-- **Schema file**: `.mochi/schema/config.schema.json`
+- **Schema file**: `.nexus/schema/config.schema.json`
 - **Auto-generated**: Updated automatically when config structs change
 
 ```yaml
@@ -34,25 +34,25 @@ agent:
   enabled: true
 
 hooks:
-  setup: .mochi/hooks/setup.sh
-  dev: .mochi/hooks/dev.sh
+  setup: .nexus/hooks/setup.sh
+  dev: .nexus/hooks/dev.sh
 ```
 
 ## 2. Lifecycle States
 
 ### **`init`**
-Scaffolds the `.mochi` directory. Creates the base configuration and templates.
+Scaffolds the `.nexus` directory. Creates the base configuration and templates.
 
 ### **`workspace create <name>`**
 1.  **Branch**: Creates or switches to the specified git branch.
-2.  **Worktree**: Creates a git worktree in `.mochi/worktrees/<name>/` (if `-w` flag used).
+2.  **Worktree**: Creates a git worktree in `.nexus/worktrees/<name>/` (if `-w` flag used).
 3.  **Agent Configs**: Generates AI agent configurations (Cursor, OpenCode, etc.) from templates.
-4.  **Hooks**: Runs `.mochi/hooks/create.sh` if it exists.
+4.  **Hooks**: Runs `.nexus/hooks/create.sh` if it exists.
 
 ### **`workspace up [name]`**
 1.  **Container**: Starts the Docker container with worktree bind-mounted.
-2.  **Port Forwarding**: Maps service ports and injects `mochi_SERVICE_*` environment variables.
-3.  **Hooks**: Executes `.mochi/hooks/up.sh` if it exists.
+2.  **Port Forwarding**: Maps service ports and injects `nexus_SERVICE_*` environment variables.
+3.  **Hooks**: Executes `.nexus/hooks/up.sh` if it exists.
 4.  **Blocking**: Streams logs and maintains session until Ctrl+C (or detached with `-d`).
 
 ### **`workspace stop [name]`**

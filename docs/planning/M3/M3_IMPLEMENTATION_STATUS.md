@@ -1,6 +1,6 @@
 # M3 Implementation Status Tracking
 
-**Project**: mochi M3 - Provider-Agnostic Remote Nodes with Coordination Server  
+**Project**: nexus M3 - Provider-Agnostic Remote Nodes with Coordination Server  
 **Current Status**: 20% Complete 🔴  
 **Last Updated**: January 13, 2026  
 **Verification Method**: Architecture analysis + corrected understanding  
@@ -137,12 +137,12 @@ M3 is currently at **20% completion** after architectural correction revealed th
 **Status**: No CLI commands for coordination server operations  
 **Impact**: No way to manage remote nodes from CLI  
 **Missing Commands**:
-- `mochi node add/list/status/remove` (talks to coordination server)
+- `nexus node add/list/status/remove` (talks to coordination server)
 - Connection testing and validation
 - Node configuration management
 - Coordination server status commands
 
-**Implementation Required**: New CLI package `cmd/mochi/node.go`
+**Implementation Required**: New CLI package `cmd/nexus/node.go`
 
 #### 11. User Management System (0%)
 **Status**: No user registration or management functionality
@@ -179,10 +179,10 @@ M3 is currently at **20% completion** after architectural correction revealed th
 | **Transport Layer** | ❌ Missing | 0% | `pkg/transport/` (missing) |
 | **Coordination Server** | ❌ Missing | 0% | `pkg/coordination/` (missing) |
 | **Node Agents** | ❌ Missing | 0% | `pkg/nodeagent/` (missing) |
-| **Node Management CLI** | ❌ Missing | 0% | `cmd/mochi/node.go` (missing) |
+| **Node Management CLI** | ❌ Missing | 0% | `cmd/nexus/node.go` (missing) |
 | **User Registry** | ❌ Missing | 0% | `pkg/user/` (missing) |
 | **User API** | ❌ Missing | 0% | `pkg/coordination/api/user.go` (missing) |
-| **User CLI** | ❌ Missing | 0% | `cmd/mochi/user.go` (missing) |
+| **User CLI** | ❌ Missing | 0% | `cmd/nexus/user.go` (missing) |
 | **Deep Links** | ❌ Missing | 0% | `pkg/user/deeplinks.go` (missing) |
 | **Port Discovery** | ❌ Missing | 0% | `pkg/coordination/ports.go` (missing) |
 

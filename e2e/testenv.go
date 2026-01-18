@@ -22,7 +22,7 @@ type TestEnvironment struct {
 
 // NewTestEnvironment creates a new test environment
 func NewTestEnvironment(t *testing.T) *TestEnvironment {
-	tempDir, err := os.MkdirTemp("", "mochi-e2e-*")
+	tempDir, err := os.MkdirTemp("", "nexus-e2e-*")
 	require.NoError(t, err)
 
 	return &TestEnvironment{
@@ -34,7 +34,7 @@ func NewTestEnvironment(t *testing.T) *TestEnvironment {
 // Cleanup removes the test environment
 func (env *TestEnvironment) Cleanup() {
 	// Clean up docker containers
-	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=mochi.session.id")
+	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=nexus.session.id")
 	if output, err := cmd.Output(); err == nil {
 		containerIDs := strings.Fields(string(output))
 		for _, id := range containerIDs {
@@ -83,8 +83,8 @@ func (env *TestEnvironment) CreateTestProject(t *testing.T, files map[string]str
 	return projectDir
 }
 
-// BuildmochiBinary builds the nexus binary for testing
-func (env *TestEnvironment) BuildmochiBinary(t *testing.T) string {
+// BuildnexusBinary builds the nexus binary for testing
+func (env *TestEnvironment) BuildnexusBinary(t *testing.T) string {
 	if env.binaryPath != "" {
 		return env.binaryPath
 	}
@@ -120,8 +120,8 @@ func findRepoRoot(t *testing.T) string {
 	}
 }
 
-// RunmochiCommand runs a nexus command and returns the output
-func (env *TestEnvironment) RunmochiCommand(t *testing.T, binaryPath, projectDir string, args ...string) string {
+// RunnexusCommand runs a nexus command and returns the output
+func (env *TestEnvironment) RunnexusCommand(t *testing.T, binaryPath, projectDir string, args ...string) string {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = projectDir
 
@@ -140,8 +140,8 @@ func (env *TestEnvironment) RunmochiCommand(t *testing.T, binaryPath, projectDir
 	return output
 }
 
-// RunmochiCommandWithError runs a nexus command and returns output and error
-func (env *TestEnvironment) RunmochiCommandWithError(binaryPath, projectDir string, args ...string) (string, error) {
+// RunnexusCommandWithError runs a nexus command and returns output and error
+func (env *TestEnvironment) RunnexusCommandWithError(binaryPath, projectDir string, args ...string) (string, error) {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = projectDir
 

@@ -29,7 +29,7 @@ func NewQEMUProvider() (*QEMUProvider, error) {
 	}
 	return &QEMUProvider{
 		Manager: *transport.NewManager(),
-		baseDir: filepath.Join(os.Getenv("HOME"), ".mochi", "qemu"),
+		baseDir: filepath.Join(os.Getenv("HOME"), ".nexus", "qemu"),
 	}, nil
 }
 
@@ -129,9 +129,9 @@ func (p *QEMUProvider) Create(ctx context.Context, sessionID string, workspacePa
 		Services: p.extractServicePorts(cfg),
 		Labels: map[string]string{
 			"nexus.session.id": sessionID,
-			"mochi.vm.dir":     vmDir,
-			"mochi.workspace":  workspacePath,
-			"mochi.remote":     p.remote,
+			"nexus.vm.dir":     vmDir,
+			"nexus.workspace":  workspacePath,
+			"nexus.remote":     p.remote,
 		},
 	}, nil
 }
@@ -211,7 +211,7 @@ func (p *QEMUProvider) Exec(ctx context.Context, sessionID string, opts provider
 	return nil
 }
 
-// List returns all QEMU VMs managed by mochi
+// List returns all QEMU VMs managed by nexus
 func (p *QEMUProvider) List(ctx context.Context) ([]provider.Session, error) {
 	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep -oE '%s-[a-z0-9_-]+' | sort -u")
 	if err != nil {

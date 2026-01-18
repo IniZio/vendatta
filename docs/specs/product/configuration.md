@@ -1,8 +1,8 @@
-# Configuration Reference: Project mochi
+# Configuration Reference: Project nexus
 
 ## 1. Overview
 
-mochi uses a declarative configuration system based on YAML and JSON templates. This reference covers all available configuration options and how to use them effectively.
+nexus uses a declarative configuration system based on YAML and JSON templates. This reference covers all available configuration options and how to use them effectively.
 
 ## 2. Main Configuration (`config.yaml`)
 
@@ -37,15 +37,15 @@ Extends are loaded first and provide the foundation rules, skills, and commands.
 
 #### **Updating Extends**
 ```bash
-mochi update         # Fetch latest versions of all extends
+nexus update         # Fetch latest versions of all extends
 ```
 
 This command:
 - Fetches latest content from remote repositories
-- Updates the cached copies in `.mochi/remotes/`
+- Updates the cached copies in `.nexus/remotes/`
 - Displays updated repos with their commit SHAs
 
-**Note:** Normal operations (workspace create, apply) use cached extends with no network calls. Run `mochi update` periodically to get the latest templates.
+**Note:** Normal operations (workspace create, apply) use cached extends with no network calls. Run `nexus update` periodically to get the latest templates.
 
 ### **Plugins Configuration**
 
@@ -73,18 +73,18 @@ Plugin capabilities are organized in structured directories:
 
 When you load plugins, all their capabilities are automatically enabled and organized by plugin. This provides a "batteries included" experience where adding a plugin gives you a complete set of capabilities.
 
-For customization, use local overrides in `.mochi/templates/` to modify or remove specific capabilities.
+For customization, use local overrides in `.nexus/templates/` to modify or remove specific capabilities.
 
 ---
 
-### **Reproducible Locking (`mochi.lock`)**
+### **Reproducible Locking (`nexus.lock`)**
 
-mochi automatically generates a `mochi.lock` file to ensure that your team is always using the exact same versions of all extends.
+nexus automatically generates a `nexus.lock` file to ensure that your team is always using the exact same versions of all extends.
 
 **Command Workflow:**
-1. `mochi init`: Initializes project with optional extends.
-2. `mochi update`: Updates all extends to their latest versions and refreshes the cache.
-3. `mochi workspace create`: Uses cached extends for offline-safe, deterministic workspace creation.
+1. `nexus init`: Initializes project with optional extends.
+2. `nexus update`: Updates all extends to their latest versions and refreshes the cache.
+3. `nexus workspace create`: Uses cached extends for offline-safe, deterministic workspace creation.
 
 ### **Services Configuration**
 
@@ -144,11 +144,11 @@ MCP (Model Context Protocol) servers are automatically configured and started wh
 - **Host**: localhost
 - **Auto-enabled**: When any agents are detected/enabled
 
-No manual MCP configuration is required - mochi handles this automatically.
+No manual MCP configuration is required - nexus handles this automatically.
 
-### **User-Specific Configuration (`$XDG_CONFIG_HOME/mochi/config.yaml`)**
+### **User-Specific Configuration (`$XDG_CONFIG_HOME/nexus/config.yaml`)**
 
-mochi auto-generates a default user configuration at `$XDG_CONFIG_HOME/mochi/config.yaml` (typically `~/.config/mochi/config.yaml`). This file contains your personal preferences and is never committed to version control.
+nexus auto-generates a default user configuration at `$XDG_CONFIG_HOME/nexus/config.yaml` (typically `~/.config/nexus/config.yaml`). This file contains your personal preferences and is never committed to version control.
 
 AI agents are automatically detected from installed CLIs - no manual configuration required.
 
@@ -158,7 +158,7 @@ provider: "docker"
 ```
 
 #### **Auto-Detection**
-mochi scans your system for installed AI agents:
+nexus scans your system for installed AI agents:
 - **Cursor**: Detects VS Code with Cursor extension
 - **OpenCode**: Detects OpenCode installation
 - **Claude Desktop/Code**: Detects Anthropic CLI tools
@@ -187,13 +187,13 @@ docker:
 ### **Hooks Configuration**
 
 #### **Convention-Based Lifecycle Scripts**
-Hooks are now convention-based and located in `.mochi/hooks/`:
+Hooks are now convention-based and located in `.nexus/hooks/`:
 
 **Base Project Hooks:**
-- `.mochi/hooks/create.sh` - Executed during `workspace create` (optional)
-- `.mochi/hooks/up.sh` - Executed during `workspace up` (optional)
-- `.mochi/hooks/stop.sh` - Executed during `workspace stop` (optional)
-- `.mochi/hooks/down.sh` - Executed during `workspace down` (optional)
+- `.nexus/hooks/create.sh` - Executed during `workspace create` (optional)
+- `.nexus/hooks/up.sh` - Executed during `workspace up` (optional)
+- `.nexus/hooks/stop.sh` - Executed during `workspace stop` (optional)
+- `.nexus/hooks/down.sh` - Executed during `workspace down` (optional)
 
 **Execution:** Scripts must be executable (chmod +x) if present.
 
@@ -305,7 +305,7 @@ priority: "high"
 
 ## 4. Agent-Specific Configuration
 
-Agent configurations are generated based on your `$XDG_CONFIG_HOME/mochi/config.yaml` settings and the enabled capabilities from `config.yaml`. Each supported agent gets customized configuration files.
+Agent configurations are generated based on your `$XDG_CONFIG_HOME/nexus/config.yaml` settings and the enabled capabilities from `config.yaml`. Each supported agent gets customized configuration files.
 
 ### **Cursor Configuration**
 Generated: `.cursor/mcp.json` (when cursor is enabled in `config.local.yaml`)
@@ -400,7 +400,7 @@ Generated: `claude_desktop_config.json` / `claude_code_config.json`
 
 ## 5. Environment Variables
 
-mochi supports environment variable substitution in configuration:
+nexus supports environment variable substitution in configuration:
 
 ### **In config.yaml**
 ```yaml
@@ -450,7 +450,7 @@ GITHUB_TOKEN=ghp_...
 - Enable D in D only when needed
 
 ### **Maintenance**
-- Version control your `.mochi/` directory
+- Version control your `.nexus/` directory
 - Test configuration changes in isolated branches
 - Document custom templates and their purpose
 
@@ -468,7 +468,7 @@ mcp:
 ```
 
 #### **Agent Config Not Generated**
-Ensure the AI agent CLI is installed and available in PATH. mochi auto-detects supported agents.
+Ensure the AI agent CLI is installed and available in PATH. nexus auto-detects supported agents.
 
 #### **Container Won't Start**
 ```yaml
@@ -493,16 +493,16 @@ cat .cursor/mcp.json
 cat opencode.json
 
 # Check container logs
-docker logs mochi-session-123
+docker logs nexus-session-123
 ```
 
 ## 8. Migration Guide
 
 ### **Upgrading from Manual Config**
-1. Run `mochi init` to generate new structure
+1. Run `nexus init` to generate new structure
 2. Move existing configs to appropriate template directories
 3. Update `config.yaml` with your settings
-4. Test with `mochi dev test-branch`
+4. Test with `nexus dev test-branch`
 
 ### **From Other Tools**
 - **docker-compose**: Move service definitions to `services:` section

@@ -4,13 +4,13 @@
 **Status**: [Completed]
 
 ## 🎯 Objective
-Implement convention-based hooks as the main operations in `.mochi/hooks/` directory, allowing users to customize workspace behavior with full environment variable access.
+Implement convention-based hooks as the main operations in `.nexus/hooks/` directory, allowing users to customize workspace behavior with full environment variable access.
 
 ## 🛠 Implementation Details
 
 ### **Hook Directory Structure**
 ```
-.mochi/hooks/
+.nexus/hooks/
 ├── create.sh     # Executed during workspace create
 ├── up.sh         # Executed during workspace up
 ├── stop.sh       # Executed during workspace stop
@@ -27,14 +27,14 @@ Implement convention-based hooks as the main operations in `.mochi/hooks/` direc
 ### **Hook Execution Points**
 ```go
 // During workspace create - runs instead of default create logic
-if createHook := filepath.Join(".mochi", "hooks", "create.sh"); fileExists(createHook) {
+if createHook := filepath.Join(".nexus", "hooks", "create.sh"); fileExists(createHook) {
     executeHook(createHook, envVars)
 } else {
     // Default create behavior
 }
 
 // During workspace up - runs instead of default service startup
-if upHook := filepath.Join(".mochi", "hooks", "up.sh"); fileExists(upHook) {
+if upHook := filepath.Join(".nexus", "hooks", "up.sh"); fileExists(upHook) {
     executeHook(upHook, envVars)
 } else {
     // Default up behavior (docker-compose, etc.)
@@ -42,7 +42,7 @@ if upHook := filepath.Join(".mochi", "hooks", "up.sh"); fileExists(upHook) {
 ```
 
 ### **Hook Environment**
-Hooks receive all `mochi_SERVICE_*_URL` environment variables plus:
+Hooks receive all `nexus_SERVICE_*_URL` environment variables plus:
 - `BRANCH_NAME`: Name of the current branch
 - `WORKTREE_PATH`: Absolute path to the worktree
 - `CONTAINER_ID`: Docker container ID (when available)
@@ -67,21 +67,21 @@ Hooks receive all `mochi_SERVICE_*_URL` environment variables plus:
 ### **E2E Scenarios**
 ```bash
 # Test hook execution
-mochi workspace create hooks-demo
+nexus workspace create hooks-demo
 
 # Create hook as main operation
-cat > .mochi/hooks/up.sh << 'EOF'
+cat > .nexus/hooks/up.sh << 'EOF'
 #!/bin/bash
 echo "Custom startup for $BRANCH_NAME"
-echo "Web URL: $mochi_SERVICE_WEB_URL"
+echo "Web URL: $nexus_SERVICE_WEB_URL"
 docker-compose up -d  # Custom logic
 npm run dev &         # Custom dev server
 EOF
 
-chmod +x .mochi/hooks/up.sh
+chmod +x .nexus/hooks/up.sh
 
 # Execute workspace up - hook replaces default behavior
-mochi workspace up hooks-demo
+nexus workspace up hooks-demo
 
 # Verify hook executed as main operation
 # Check docker-compose started via hook

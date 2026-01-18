@@ -505,7 +505,7 @@ func TestDockerProvider_List_Empty(t *testing.T) {
 	assert.Empty(t, sessions)
 }
 
-// TestDockerProvider_List_WithSessions tests listing with mochi containers.
+// TestDockerProvider_List_WithSessions tests listing with nexus containers.
 func TestDockerProvider_List_WithSessions(t *testing.T) {
 	mock := &MockDockerClient{}
 
@@ -546,8 +546,8 @@ func TestDockerProvider_List_WithSessions(t *testing.T) {
 	assert.Equal(t, 0, sessions[1].SSHPort)
 }
 
-// TestDockerProvider_List_NonmochiContainers tests filtering non-mochi containers.
-func TestDockerProvider_List_NonmochiContainers(t *testing.T) {
+// TestDockerProvider_List_NonnexusContainers tests filtering non-nexus containers.
+func TestDockerProvider_List_NonnexusContainers(t *testing.T) {
 	mock := &MockDockerClient{}
 
 	mock.ContainerListFn = func(ctx context.Context, options container.ListOptions) ([]types.Container, error) {

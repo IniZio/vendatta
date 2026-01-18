@@ -185,7 +185,7 @@ For communication between coordination server and node agents:
 // Node configuration
 nodeConfig := transport.CreateDefaultSSHConfig(
     "coordinator.example.com:3001",
-    "mochi", 
+    "nexus", 
     "/home/nexus/.ssh/id_rsa",
 )
 
@@ -275,4 +275,4 @@ err := manager.LoadConfig("/etc/nexus/transports.yaml")
 configs := manager.ListConfigs()
 ```
 
-This transport layer provides a solid foundation for secure, efficient communication in distributed mochi environments.
+This transport layer provides a solid foundation for secure, efficient communication in distributed nexus environments.

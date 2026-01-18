@@ -101,7 +101,7 @@ retry_policy:
   backoff: 1s
   max_backoff: 30s
 offline_mode: false
-cache_dir: "/tmp/mochi-agent"
+cache_dir: "/tmp/nexus-agent"
 log_level: "info"
 ```
 
@@ -110,22 +110,22 @@ log_level: "info"
 ### Agent Commands
 ```bash
 # Install agent to remote node
-mochi agent install user@remote-host
+nexus agent install user@remote-host
 
 # Start agent daemon
-mochi agent start
+nexus agent start
 
 # Stop agent daemon  
-mochi agent stop
+nexus agent stop
 
 # Check agent status
-mochi agent status
+nexus agent status
 
 # Connect to coordination server
-mochi agent connect http://coord-server:3001
+nexus agent connect http://coord-server:3001
 
 # Generate configuration
-mochi agent config
+nexus agent config
 ```
 
 ## Production Deployment
@@ -138,9 +138,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=mochi
-ExecStart=/usr/local/bin/mochi agent start
-ExecStop=/usr/local/bin/mochi agent stop
+User=nexus
+ExecStart=/usr/local/bin/nexus agent start
+ExecStop=/usr/local/bin/nexus agent stop
 Restart=always
 RestartSec=5
 
@@ -153,13 +153,13 @@ WantedBy=multi-user.target
 FROM golang:1.24-alpine AS builder
 WORKDIR /app
 COPY . .
-RUN go build -o mochi-agent ./cmd/mochi
+RUN go build -o nexus-agent ./cmd/nexus
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-COPY --from=builder /app/mochi-agent /usr/local/bin/
+COPY --from=builder /app/nexus-agent /usr/local/bin/
 EXPOSE 8080
-CMD ["mochi", "agent", "start"]
+CMD ["nexus", "agent", "start"]
 ```
 
 ## Security Considerations
@@ -201,10 +201,10 @@ CMD ["mochi", "agent", "start"]
 ### Debug Mode
 ```bash
 # Enable debug logging
-VENDETTA_LOG_LEVEL=debug mochi agent start
+VENDETTA_LOG_LEVEL=debug nexus agent start
 
 # Enable profiling
-VENDETTA_DEBUG_PPROF=true mochi agent start
+VENDETTA_DEBUG_PPROF=true nexus agent start
 ```
 
 ## Testing

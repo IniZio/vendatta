@@ -7,8 +7,8 @@ coverage*.out
 coverage.html
 # Dependencies
 node_modules/
-# mochi artifacts
-.mochi/worktrees/
+# nexus artifacts
+.nexus/worktrees/
 .cursor/
 .opencode/
 claude_desktop_config.json
@@ -23,7 +23,7 @@ opencode.json
 .DS_Store
 Thumbs.db
 AGENTS.md
-example/.mochi/remotes/
+example/.nexus/remotes/
 # Session and temporary files
 .sisyphus/
 # Examples directory (separate git project)
@@ -44,7 +44,7 @@ FINAL_COMPLETION_GUIDE.md
 scripts/task_*.sh
 scripts/README_TASK_*.md
 # Temporary documentation
-mochi-config-inizio-README.md
+nexus-config-inizio-README.md
 *_SUMMARY.md
 *_GUIDE.md
 *_PLAN.md

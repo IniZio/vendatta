@@ -1,4 +1,4 @@
-# mochi Example Project
+# nexus Example Project
 
 This directory contains a complete working example of an nexus-configured project. It demonstrates a full-stack web application with database, API, and frontend services, plus AI agent integration.
 
@@ -21,26 +21,26 @@ This directory contains a complete working example of an nexus-configured projec
 
 ## Quick Start
 
-1. **Initialize mochi**:
+1. **Initialize nexus**:
    ```bash
    cd example
-   ../mochi init
+   ../nexus init
    ```
 
 2. **Start development environment**:
    ```bash
-   ../mochi dev example-branch
+   ../nexus dev example-branch
    ```
 
 3. **Open in your AI agent**:
-   - **Cursor**: Open `.mochi/worktrees/example-branch/`
+   - **Cursor**: Open `.nexus/worktrees/example-branch/`
    - **OpenCode**: Uses the generated `opencode.json`
    - **Claude**: Uses the generated config files
 
 ## Configuration Structure
 
 ```
-.mochi/
+.nexus/
 ├── config.yaml          # Project configuration
 ├── templates/           # Shared AI capabilities
 │   ├── skills/          # Reusable skills
@@ -75,7 +75,7 @@ PostgreSQL runs on `localhost:5432` with credentials from `.env`.
 ## Customizing
 
 ### Add Your Own Skills
-Create `.mochi/templates/skills/my-skill.yaml`:
+Create `.nexus/templates/skills/my-skill.yaml`:
 ```yaml
 name: "my-skill"
 description: "Does something useful"
@@ -89,10 +89,10 @@ execute:
 ```
 
 ### Modify Rules
-Edit `.mochi/templates/rules/code-quality.md` to match your team's standards.
+Edit `.nexus/templates/rules/code-quality.md` to match your team's standards.
 
 ### Configure Services
-Update `.mochi/config.yaml` to change ports, add services, or enable different agents.
+Update `.nexus/config.yaml` to change ports, add services, or enable different agents.
 
 ## Troubleshooting
 
@@ -107,10 +107,10 @@ netstat -tlnp | grep :3000
 Check generated agent configs in the worktree.
 
 ### Configuration Issues
-Check generated configs in `.mochi/worktrees/<branch>/`
+Check generated configs in `.nexus/worktrees/<branch>/`
 
 ## Learn More
 
-- [Main README](../../README.md) - General mochi documentation
+- [Main README](../../README.md) - General nexus documentation
 - [Configuration Reference](../../docs/spec/product/configuration.md) - Detailed config options
 - [Technical Specs](../../docs/spec/technical/) - Architecture details

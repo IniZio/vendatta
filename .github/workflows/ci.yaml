@@ -42,8 +42,8 @@ jobs:
            sudo systemctl start docker
            docker version
 
-       # Build mochi binary for testing
-       - name: Build mochi
+       # Build nexus binary for testing
+       - name: Build nexus
          run: make build
 
        # Run e2e tests

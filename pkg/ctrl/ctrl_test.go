@@ -261,7 +261,7 @@ func TestBaseController_DetectWorkspaceFromCWD(t *testing.T) {
 	workspaceName := "my-workspace"
 	workspaceDir := filepath.Join(projectRoot, ".nexus/worktrees", workspaceName)
 	os.MkdirAll(workspaceDir, 0755)
-	os.Mkdir(filepath.Join(projectRoot, ".mochi"), 0755)
+	os.Mkdir(filepath.Join(projectRoot, ".nexus"), 0755)
 
 	subDir := filepath.Join(workspaceDir, "src/components")
 	os.MkdirAll(subDir, 0755)
@@ -517,12 +517,12 @@ func TestFetchPluginFiles_Integration(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	// Test cloning the actual mochi repo and fetching rules
-	// Use IniZio/mochi which is the correct repo name
+	// Test cloning the actual nexus repo and fetching rules
+	// Use IniZio/nexus which is the correct repo name
 	ctrl := NewBaseController(nil, nil)
 
 	files, err := ctrl.fetchPluginFiles(
-		"https://github.com/IniZio/mochi",
+		"https://github.com/IniZio/nexus",
 		".nexus/templates/rules",
 		"main",
 	)
@@ -549,7 +549,7 @@ func TestFetchPluginFiles_FileContentMatches(t *testing.T) {
 
 	// Fetch rules from our own repo (using correct repo name)
 	files, err := ctrl.fetchPluginFiles(
-		"https://github.com/IniZio/mochi",
+		"https://github.com/IniZio/nexus",
 		".nexus/templates/rules",
 		"main",
 	)

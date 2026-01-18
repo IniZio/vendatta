@@ -17,7 +17,7 @@ type Logger struct {
 
 func NewLogger(basePath string) *Logger {
 	return &Logger{
-		filePath: filepath.Join(basePath, ".mochi", "logs", "usage.json"),
+		filePath: filepath.Join(basePath, ".nexus", "logs", "usage.json"),
 		store:    &LogStore{},
 	}
 }

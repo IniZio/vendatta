@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Plugin represents a mochi plugin
+// Plugin represents a nexus plugin
 type Plugin struct {
 	Name         string            `yaml:"name"`
 	Version      string            `yaml:"version"`
@@ -48,7 +48,7 @@ func (r *Registry) DiscoverPlugins(baseDir string) error {
 		return fmt.Errorf("failed to discover local plugins: %w", err)
 	}
 
-	// TODO: Discover remote plugins from mochi.lock
+	// TODO: Discover remote plugins from nexus.lock
 	// This will be implemented in the lockfile manager
 
 	return nil

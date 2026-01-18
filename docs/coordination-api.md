@@ -2,7 +2,7 @@
 
 ## Overview
 
-The mochi Coordination Server provides a centralized API for managing remote nodes and dispatching commands across distributed development environments.
+The nexus Coordination Server provides a centralized API for managing remote nodes and dispatching commands across distributed development environments.
 
 ## Features
 
@@ -22,7 +22,7 @@ The coordination server is configured via YAML files and environment variables.
 server:
   host: "0.0.0.0"
   port: 3001
-  auth_token: "mochi-coordination-token"
+  auth_token: "nexus-coordination-token"
   read_timeout: "30s"
   write_timeout: "30s"
   idle_timeout: "120s"
@@ -42,7 +42,7 @@ websocket:
 
 auth:
   enabled: false
-  jwt_secret: "mochi-jwt-secret-key-minimum-16-chars"
+  jwt_secret: "nexus-jwt-secret-key-minimum-16-chars"
   token_expiry: "24h"
 
 logging:
@@ -281,17 +281,17 @@ eventSource.onmessage = function(event) {
 
 ### Generate Configuration
 ```bash
-mochi coordination config
+nexus coordination config
 ```
 
 ### Start Server
 ```bash
-mochi coordination start
+nexus coordination start
 ```
 
 ### Check Status
 ```bash
-mochi coordination status
+nexus coordination status
 ```
 
 ## Integration Examples
@@ -353,7 +353,7 @@ go test ./pkg/coordination/...
 
 ### Building
 ```bash
-go build -o bin/mochi ./cmd/mochi/
+go build -o bin/nexus ./cmd/nexus/
 ```
 
 ### Configuration Development

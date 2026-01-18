@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/IniZio/mochi/main/schema/config.schema.json",
-  "title": "mochi Configuration Schema",
-  "description": "Schema for .mochi/config.yaml configuration files",
+  "$id": "https://raw.githubusercontent.com/IniZio/nexus/main/schema/config.schema.json",
+  "title": "nexus Configuration Schema",
+  "description": "Schema for .nexus/config.yaml configuration files",
   "type": "object",
   "properties": {
     "name": {
@@ -35,7 +35,7 @@
     },
     "sync_targets": {
       "type": "array",
-      "description": "Remote repositories to sync .mochi directory to",
+      "description": "Remote repositories to sync .nexus directory to",
       "items": {
         "$ref": "#/definitions/remote"
       }

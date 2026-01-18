@@ -3,11 +3,11 @@
 **Objective**: Complete workspace-centric CLI with isolation, lifecycle hooks, and simplified agent configuration. Deliver a clean, intuitive developer experience with comprehensive test coverage.
 
 ## 🎯 Success Criteria
-- [x] `mochi workspace create <name>` creates isolated workspace with agent configs
-- [x] `mochi workspace up <name>` starts services with port forwarding and optional hooks
-- [x] Service discovery injects `mochi_SERVICE_*_URL` environment variables correctly
+- [x] `nexus workspace create <name>` creates isolated workspace with agent configs
+- [x] `nexus workspace up <name>` starts services with port forwarding and optional hooks
+- [x] Service discovery injects `nexus_SERVICE_*_URL` environment variables correctly
 - [x] Agent configurations generated for supported AI agents
-- [x] Optional lifecycle hooks execute from `.mochi/hooks/` directory
+- [x] Optional lifecycle hooks execute from `.nexus/hooks/` directory
 - [ ] Full E2E test suite with 90%+ coverage and CI integration
 - [ ] JSON schema validation for config.yaml
 - [ ] Makefile for development and CI workflows
@@ -44,20 +44,20 @@
 **E2E Scenarios:**
 ```bash
 # Test 1: Basic workspace lifecycle
-mochi workspace create feature-x
-cd .mochi/worktrees/feature-x
-mochi workspace up    # Should auto-detect workspace
+nexus workspace create feature-x
+cd .nexus/worktrees/feature-x
+nexus workspace up    # Should auto-detect workspace
 # Verify: Container running, services accessible, agent configs present
 
 # Test 2: Hook execution
-echo "#!/bin/bash\necho 'Hook executed'" > .mochi/hooks/up.sh
-chmod +x .mochi/hooks/up.sh
-mochi workspace up feature-x
+echo "#!/bin/bash\necho 'Hook executed'" > .nexus/hooks/up.sh
+chmod +x .nexus/hooks/up.sh
+nexus workspace up feature-x
 # Verify: Hook output in logs
 
 # Test 3: Service discovery
-mochi workspace up feature-x
-# Verify: mochi_SERVICE_WEB_URL=localhost:3000 in container env
+nexus workspace up feature-x
+# Verify: nexus_SERVICE_WEB_URL=localhost:3000 in container env
 ```
 
 ---
@@ -67,7 +67,7 @@ mochi workspace up feature-x
 
 **Unit Tests:**
 - ✅ Port auto-detection from service commands (docker-compose, npm, etc.)
-- ✅ Environment variable generation follows `mochi_SERVICE_{NAME}_URL` pattern
+- ✅ Environment variable generation follows `nexus_SERVICE_{NAME}_URL` pattern
 - ✅ Protocol guessing from service nature (postgres → postgresql://, web → http://)
 - ✅ Multiple services generate multiple environment variables
 
@@ -79,8 +79,8 @@ mochi workspace up feature-x
 **E2E Scenarios:**
 ```bash
 # Test service discovery with command-based services
-mochi workspace create discovery-test
-cat > .mochi/config.yaml << EOF
+nexus workspace create discovery-test
+cat > .nexus/config.yaml << EOF
 services:
   web:
     command: "cd client && npm run dev"
@@ -89,14 +89,14 @@ services:
   db:
     command: "docker-compose up -d postgres"
 EOF
-mochi workspace up discovery-test
+nexus workspace up discovery-test
 
 # Verify environment variables available before services start
-mochi workspace shell discovery-test
-env | grep mochi_SERVICE
-# Expected: mochi_SERVICE_WEB_URL=http://localhost:3000
-#          mochi_SERVICE_API_URL=http://localhost:8080
-#          mochi_SERVICE_DB_URL=postgresql://localhost:5432
+nexus workspace shell discovery-test
+env | grep nexus_SERVICE
+# Expected: nexus_SERVICE_WEB_URL=http://localhost:3000
+#          nexus_SERVICE_API_URL=http://localhost:8080
+#          nexus_SERVICE_DB_URL=postgresql://localhost:5432
 ```
 
 ---
@@ -105,7 +105,7 @@ env | grep mochi_SERVICE
 **Objective**: Validate convention-based hooks as main operations with environment variable access
 
 **Unit Tests:**
-- ✅ Hook discovery finds scripts in `.mochi/hooks/`
+- ✅ Hook discovery finds scripts in `.nexus/hooks/`
 - ✅ Missing hooks use default behavior (no errors)
 - ✅ Scripts are made executable before execution (with user prompt/warning)
 - ✅ Hook execution receives service discovery variables and workspace context
@@ -119,20 +119,20 @@ env | grep mochi_SERVICE
 **E2E Scenarios:**
 ```bash
 # Test hooks as main operations
-mochi workspace create hooks-demo
-mkdir -p .mochi/hooks
+nexus workspace create hooks-demo
+mkdir -p .nexus/hooks
 
 # Create up.sh to replace default behavior
-cat > .mochi/hooks/up.sh << 'EOF'
+cat > .nexus/hooks/up.sh << 'EOF'
 #!/bin/bash
 echo "Starting custom services..."
 docker-compose up -d
 npm run dev &
 EOF
-chmod +x .mochi/hooks/up.sh
+chmod +x .nexus/hooks/up.sh
 
 # Execute workspace up - should run up.sh instead of default
-mochi workspace up hooks-demo
+nexus workspace up hooks-demo
 
 # Verify services started via hook
 # Check docker-compose containers running
@@ -145,7 +145,7 @@ mochi workspace up hooks-demo
 **Objective**: Verify AI agent configuration generation for supported agents
 
 **Unit Tests:**
-- ✅ Base templates loaded from `.mochi/templates/`
+- ✅ Base templates loaded from `.nexus/templates/`
 - ✅ Agent-specific configurations generated correctly
 - ✅ Override files replace base templates per agent specs
 - ✅ Empty files suppress template generation
@@ -158,20 +158,20 @@ mochi workspace up hooks-demo
 **E2E Scenarios:**
 ```bash
 # Test config generation for agents
-mochi workspace create config-test
+nexus workspace create config-test
 
 # Create agent override
-mkdir -p .mochi/agents/cursor
-cat > .mochi/agents/cursor/.cursorrules << EOF
+mkdir -p .nexus/agents/cursor
+cat > .nexus/agents/cursor/.cursorrules << EOF
 # Custom Cursor Rules
 - Use TypeScript for all new files
 - Prefer functional components over class components
 EOF
 
 # Create suppression for specific rules
-touch .mochi/agents/opencode/rules/legacy.md  # Empty file suppresses
+touch .nexus/agents/opencode/rules/legacy.md  # Empty file suppresses
 
-mochi workspace create config-test
+nexus workspace create config-test
 # Verify: Agent configs generated in worktree
 # Verify: Overrides applied correctly
 # Verify: Suppressions work
@@ -190,26 +190,26 @@ mochi workspace create config-test
 
 **Integration Tests:**
 - ✅ Template precedence: remote (fast-forward) > local > base
-- ✅ Sync creates filtered branch with only `.mochi`
+- ✅ Sync creates filtered branch with only `.nexus`
 - ✅ Merge conflicts trigger interactive reconciliation
 
 **E2E Scenarios:**
 ```bash
 # Test config pulling with branch
-mochi config pull https://github.com/example/templates.git --branch develop
+nexus config pull https://github.com/example/templates.git --branch develop
 
 # Test template merging with stored refs
 # Remote templates override local when fast-forward possible
 # Conflicts show diff and allow selection
 
 # Test config syncing
-cat > .mochi/config.yaml << EOF
+cat > .nexus/config.yaml << EOF
 sync_targets:
   - name: team-configs
     url: https://github.com/company/dev-templates.git
 EOF
-mochi config sync team-configs
-# Verify: .mochi directory merged and pushed
+nexus config sync team-configs
+# Verify: .nexus directory merged and pushed
 ```
 
 ---
@@ -271,10 +271,10 @@ test-e2e:
 test-all: test-unit test-integration test-e2e
 
 build:
-	go build -o bin/mochi ./cmd/mochi
+	go build -o bin/nexus ./cmd/nexus
 
 install: build
-	cp bin/mochi ~/.local/bin/
+	cp bin/nexus ~/.local/bin/
 
 lint:
 	golangci-lint run
@@ -316,7 +316,7 @@ fmt:
 - **Git Conflicts**: Clear instructions for manual resolution
 
 **Hook Environment Variables:**
-- **Service Discovery**: `mochi_SERVICE_{NAME}_URL` (protocol guessed from service type)
+- **Service Discovery**: `nexus_SERVICE_{NAME}_URL` (protocol guessed from service type)
 - **Branch Context**: `BRANCH_NAME`, `WORKTREE_PATH`
 - **Container Info**: `CONTAINER_ID` (when available)
 - **Host Info**: `HOST_USER`, `HOST_CWD`
@@ -327,7 +327,7 @@ fmt:
 - **Future Remote**: Support for remote workspaces (k8s, LXC) with dynamic host detection
 
 **Workspace Context Detection:**
-- **Scope**: Only within `.mochi/worktrees/<name>/` directory
+- **Scope**: Only within `.nexus/worktrees/<name>/` directory
 - **Auto-detection**: Parse directory path to extract workspace name
 - **Validation**: Verify worktree exists and is valid
 

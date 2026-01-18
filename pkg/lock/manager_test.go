@@ -76,7 +76,7 @@ func TestManager_SaveLoadLockfile(t *testing.T) {
 		Metadata: LockMetadata{
 			ContentHash: "hash123",
 			Timestamp:   time.Now().Format(time.RFC3339),
-			Generator:   "mochi",
+			Generator:   "nexus",
 		},
 	}
 

@@ -37,7 +37,7 @@ pkg/coordination/
 ├── dispatcher.go      # Provider dispatch interface
 └── status.go          # Status monitoring
 
-cmd/mochi/
+cmd/nexus/
 └── node.go            # Node management CLI commands
 ```
 
@@ -53,11 +53,11 @@ type Server interface {
 }
 
 // Node management CLI commands
-// mochi node add <name> <address> [--user <user>] [--port <port>]
-// mochi node list
-// mochi node status <name>
-// mochi node test <name>
-// mochi node remove <name>
+// nexus node add <name> <address> [--user <user>] [--port <port>]
+// nexus node list
+// nexus node status <name>
+// nexus node test <name>
+// nexus node remove <name>
 ```
 
 **Success Criteria**:

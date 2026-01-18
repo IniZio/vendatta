@@ -24,7 +24,7 @@ type LocalTransportTestSuite struct {
 }
 
 func (s *LocalTransportTestSuite) SetupTestSuite(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "mochi-local-transport-*")
+	tempDir, err := os.MkdirTemp("", "nexus-local-transport-*")
 	require.NoError(t, err)
 	s.tempDir = tempDir
 	s.coordConfig = filepath.Join(tempDir, "coordination.yaml")
@@ -152,7 +152,7 @@ func TestLocalCoordinationServer(t *testing.T) {
 		t.Skip("Skipping coordination server test in short mode")
 	}
 
-	tempDir, err := os.MkdirTemp("", "mochi-coord-*")
+	tempDir, err := os.MkdirTemp("", "nexus-coord-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 

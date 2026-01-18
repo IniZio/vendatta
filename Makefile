@@ -1,4 +1,4 @@
-# mochi - Development Environment Manager
+# nexus - Development Environment Manager
 # Makefile for development, testing, and CI workflows
 
 .PHONY: help build install clean test test-unit test-integration test-e2e test-all lint fmt fmt-check docker-build docker-push release
@@ -15,20 +15,20 @@ BUILDDATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS := -X main.version=$(VERSION) -X main.buildDate=$(BUILDDATE)
 
 # Development
-build: ## Build mochi binary
-	go build -ldflags "$(LDFLAGS)" -o bin/mochi ./cmd/mochi
+build: ## Build nexus binary
+	go build -ldflags "$(LDFLAGS)" -o bin/nexus ./cmd/nexus
 
-install: build ## Install mochi to ~/.local/bin
-	cp bin/mochi ~/.local/bin/mochi
-	chmod +x ~/.local/bin/mochi
+install: build ## Install nexus to ~/.local/bin
+	cp bin/nexus ~/.local/bin/nexus
+	chmod +x ~/.local/bin/nexus
 
 ci-build: ## Build for multiple platforms
 	mkdir -p dist
-	GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-linux-amd64 ./cmd/mochi
-	GOOS=linux GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-linux-arm64 ./cmd/mochi
-	GOOS=darwin GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-darwin-amd64 ./cmd/mochi
-	GOOS=darwin GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-darwin-arm64 ./cmd/mochi
-	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/mochi-windows-amd64.exe ./cmd/mochi
+	GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/nexus-linux-amd64 ./cmd/nexus
+	GOOS=linux GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/nexus-linux-arm64 ./cmd/nexus
+	GOOS=darwin GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/nexus-darwin-amd64 ./cmd/nexus
+	GOOS=darwin GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/nexus-darwin-arm64 ./cmd/nexus
+	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/nexus-windows-amd64.exe ./cmd/nexus
 
 ci-docker: docker-build docker-push ## Build and push Docker image
 

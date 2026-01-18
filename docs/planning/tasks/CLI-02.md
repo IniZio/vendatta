@@ -9,21 +9,21 @@ Implement native CLI support for Git remote synchronization, allowing users to m
 ## 🛠 Implementation Details
 
 ### **Command Structure**
-- **Parent Command**: `mochi remote`
+- **Parent Command**: `nexus remote`
 - **Subcommands**:
-  - `mochi remote sync <target-name>` (syncs .mochi to configured target)
-  - `mochi remote sync-all` (syncs .mochi to all configured targets)
+  - `nexus remote sync <target-name>` (syncs .nexus to configured target)
+  - `nexus remote sync-all` (syncs .nexus to all configured targets)
 
 ### **Configuration Integration**
-- **Config Section**: `sync_targets` array in `.mochi/config.yaml`
+- **Config Section**: `sync_targets` array in `.nexus/config.yaml`
 - **Target Definition**: Each target specifies `name` and `url`
-- **Always .mochi Only**: Syncs only the `.mochi` directory to maintain config separation
+- **Always .nexus Only**: Syncs only the `.nexus` directory to maintain config separation
 - **Declarative Sync**: Commands read config and sync to defined targets
 
 ### **Git Operations Automation**
 1. **Pull from Origin**: Ensures local repository is up-to-date
 2. **Remote Management**: Adds or updates the specified remote
-3. **Content Filtering**: Creates filtered branch with only `.mochi` directory
+3. **Content Filtering**: Creates filtered branch with only `.nexus` directory
 4. **Push Operations**: Pushes filtered branch to remote main
 
 ### **Error Handling**
@@ -33,7 +33,7 @@ Implement native CLI support for Git remote synchronization, allowing users to m
 - **Git States**: Validates repository state before operations
 
 ### **Advanced Features**
-- **Configs-Only Mode**: Selective synchronization of `.mochi` configuration files
+- **Configs-Only Mode**: Selective synchronization of `.nexus` configuration files
 - **Branch Management**: Temporary branches for filtered content
 - **Cleanup**: Automatic cleanup of temporary Git objects
 

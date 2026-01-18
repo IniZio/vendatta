@@ -14,11 +14,11 @@ func TestExtractConfigToPlugin(t *testing.T) {
 	testDir := t.TempDir()
 
 	// Create source directories and files
-	rulesDir := testDir + "/.mochi/templates/rules"
+	rulesDir := testDir + "/.nexus/templates/rules"
 	require.NoError(t, os.MkdirAll(rulesDir, 0755))
 	require.NoError(t, os.WriteFile(rulesDir+"/team-standards.md", []byte("# Team Standards\n- Use Go"), 0644))
 
-	skillsDir := testDir + "/.mochi/templates/skills"
+	skillsDir := testDir + "/.nexus/templates/skills"
 	require.NoError(t, os.MkdirAll(skillsDir, 0755))
 	require.NoError(t, os.WriteFile(skillsDir+"/code-review.yaml", []byte("name: code-review\ndescription: Review code"), 0644))
 
@@ -33,7 +33,7 @@ func TestExtractConfigToPlugin(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify plugin was created
-	pluginDir := ".mochi/plugins/team-config"
+	pluginDir := ".nexus/plugins/team-config"
 	assert.DirExists(t, pluginDir)
 	assert.FileExists(t, pluginDir+"/plugin.yaml")
 	assert.FileExists(t, pluginDir+"/rules/team-standards.md")

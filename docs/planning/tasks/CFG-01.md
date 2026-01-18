@@ -10,39 +10,39 @@ Implement config pull and sync commands for sharing templates and configurations
 
 ### **Config Pull Command**
 ```bash
-mochi config pull <url> [--branch=branch]
+nexus config pull <url> [--branch=branch]
 ```
 
 **Functionality:**
-- Clone remote Git repository into `.mochi/remotes/`
+- Clone remote Git repository into `.nexus/remotes/`
 - Extract templates from repository
 - Merge with existing templates (remote overrides base)
 - Support branch specification for template versioning
 
 ### **Config Sync Commands**
 ```bash
-mochi config sync <target>      # Sync to specific target
-mochi config sync-all          # Sync to all configured targets
+nexus config sync <target>      # Sync to specific target
+nexus config sync-all          # Sync to all configured targets
 ```
 
 **Functionality:**
-- Read sync targets from `.mochi/config.yaml`
-- Create filtered Git branch with only `.mochi` directory
+- Read sync targets from `.nexus/config.yaml`
+- Create filtered Git branch with only `.nexus` directory
 - Push to remote repository
 - Clean up temporary branches
 
 ### **Configuration Schema**
 ```yaml
-# .mochi/config.yaml
+# .nexus/config.yaml
 sync_targets:
   - name: "team-templates"
-    url: "https://github.com/company/mochi-templates.git"
+    url: "https://github.com/company/nexus-templates.git"
   - name: "project-configs"
     url: "https://github.com/project/nexus-configs.git"
 ```
 
 ### **Template Merging**
-- **Remote Ref Tracking**: Store latest commit SHA for each remote in `.mochi/state.json`
+- **Remote Ref Tracking**: Store latest commit SHA for each remote in `.nexus/state.json`
 - **Fast-Forward Merging**: When remote has linear history from stored ref, prefer remote templates
 - **Conflict Resolution**: Use chezmoi-style interactive reconciliation for merge conflicts
 - **Precedence Order**: remote (fast-forward) > local modifications > base templates
@@ -64,24 +64,24 @@ sync_targets:
 ### **E2E Scenarios**
 ```bash
 # Test config pulling
-mochi config pull https://github.com/company/templates.git --branch=main
+nexus config pull https://github.com/company/templates.git --branch=main
 
 # Verify templates merged
-ls .mochi/templates/
+ls .nexus/templates/
 # Should contain both base and remote templates
 
 # Test config syncing
-cat > .mochi/config.yaml << EOF
+cat > .nexus/config.yaml << EOF
 sync_targets:
   - name: test-sync
     url: https://github.com/test/repo.git
 EOF
 
 # Create some config
-echo "test config" > .mochi/test.txt
+echo "test config" > .nexus/test.txt
 
-mochi config sync test-sync
-# Verify: .mochi directory pushed to remote repo
+nexus config sync test-sync
+# Verify: .nexus directory pushed to remote repo
 ```
 
 ## 📋 Implementation Steps

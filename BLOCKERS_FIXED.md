@@ -12,12 +12,12 @@ All critical blockers preventing M4 Phase 1 execution have been **FIXED and VERI
 
 ### ✅ BLOCKER 1: E2E Test Naming Mismatch (FIXED)
 
-**Issue**: Tests referenced `cmd/mochi/` but binary is `cmd/nexus/`
+**Issue**: Tests referenced `cmd/nexus/` but binary is `cmd/nexus/`
 
 **Fix Applied**:
-- Updated `e2e/testenv.go:97` - Changed `cmd/mochi/main.go` → `cmd/nexus/main.go`
-- Updated `e2e/testenv.go:31` - Binary name `mochi` → `nexus`
-- Updated `e2e/testenv.go` docstrings - Renamed from "mochi" to "nexus"
+- Updated `e2e/testenv.go:97` - Changed `cmd/nexus/main.go` → `cmd/nexus/main.go`
+- Updated `e2e/testenv.go:31` - Binary name `nexus` → `nexus`
+- Updated `e2e/testenv.go` docstrings - Renamed from "nexus" to "nexus"
 
 **Verification**:
 ```bash
@@ -118,7 +118,7 @@ NO LONGER TOUCHED:
 
 ### Core Fixes
 1. **e2e/testenv.go** (3 lines changed)
-   - Updated binary path from `cmd/mochi` → `cmd/nexus`
+   - Updated binary path from `cmd/nexus` → `cmd/nexus`
    - Updated docstrings
 
 2. **pkg/transport/transport_e2e_test.go** (35 lines changed)
@@ -227,7 +227,7 @@ NO LONGER TOUCHED:
 fix: resolve M4 blockers - E2E naming, SSH isolation, Makefile targets
 
 BLOCKERS FIXED:
-- E2E: cmd/mochi → cmd/nexus naming mismatch (testenv.go)
+- E2E: cmd/nexus → cmd/nexus naming mismatch (testenv.go)
 - SECURITY: SSH keys isolated to .nexus/test-ssh/ (transport_e2e_test.go)
 - CI/CD: Implemented missing Makefile test targets (Makefile)
 

@@ -54,9 +54,9 @@
 - ✅ Configuration generation and loading
 
 ### CLI Integration
-- ✅ `mochi coordination config` - Generate configuration
-- ✅ `mochi coordination start` - Start server
-- ✅ `mochi coordination status` - Show status
+- ✅ `nexus coordination config` - Generate configuration
+- ✅ `nexus coordination start` - Start server
+- ✅ `nexus coordination status` - Show status
 - ✅ Proper error handling and logging
 
 ## 📊 Technical Implementation Details
@@ -84,13 +84,13 @@
 ### Basic Server Setup
 ```bash
 # Generate configuration
-mochi coordination config
+nexus coordination config
 
 # Start server
-mochi coordination start
+nexus coordination start
 
 # Check status
-mochi coordination status
+nexus coordination status
 ```
 
 ### API Usage
@@ -150,7 +150,7 @@ docs/
 - [x] In-memory node registry (extensible design)
 - [x] Real-time status updates (SSE/WebSocket)
 - [x] Authentication via JWT tokens
-- [x] Configuration loaded from `.mochi/coordination.yaml`
+- [x] Configuration loaded from `.nexus/coordination.yaml`
 
 ### ✅ Integration Points
 - [x] Integrates with existing configuration system

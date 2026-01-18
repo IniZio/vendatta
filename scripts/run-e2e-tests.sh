@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🚀 Running Comprehensive mochi E2E Tests"
+echo "🚀 Running Comprehensive nexus E2E Tests"
 
 # Colors for output
 RED='\033[0;31m'
@@ -71,14 +71,14 @@ check_prerequisites() {
     log_success "Prerequisites check passed"
 }
 
-# Build mochi binary
-build_mochi() {
-    log_info "Building mochi binary..."
-    if ! go build -o mochi ./cmd/mochi; then
-        log_error "Failed to build mochi binary"
+# Build nexus binary
+build_nexus() {
+    log_info "Building nexus binary..."
+    if ! go build -o nexus ./cmd/nexus; then
+        log_error "Failed to build nexus binary"
         exit 1
     fi
-    log_success "mochi binary built successfully"
+    log_success "nexus binary built successfully"
 }
 
 # Run a single test
@@ -199,11 +199,11 @@ analyze_results() {
 # Main execution
 main() {
     echo "========================================"
-    echo "🧪 mochi E2E Test Suite"
+    echo "🧪 nexus E2E Test Suite"
     echo "========================================"
 
     check_prerequisites
-    build_mochi
+    build_nexus
     run_e2e_tests
     analyze_results
 

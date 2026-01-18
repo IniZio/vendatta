@@ -570,7 +570,7 @@ func (s *Server) handleGetWorkspaceUsers(w http.ResponseWriter, r *http.Request,
 }
 func (s *Server) handleGetWorkspaceServices(w http.ResponseWriter, r *http.Request, workspaceID string) {
 	// For now, return mock services. In a real implementation, this would query
-	// the workspace services from the local mochi instance or coordination registry
+	// the workspace services from the local nexus instance or coordination registry
 	services := []map[string]interface{}{}
 
 	// Mock services for demonstration

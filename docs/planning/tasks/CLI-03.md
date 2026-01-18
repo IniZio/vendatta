@@ -10,34 +10,34 @@ Implement the complete workspace command group with context awareness, proper is
 
 ### **Command Structure**
 ```bash
-mochi workspace create <name>     # Create workspace + configs
-mochi workspace up [name] [-d]    # Start services (detached optional)
-mochi workspace shell [name]      # Interactive shell
-mochi workspace stop [name]       # Stop services
-mochi workspace down [name]       # Stop + cleanup
-mochi workspace list              # List all workspaces
-mochi workspace rm <name>         # Remove workspace
+nexus workspace create <name>     # Create workspace + configs
+nexus workspace up [name] [-d]    # Start services (detached optional)
+nexus workspace shell [name]      # Interactive shell
+nexus workspace stop [name]       # Stop services
+nexus workspace down [name]       # Stop + cleanup
+nexus workspace list              # List all workspaces
+nexus workspace rm <name>         # Remove workspace
 # Note: 'agent' command removed per latest spec
 ```
 
 ### **Context Awareness**
-- If inside `.mochi/worktrees/<name>/`, auto-detect workspace name
+- If inside `.nexus/worktrees/<name>/`, auto-detect workspace name
 - Commands accept optional `[name]` parameter for explicit specification
 - Validate workspace existence before operations
 
 ### **Workspace Isolation**
-- **Worktree Creation**: `git worktree add .mochi/worktrees/<name>`
+- **Worktree Creation**: `git worktree add .nexus/worktrees/<name>`
 - **Branch Handling**: Auto-create branch if doesn't exist; for conflicts: stash changes, create/checkout branch, stash pop
-- **Container Naming**: `mochi-workspace-<name>` for easy identification
+- **Container Naming**: `nexus-workspace-<name>` for easy identification
 
 ### **Agent Config Generation**
 - Generate configs during `workspace create`
 - Place configs in worktree root (`.cursor/mcp.json`, `opencode.json`, etc.)
-- Support file-based overrides from `.mochi/agents/`
+- Support file-based overrides from `.nexus/agents/`
 
 ### **Service Discovery Integration**
 - Collect port mappings during container startup
-- Inject `mochi_SERVICE_*_URL` environment variables
+- Inject `nexus_SERVICE_*_URL` environment variables
 - Make variables available in hooks and container shell
 
 ## 🧪 Testing Requirements
@@ -58,16 +58,16 @@ mochi workspace rm <name>         # Remove workspace
 ### **E2E Scenarios**
 ```bash
 # Happy path
-mochi workspace create feature-x
-mochi workspace up
+nexus workspace create feature-x
+nexus workspace up
 # Verify: Worktree created, container running, configs generated
 
 # Context awareness
-cd .mochi/worktrees/feature-x
-mochi workspace up  # Should work without specifying name
+cd .nexus/worktrees/feature-x
+nexus workspace up  # Should work without specifying name
 
 # Error handling
-mochi workspace up nonexistent  # Should fail gracefully
+nexus workspace up nonexistent  # Should fail gracefully
 ```
 
 ## 📋 Implementation Steps

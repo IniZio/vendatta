@@ -365,7 +365,7 @@ func (c *BaseController) WorkspaceConnect(ctx context.Context, name string) erro
 	fmt.Println("  ssh -p <port> dev@localhost")
 	fmt.Println("")
 	fmt.Println("💡 Workspace is not running. Start it with:")
-	fmt.Printf("  mochi workspace up %s\n", name)
+	fmt.Printf("  nexus workspace up %s\n", name)
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	return nil
 }
@@ -408,7 +408,7 @@ hooks:
 		return err
 	}
 
-	mochiAgentRule := `# mochi Agent Rules
+	nexusAgentRule := `# nexus Agent Rules
 
 ## Core Principles
 - Work in isolated environments to ensure reproducibility
@@ -417,18 +417,18 @@ hooks:
 - Follow established patterns in the codebase
 
 ## Development Workflow
-1. Create a workspace for each feature branch: 'mochi workspace create <branch-name>'
-2. Start the workspace: 'mochi workspace up <branch-name>'
+1. Create a workspace for each feature branch: 'nexus workspace create <branch-name>'
+2. Start the workspace: 'nexus workspace up <branch-name>'
 3. Work in the isolated environment with full AI agent support
 4. Commit changes and merge when ready
-5. Clean up: 'mochi workspace down <branch-name>' and 'mochi workspace rm <branch-name>'
+5. Clean up: 'nexus workspace down <branch-name>' and 'nexus workspace rm <branch-name>'
 
 ## AI Agent Integration
 - Cursor, OpenCode, Claude, and other agents are auto-configured
 - MCP server provides context and capabilities
 - Rules and skills are automatically loaded from templates
 `
-	if err := os.WriteFile(".nexus/templates/rules/nexus-agent.md", []byte(mochiAgentRule), 0644); err != nil {
+	if err := os.WriteFile(".nexus/templates/rules/nexus-agent.md", []byte(nexusAgentRule), 0644); err != nil {
 		return err
 	}
 
@@ -457,8 +457,8 @@ hooks:
 	}
 
 	// Create local skills
-	mochiOpsSkill := `name: %s-ops
-description: mochi workspace management operations
+	nexusOpsSkill := `name: %s-ops
+description: nexus workspace management operations
 capabilities:
   - workspace_create: Create new isolated workspaces
   - workspace_up: Start workspace environment
@@ -482,7 +482,7 @@ parameters:
     description: Git branch for workspace creation
     required: false
 `
-	if err := os.WriteFile(".nexus/templates/skills/%s-ops.yaml", []byte(mochiOpsSkill), 0644); err != nil {
+	if err := os.WriteFile(".nexus/templates/skills/%s-ops.yaml", []byte(nexusOpsSkill), 0644); err != nil {
 		return err
 	}
 
@@ -584,7 +584,7 @@ wait
 
 	claudeDesktopTpl := `{
   "mcpServers": {
-    "mochi": {
+    "nexus": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-everything", "{{.ProjectName}}"]
     }
@@ -597,7 +597,7 @@ wait
 
 	claudeCodeTpl := `{
   "mcpServers": {
-    "mochi": {
+    "nexus": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-everything", "{{.ProjectName}}"]
     }
@@ -621,7 +621,7 @@ func (c *BaseController) Apply(ctx context.Context) error {
 
 	agents := config.DetectInstalledAgents()
 	if len(agents) == 0 {
-		fmt.Println("⚠️  No AI agents detected. Install Cursor, OpenCode, or Claude to use mochi.")
+		fmt.Println("⚠️  No AI agents detected. Install Cursor, OpenCode, or Claude to use nexus.")
 		return nil
 	}
 
@@ -706,14 +706,14 @@ func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
 }
 
 func (c *BaseController) createCursorRules(cursorDir string) error {
-	rulesDir := filepath.Join(cursorDir, "rules", "mochi")
+	rulesDir := filepath.Join(cursorDir, "rules", "nexus")
 	if err := os.MkdirAll(rulesDir, 0755); err != nil {
 		return err
 	}
 
 	rules := map[string]string{
-		"code-quality.md": "# Code Quality Standards\n\nThis rule defines coding standards from the mochi/standard plugin.",
-		"security.md":     "# Security Guidelines\n\nThis rule defines security guidelines from the mochi/standard plugin.",
+		"code-quality.md": "# Code Quality Standards\n\nThis rule defines coding standards from the nexus/standard plugin.",
+		"security.md":     "# Security Guidelines\n\nThis rule defines security guidelines from the nexus/standard plugin.",
 	}
 
 	for filename, content := range rules {
@@ -771,9 +771,9 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) error {
 	// Copy capabilities from project templates to .opencode directory
 	dirMappings := map[string]string{
-		filepath.Join(".opencode", "rules", "mochi"):    ".nexus/templates/rules",
-		filepath.Join(".opencode", "skills", "mochi"):   ".nexus/templates/skills",
-		filepath.Join(".opencode", "commands", "mochi"): ".nexus/templates/commands",
+		filepath.Join(".opencode", "rules", "nexus"):    ".nexus/templates/rules",
+		filepath.Join(".opencode", "skills", "nexus"):   ".nexus/templates/skills",
+		filepath.Join(".opencode", "commands", "nexus"): ".nexus/templates/commands",
 	}
 
 	// Create render data for template variables
@@ -817,7 +817,7 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) er
 }
 
 func (c *BaseController) downloadPluginCapabilities(plugin config.TemplateRepo, baseDir string) error {
-	pluginName := "mochi"
+	pluginName := "nexus"
 
 	dirMappings := map[string]string{
 		filepath.Join(baseDir, "rules"):    ".nexus/templates/rules",
@@ -968,12 +968,12 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCodeWorktree(cfg *config.Co
 	}
 
 	for _, baseDir := range baseDirs {
-		worktreePluginDir := filepath.Join(worktreePath, ".opencode", baseDir, "mochi")
+		worktreePluginDir := filepath.Join(worktreePath, ".opencode", baseDir, "nexus")
 		if err := os.MkdirAll(worktreePluginDir, 0755); err != nil {
 			continue
 		}
 
-		projectPluginDir := filepath.Join(".opencode", baseDir, "mochi")
+		projectPluginDir := filepath.Join(".opencode", baseDir, "nexus")
 		entries, err := os.ReadDir(projectPluginDir)
 		if err != nil {
 			continue
@@ -1128,13 +1128,13 @@ func (c *BaseController) PluginUpdate(ctx context.Context) error {
 		Version: "1.0",
 		Plugins: make(map[string]*lock.LockEntry),
 		Metadata: lock.LockMetadata{
-			Generator: "mochi",
+			Generator: "nexus",
 			Extra:     make(map[string]string),
 		},
 	}
 
-	mochiDir := ".mochi"
-	remotesDir := filepath.Join(mochiDir, "remotes")
+	nexusDir := ".nexus"
+	remotesDir := filepath.Join(nexusDir, "remotes")
 	entries, err := os.ReadDir(remotesDir)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to read remotes dir: %w", err)
@@ -1183,14 +1183,14 @@ func (c *BaseController) PluginUpdate(ctx context.Context) error {
 			return fmt.Errorf("failed to save lockfile: %w", err)
 		}
 
-		fmt.Println("✅ Updated mochi.lock")
+		fmt.Println("✅ Updated nexus.lock")
 	}
 
 	fmt.Println("✅ All plugins updated successfully")
 
 	// TODO: Implement lockfile generation
 
-	fmt.Println("✅ Updated mochi.lock")
+	fmt.Println("✅ Updated nexus.lock")
 	fmt.Println("✅ All plugins updated successfully")
 
 	return nil
@@ -1332,12 +1332,12 @@ func (c *BaseController) findProjectRoot() (string, error) {
 		return "", err
 	}
 	for {
-		if _, err := os.Stat(filepath.Join(curr, ".mochi")); err == nil {
+		if _, err := os.Stat(filepath.Join(curr, ".nexus")); err == nil {
 			return curr, nil
 		}
 		parent := filepath.Dir(curr)
 		if parent == curr {
-			return "", fmt.Errorf("could not find project root (no .mochi directory)")
+			return "", fmt.Errorf("could not find project root (no .nexus directory)")
 		}
 		curr = parent
 	}

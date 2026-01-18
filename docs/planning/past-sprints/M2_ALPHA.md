@@ -1,10 +1,10 @@
 # Milestone: M2_Alpha (Namespaced Plugins & Determinism)
 
-**Objective**: Transition mochi into a modular, plugin-based platform with hierarchical discovery and `uv`-style version locking. This phase focuses on developer experience, parallel performance, and environment reproducibility.
+**Objective**: Transition nexus into a modular, plugin-based platform with hierarchical discovery and `uv`-style version locking. This phase focuses on developer experience, parallel performance, and environment reproducibility.
 
 ## 🎯 Success Criteria
 - [x] `pkg/plugins` registry implements hierarchical discovery and DAG resolution.
-- [x] `mochi.lock` ensures deterministic environment recreation across machines.
+- [x] `nexus.lock` ensures deterministic environment recreation across machines.
 - [x] Remote plugins are fetched in parallel with 0 resolution overhead during workspace creation.
 - [x] Agents receive namespaced capabilities (Rules, Skills, Commands).
 - [ ] E2E test suite with 90%+ coverage and performance benchmarks (<30s startup, <500MB memory).
@@ -20,7 +20,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **PLG-01** | Plugin Registry & DAG Resolver | 🔥 High | [✅ Completed] | [TP-PLG-01](#test-plan-plg-01) |
 | **LCK-01** | Lockfile Manager (uv-style) | 🔥 High | [✅ Completed] | [TP-LCK-01](#test-plan-lck-01) |
-| **CLI-04** | `mochi plugin` Command Group | ⚡ Med | [✅ Completed] | [TP-CLI-04](#test-plan-cli-04) |
+| **CLI-04** | `nexus plugin` Command Group | ⚡ Med | [✅ Completed] | [TP-CLI-04](#test-plan-cli-04) |
 | **AGT-03** | Namespaced Agent Generation | ⚡ Med | [✅ Completed] | [TP-AGT-03](#test-plan-agt-03) |
 | **VFY-02** | E2E Test Suite & Coverage | 🔥 High | [🚧 Pending] | [TP-VFY-02](#test-plan-vfy-02) |
 | **SCH-01** | JSON Schema Validation | ⚡ Med | [✅ Completed] | [TP-SCH-01](#test-plan-sch-01) |
@@ -41,14 +41,14 @@
 **Objective**: Ensure modular plugins are correctly discovered, namespaced, and resolved without cycles.
 
 **Unit Tests:**
-- ✅ **Recursive Discovery**: Verify plugins are found at various depths in `.mochi/plugins/`.
+- ✅ **Recursive Discovery**: Verify plugins are found at various depths in `.nexus/plugins/`.
 - ✅ **Namespace Isolation**: Ensure rules from `plugin-a` don't leak into `plugin-b`.
 - ✅ **DAG Resolution**: Verify correct loading order for dependent plugins.
 - ✅ **Cycle Detection**: Fail explicitly when A -> B -> A dependency exists.
 
 **Integration Tests:**
 - ✅ **Merge Logic**: Verify that namespaced rules are correctly merged into final agent configs.
-- ✅ **Local Overrides**: Project-specific plugins at `.mochi/plugins/` take precedence over remote ones.
+- ✅ **Local Overrides**: Project-specific plugins at `.nexus/plugins/` take precedence over remote ones.
 
 ---
 
@@ -56,7 +56,7 @@
 **Objective**: Validate deterministic behavior and parallel performance.
 
 **Unit Tests:**
-- ✅ **Lockfile Generation**: Ensure `mochi.lock` captures exact SHAs for all remotes.
+- ✅ **Lockfile Generation**: Ensure `nexus.lock` captures exact SHAs for all remotes.
 - ✅ **Integrity Checks**: Verify that tampering with a plugin's manifest triggers a lock mismatch.
 - ✅ **Idempotency**: `workspace create` produces identical results when run twice with the same lockfile.
 
@@ -72,8 +72,8 @@
 **E2E Scenarios:**
 ```bash
 # Test 1: Namespaced Rules in Cursor
-# 1. Add plugin 'mochi/git' and 'local/verification'
-# 2. Run 'mochi workspace create test-workspace'
+# 1. Add plugin 'nexus/git' and 'local/verification'
+# 2. Run 'nexus workspace create test-workspace'
 # 3. Verify: .cursor/rules/git_commit.mdc exists
 # 4. Verify: .cursor/rules/verification_strict.mdc exists
 # 5. Verify: NO collisions between similarly named rules in different plugins
@@ -124,7 +124,7 @@
 
 **Integration Tests:**
 - ✅ **IDE Support**: VSCode/Cursor intellisense works with auto-generated schema
-- ✅ **CLI Validation**: `mochi config validate` command works
+- ✅ **CLI Validation**: `nexus config validate` command works
 - ✅ **Plugin Registry**: Generic plugins available from nexus-config repo
 
 ---
@@ -157,23 +157,23 @@ make fmt            # Code properly formatted
 ---
 
 ### **TP-CFG-02: Config Extraction to Plugins**
-**Objective**: Simplify sharing by extracting local .mochi/ configurations (rules, skills, commands) into dedicated plugins for easy distribution and reuse.
+**Objective**: Simplify sharing by extracting local .nexus/ configurations (rules, skills, commands) into dedicated plugins for easy distribution and reuse.
 
 **Requirements:**
-- Extract custom rules, skills, and commands from .mochi/templates/ and .mochi/agents/
+- Extract custom rules, skills, and commands from .nexus/templates/ and .nexus/agents/
 - Generate proper plugin manifest with metadata (name, version, description, author)
 - Create namespace to avoid conflicts (e.g., 'team-standards' plugin)
 - Allow selective extraction (rules only, skills only, or all)
 - Preserve local overrides after extraction
 
 **Unit Tests:**
-- ✅ **Extraction Logic**: Convert .mochi/ directory structure to plugin format
+- ✅ **Extraction Logic**: Convert .nexus/ directory structure to plugin format
 - ✅ **Plugin Generation**: Create plugin.yaml manifest and organized file structure
 - ✅ **Namespace Handling**: Ensure extracted plugins have unique namespaces
 - ✅ **Selective Extraction**: Extract specific config types (rules/skills/commands)
 
 **Integration Tests:**
-- ✅ **CLI Command**: `mochi config extract --plugin-name my-plugin [--rules|--skills|--commands]`
+- ✅ **CLI Command**: `nexus config extract --plugin-name my-plugin [--rules|--skills|--commands]`
 - ✅ **Plugin Installation**: Extracted plugin can be installed via plugin registry
 - ✅ **Override Preservation**: Local customizations remain after extraction
 - ✅ **Sharing Workflow**: Extracted plugin can be committed and shared via git
@@ -181,11 +181,11 @@ make fmt            # Code properly formatted
 **E2E Scenarios:**
 ```bash
 # Test 1: Extract Team Coding Standards
-# 1. Add custom rules to .mochi/templates/rules/ and .mochi/agents/cursor/rules/
-# 2. Run 'mochi config extract --plugin-name team-standards --rules'
-# 3. Verify plugin created in .mochi/plugins/team-standards/ with manifest
+# 1. Add custom rules to .nexus/templates/rules/ and .nexus/agents/cursor/rules/
+# 2. Run 'nexus config extract --plugin-name team-standards --rules'
+# 3. Verify plugin created in .nexus/plugins/team-standards/ with manifest
 # 4. Commit plugin to team repo and share with colleagues
-# 5. Colleagues can install via 'mochi plugin install https://github.com/team/configs'
+# 5. Colleagues can install via 'nexus plugin install https://github.com/team/configs'
 # Expected: Team standards propagate without manual config syncing
 ```
 
@@ -208,7 +208,7 @@ make fmt            # Code properly formatted
 **E2E Scenarios:**
 ```bash
 # Test 1: LXC Workspace Creation
-# 1. Run 'mochi workspace create test --provider lxc'
+# 1. Run 'nexus workspace create test --provider lxc'
 # 2. Verify LXC container starts with proper networking
 # 3. Install dependencies and run services
 # 4. Test faster startup compared to Docker
@@ -220,7 +220,7 @@ make fmt            # Code properly formatted
 ## 🏗 Infrastructure Requirements (for handover)
 
 ### **CI Integration**
-- **Artifact Locking**: CI must run `mochi plugin check` to ensure the lockfile is up-to-date with `config.yaml`.
+- **Artifact Locking**: CI must run `nexus plugin check` to ensure the lockfile is up-to-date with `config.yaml`.
 - **Benchmarking**: Monitor workspace creation time to ensure parallel fetching remains < 10s for 5+ remote plugins.
 
 ### **Handover Guidelines**

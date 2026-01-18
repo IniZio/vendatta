@@ -138,12 +138,12 @@ func LoadConfig(path string) (*Config, error) {
 func GetConfigPath() string {
 	// Fallback to user config
 	if home, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(home, ".config", "mochi", "coordination.yaml")
+		return filepath.Join(home, ".config", "nexus", "coordination.yaml")
 	}
 
 	// Current directory fallback
 	if cwd, err := os.Getwd(); err == nil {
-		return filepath.Join(cwd, ".mochi", "coordination.yaml")
+		return filepath.Join(cwd, ".nexus", "coordination.yaml")
 	}
 
 	return ".nexus/coordination.yaml"

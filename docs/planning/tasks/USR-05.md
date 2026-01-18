@@ -21,7 +21,7 @@ Implement automatic service port discovery and user-friendly display system to h
 
 3. **Configuration-Based Discovery**: Declarative port definitions
    - Service configuration parsing from workspace YAML
-   - Port mapping from mochi config files
+   - Port mapping from nexus config files
    - Environment variable injection tracking
 
 ### **Port Display System** (`pkg/coordination/ports.go`)
@@ -31,7 +31,7 @@ Implement automatic service port discovery and user-friendly display system to h
 - Integration with node agents for remote execution
 
 ### **User Interface Components**
-1. **CLI Display**: `mochi workspace ports <name>`
+1. **CLI Display**: `nexus workspace ports <name>`
    - Table format with service name, internal port, external port
    - Protocol detection (HTTP, HTTPS, TCP, UDP)
    - Direct access URLs for web services

@@ -2,7 +2,7 @@
 
 set -e
 
-REPO="IniZio/mochi"
+REPO="IniZio/nexus"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 # Detect OS and architecture
@@ -36,7 +36,7 @@ detect_platform() {
             ;;
     esac
 
-    BINARY_NAME="mochi-${OS}-${ARCH}"
+    BINARY_NAME="nexus-${OS}-${ARCH}"
     if [ "$OS" = "windows" ]; then
         BINARY_NAME="${BINARY_NAME}.exe"
     fi
@@ -59,35 +59,35 @@ install_binary() {
     echo "Downloading $BINARY_NAME from $DOWNLOAD_URL"
 
     if command -v curl >/dev/null 2>&1; then
-        curl -L -o "/tmp/mochi" "$DOWNLOAD_URL"
+        curl -L -o "/tmp/nexus" "$DOWNLOAD_URL"
     elif command -v wget >/dev/null 2>&1; then
-        wget -O "/tmp/mochi" "$DOWNLOAD_URL"
+        wget -O "/tmp/nexus" "$DOWNLOAD_URL"
     else
         echo "Neither curl nor wget found. Please install one of them."
         exit 1
     fi
 
-    chmod +x "/tmp/mochi"
+    chmod +x "/tmp/nexus"
 
     mkdir -p "$INSTALL_DIR"
-    mv "/tmp/mochi" "$INSTALL_DIR/mochi"
+    mv "/tmp/nexus" "$INSTALL_DIR/nexus"
 
-    echo "Vendetta $TAG installed successfully to $INSTALL_DIR/mochi"
-    echo "Run 'mochi --help' to get started"
+    echo "Vendetta $TAG installed successfully to $INSTALL_DIR/nexus"
+    echo "Run 'nexus --help' to get started"
 }
 
 # Build and install from source with version info
 install_from_source() {
     TAG=$1
     BINARY_NAME=$(detect_platform)
-    
-    echo "Building mochi from source..."
-    
+
+    echo "Building nexus from source..."
+
     # Get version and date
     VERSION=${TAG#v}
     BUILDDATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     LDFLAGS="-X main.version=$VERSION -X main.buildDate=$BUILDDATE"
-    
+
     # Build
     GOOS=$(uname -s | tr '[:upper:]' '[:lower:]')
     GOARCH=$(uname -m)
@@ -95,33 +95,33 @@ install_from_source() {
         x86_64) GOARCH="amd64" ;;
         aarch64|arm64) GOARCH="arm64" ;;
     esac
-    
+
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR"
-    
+
     # Clone if repo not present, otherwise use existing
-    if [ -d "/tmp/mochi-repo" ]; then
-        cp -r /tmp/mochi-repo/* .
+    if [ -d "/tmp/nexus-repo" ]; then
+        cp -r /tmp/nexus-repo/* .
     else
         git clone --depth 1 --branch "$TAG" "https://github.com/$REPO.git" .
     fi
-    
+
     echo "Building for $GOOS/$GOARCH..."
-    GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "/tmp/mochi" ./cmd/mochi
-    
+    GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "/tmp/nexus" ./cmd/nexus
+
     mkdir -p "$INSTALL_DIR"
-    mv "/tmp/mochi" "$INSTALL_DIR/mochi"
-    chmod +x "$INSTALL_DIR/mochi"
-    
+    mv "/tmp/nexus" "$INSTALL_DIR/nexus"
+    chmod +x "$INSTALL_DIR/nexus"
+
     cd - > /dev/null
     rm -rf "$TEMP_DIR"
-    
-    echo "Vendetta $TAG installed successfully to $INSTALL_DIR/mochi"
-    echo "Run 'mochi --help' to get started"
+
+    echo "Vendetta $TAG installed successfully to $INSTALL_DIR/nexus"
+    echo "Run 'nexus --help' to get started"
 }
 
 main() {
-    echo "Installing mochi..."
+    echo "Installing nexus..."
 
     TAG=$(get_latest_release)
     BINARY_NAME=$(detect_platform)

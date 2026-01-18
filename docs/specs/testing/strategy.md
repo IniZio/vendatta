@@ -1,7 +1,7 @@
-# Testing Strategy: Project mochi
+# Testing Strategy: Project nexus
 
 ## 1. Overview
-Project mochi is a systems-level CLI tool. Testing must cover both high-level orchestration logic and low-level provider interactions (Docker, Git).
+Project nexus is a systems-level CLI tool. Testing must cover both high-level orchestration logic and low-level provider interactions (Docker, Git).
 
 ## 2. Test Tiers
 
@@ -18,7 +18,7 @@ Project mochi is a systems-level CLI tool. Testing must cover both high-level or
 - **Note**: These tests may be skipped in environments where Docker/Git are not available.
 
 ### **Tier 3: E2E Verification (Slow, Full Flow)**
-- **Scope**: The entire `mochi init` -> `mochi dev` -> `mochi agent` lifecycle.
+- **Scope**: The entire `nexus init` -> `nexus dev` -> `nexus agent` lifecycle.
 - **Verification**: Use a test repository (fixture) and verify that:
     - Files are created correctly (worktrees, agent configs).
     - Environment variables are present in the container.

@@ -157,8 +157,8 @@ type RenderData struct {
 
 // GetMergedTemplates returns merged template data from all sources
 func (c *Config) GetMergedTemplates(baseDir string) (*templates.TemplateData, error) {
-	mochiDir := filepath.Join(baseDir, ".mochi")
-	manager := templates.NewManager(mochiDir)
+	nexusDir := filepath.Join(baseDir, ".nexus")
+	manager := templates.NewManager(nexusDir)
 
 	var enabledPlugins []string
 	for _, p := range c.Plugins {
@@ -176,7 +176,7 @@ func (c *Config) GetMergedTemplates(baseDir string) (*templates.TemplateData, er
 		}
 	}
 
-	return manager.Merge(mochiDir, enabledPlugins, extends)
+	return manager.Merge(nexusDir, enabledPlugins, extends)
 }
 
 func (c *Config) isPluginEnabled(baseDir, name string) bool {
@@ -344,7 +344,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			}
 
 			// Load agent-specific rules from override directory
-			agentOverrideDir := filepath.Join(".mochi", "agents", agentName, "rules")
+			agentOverrideDir := filepath.Join(".nexus", "agents", agentName, "rules")
 			if _, err := os.Stat(agentOverrideDir); err == nil {
 				if err := filepath.Walk(agentOverrideDir, func(path string, info os.FileInfo, err error) error {
 					if err != nil {
