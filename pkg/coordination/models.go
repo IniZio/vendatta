@@ -213,3 +213,33 @@ func (gi *GitHubInstallation) Validate() error {
 	}
 	return nil
 }
+
+// GitHubFork represents a forked repository for a user
+type GitHubFork struct {
+	UserID        string    `json:"user_id"`
+	OriginalOwner string    `json:"original_owner"`
+	OriginalRepo  string    `json:"original_repo"`
+	ForkOwner     string    `json:"fork_owner"`
+	ForkURL       string    `json:"fork_url"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+// Validate validates GitHub fork data
+func (gf *GitHubFork) Validate() error {
+	if gf.UserID == "" {
+		return ValidationError{Field: "user_id", Message: "user_id is required"}
+	}
+	if gf.OriginalOwner == "" {
+		return ValidationError{Field: "original_owner", Message: "original_owner is required"}
+	}
+	if gf.OriginalRepo == "" {
+		return ValidationError{Field: "original_repo", Message: "original_repo is required"}
+	}
+	if gf.ForkOwner == "" {
+		return ValidationError{Field: "fork_owner", Message: "fork_owner is required"}
+	}
+	if gf.ForkURL == "" {
+		return ValidationError{Field: "fork_url", Message: "fork_url is required"}
+	}
+	return nil
+}

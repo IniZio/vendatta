@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/nexus/nexus/pkg/github"
 )
 
 type M4RegisterGitHubUserRequest struct {
@@ -63,6 +65,8 @@ type M4CreateWorkspaceResponse struct {
 	SSHPort           int       `json:"ssh_port"`
 	PollingURL        string    `json:"polling_url"`
 	EstimatedTimeSecs int       `json:"estimated_time_seconds"`
+	ForkCreated       bool      `json:"fork_created"`
+	ForkURL           string    `json:"fork_url,omitempty"`
 	CreatedAt         time.Time `json:"created_at"`
 }
 
@@ -245,16 +249,41 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 	s.gitHubInstallationsMu.RUnlock()
 
 	if !hasAuth {
-		sendM4JSONError(w, http.StatusUnauthorized, "github_auth_required", "GitHub authorization required", map[string]interface{}{
-			"auth_url": fmt.Sprintf("https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&state=workspace_creation&scope=repo",
+		authURL := "https://github.com/login/oauth/authorize?client_id=unknown&redirect_uri=unknown&state=workspace_creation&scope=repo"
+		if s.appConfig != nil {
+			authURL = fmt.Sprintf("https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&state=workspace_creation&scope=repo",
 				s.appConfig.ClientID,
-				url.QueryEscape(s.appConfig.RedirectURL)),
+				url.QueryEscape(s.appConfig.RedirectURL))
+		}
+		sendM4JSONError(w, http.StatusUnauthorized, "github_auth_required", "GitHub authorization required", map[string]interface{}{
+			"auth_url": authURL,
 		})
 		return
 	}
 
 	workspaceID := fmt.Sprintf("ws-%d", time.Now().UnixNano())
 	sshPort := 2222 + (time.Now().UnixNano() % 100)
+
+	repoOwner := req.Repository.Owner
+	repoName := req.Repository.Name
+	repoURL := req.Repository.URL
+	forkCreated := false
+	forkURL := ""
+
+	repoCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	repoInfo, err := github.GetRepositoryInfo(repoCtx, installation.Token, repoOwner, repoName)
+	if err == nil && repoInfo != nil && repoInfo.Private && repoInfo.Owner.Login != req.GitHubUsername {
+		fork, forkErr := github.ForkRepository(repoCtx, installation.Token, repoOwner, repoName)
+		if forkErr == nil && fork != nil {
+			forkCreated = true
+			forkURL = fork.CloneURL
+			repoOwner = fork.Owner.Login
+			repoName = fork.Name
+			repoURL = fork.CloneURL
+		}
+	}
 
 	ws := &DBWorkspace{
 		WorkspaceID:   workspaceID,
@@ -263,9 +292,9 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 		Status:        "creating",
 		Provider:      req.Provider,
 		Image:         req.Image,
-		RepoOwner:     req.Repository.Owner,
-		RepoName:      req.Repository.Name,
-		RepoURL:       req.Repository.URL,
+		RepoOwner:     repoOwner,
+		RepoName:      repoName,
+		RepoURL:       repoURL,
 		RepoBranch:    req.Repository.Branch,
 	}
 
@@ -282,6 +311,8 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 		SSHPort:           int(sshPort),
 		PollingURL:        fmt.Sprintf("/api/v1/workspaces/%s/status", workspaceID),
 		EstimatedTimeSecs: 60,
+		ForkCreated:       forkCreated,
+		ForkURL:           forkURL,
 		CreatedAt:         time.Now(),
 	}
 
@@ -290,7 +321,7 @@ func (s *Server) handleM4CreateWorkspace(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(resp)
 }
 
-func (s *Server) provisionWorkspace(ctx context.Context, workspaceID, userID string, req M4CreateWorkspaceRequest, sshPort int, githubToken string) {
+func (s *Server) provisionWorkspace(_ context.Context, workspaceID, userID string, req M4CreateWorkspaceRequest, sshPort int, githubToken string) {
 	if err := s.workspaceRegistry.UpdateStatus(workspaceID, "creating"); err != nil {
 		fmt.Printf("Failed to update workspace status to creating: %v\n", err)
 	}
@@ -302,6 +333,10 @@ func (s *Server) provisionWorkspace(ctx context.Context, workspaceID, userID str
 	fmt.Printf("Provisioning workspace %s with GitHub token for user %s\n", workspaceID, userID)
 	fmt.Printf("Repository: %s/%s\n", req.Repository.Owner, req.Repository.Name)
 	fmt.Printf("GitHub token available: %v\n", githubToken != "")
+
+	if githubToken != "" {
+		fmt.Printf("Setting GITHUB_TOKEN environment variable in workspace startup\n")
+	}
 
 	if err := s.workspaceRegistry.UpdateStatus(workspaceID, "running"); err != nil {
 		fmt.Printf("Failed to update workspace status to running: %v\n", err)
