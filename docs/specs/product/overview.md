@@ -1,9 +1,9 @@
-# Product Overview: Project nexus
+# Product Overview: Project mochi
 
 > 📖 **Configuration Guide**: For detailed configuration options, see [Configuration Reference](./configuration.md)
 
 ## 1. Vision
-nexus is a developer-centric, local-first development environment manager. It aims to eliminate the "it works on my machine" problem by providing high-isolation, reproducible codespaces that are natively compatible with modern AI agents (Cursor, OpenCode).
+mochi is a developer-centric, local-first development environment manager. It aims to eliminate the "it works on my machine" problem by providing high-isolation, reproducible codespaces that are natively compatible with modern AI agents (Cursor, OpenCode).
 
 ## 2. Problem Statement
 - **Environment Drift**: Developers struggle with conflicting node/python versions across projects.
@@ -14,10 +14,10 @@ nexus is a developer-centric, local-first development environment manager. It ai
 ## 3. Core Value Propositions
 
 ### **High Isolation (LXC/Docker + Worktrees)**
-Unlike standard `docker-compose` which shares the host filesystem, nexus uses **Git Worktrees** to provide a unique, branch-specific filesystem for every session. This prevents file-locking and allows parallel work on multiple branches without pollution.
+Unlike standard `docker-compose` which shares the host filesystem, mochi uses **Git Worktrees** to provide a unique, branch-specific filesystem for every session. This prevents file-locking and allows parallel work on multiple branches without pollution.
 
 ### **BYOA (Bring Your Own Agent)**
-nexus provides a comprehensive **agent configuration generation system** with standardized **Model Context Protocol (MCP)** gateway. Any agent (Cursor, OpenCode, Claude Desktop/Code) automatically gets configured to connect to isolated environments with:
+mochi provides a comprehensive **agent configuration generation system** with standardized **Model Context Protocol (MCP)** gateway. Any agent (Cursor, OpenCode, Claude Desktop/Code) automatically gets configured to connect to isolated environments with:
 - **Environment-aware Tools**: MCP `exec` tool for secure command execution
 - **Shared Standard Capabilities**: Reusable skills, commands, and rules following open standards
 - **Dynamic Configuration**: Templates generate agent-specific configs with project context
@@ -28,19 +28,19 @@ Zero-setup installation. A single Go binary manages everything from worktree cre
 
 ## 4. Target Personas
 
-| Persona | Needs | nexus Solution |
+| Persona | Needs | mochi Solution |
 | :--- | :--- | :--- |
 | **Senior Dev** | Complex orchestration, fast branch switching. | Automated Worktree + DinD orchestration. |
 | **Agent User** | Secure tool execution for AI. | Built-in MCP Server with session boundaries. |
-| **Team Lead** | Onboarding consistency. | Standardized `.nexus` config & lifecycle hooks. |
+| **Team Lead** | Onboarding consistency. | Standardized `.mochi` config & lifecycle hooks. |
 
 ## 5. Configuration Guide
 
-### **Understanding the `.nexus/` Structure**
-nexus uses a simple, intuitive configuration system centered around the `.nexus/` directory:
+### **Understanding the `.mochi/` Structure**
+mochi uses a simple, intuitive configuration system centered around the `.mochi/` directory:
 
 ```
-.nexus/
+.mochi/
 ├── config.yaml          # Main project configuration (plugins, enabled capabilities, services)
 ├── templates/           # Local capability overrides
 │   ├── skills/          # Override or add AI skills
@@ -50,11 +50,11 @@ nexus uses a simple, intuitive configuration system centered around the `.nexus/
 └── worktrees/           # Generated isolated environments (auto-managed)
 
 # User config (auto-generated at XDG_CONFIG_HOME)
-~/.config/nexus/config.yaml  # Auto-detected agents and preferences
+~/.config/mochi/config.yaml  # Auto-detected agents and preferences
 ```
 
 ### **Main Configuration (`config.yaml`)**
-The heart of your nexus setup. Here's what you can configure:
+The heart of your mochi setup. Here's what you can configure:
 
 ```yaml
 # Project identity
@@ -63,7 +63,7 @@ description: "Full-stack web application"
 
 # Plugin sources to load
 plugins:
-  - name: "nexus/standard"
+  - name: "mochi/standard"
     url: "https://github.com/IniZio/laichi-config.git"
   - name: "company/templates"
     url: "https://github.com/company/ai-templates.git"
@@ -101,11 +101,11 @@ docker:
 
 # Lifecycle hooks
 hooks:
-  setup: ".nexus/hooks/setup.sh"
-  dev: ".nexus/hooks/dev.sh"
+  setup: ".mochi/hooks/setup.sh"
+  dev: ".mochi/hooks/dev.sh"
 ```
 
-### **User-Specific Configuration (`$XDG_CONFIG_HOME/nexus/config.yaml`)**
+### **User-Specific Configuration (`$XDG_CONFIG_HOME/mochi/config.yaml`)**
 Auto-generated based on detected AI agent installations:
 
 ```yaml
@@ -137,7 +137,7 @@ Secure communication bridge between agents and your environment:
 ### **Shared Templates**
 Reusable capabilities that work across all agents:
 
-#### **Skills** (`.nexus/templates/skills/`)
+#### **Skills** (`.mochi/templates/skills/`)
 AI capabilities following the [agentskills.io](https://agentskills.io) standard:
 ```yaml
 name: "web-search"
@@ -149,7 +149,7 @@ execute:
   url: "https://api.searchengine.com/search"
 ```
 
-#### **Commands** (`.nexus/templates/commands/`)
+#### **Commands** (`.mochi/templates/commands/`)
 Standardized development workflows:
 ```yaml
 name: "build"
@@ -161,7 +161,7 @@ steps:
     command: "npm run build"
 ```
 
-#### **Rules** (`.nexus/templates/rules/`)
+#### **Rules** (`.mochi/templates/rules/`)
 Development guidelines following [agents.md](https://github.com/agentsmd/agents.md):
 ```markdown
 ---
@@ -211,17 +211,17 @@ Each agent gets customized configuration:
 ```
 
 ### **Configuration Workflow**
-1. **Initialize**: `nexus init` creates the `.nexus/` structure
+1. **Initialize**: `mochi init` creates the `.mochi/` structure
 2. **Customize**: Edit `config.yaml` and templates for your project
-3. **Generate**: `nexus dev <branch>` auto-generates agent configs
+3. **Generate**: `mochi dev <branch>` auto-generates agent configs
 4. **Use**: Open worktree in your preferred AI agent
 5. **Iterate**: Modify templates and regenerate as needed
 
 ## 6. The Workspace-Centric Workflow
-1.  **Onboard**: Run `nexus init`. Define services and capabilities.
-2.  **Create**: Run `nexus workspace create feature-x`. Creates branch, worktree, and generates agent configs.
-3.  **Develop**: Run `nexus workspace up feature-x`. Starts isolated container with port forwarding and lifecycle hooks.
+1.  **Onboard**: Run `mochi init`. Define services and capabilities.
+2.  **Create**: Run `mochi workspace create feature-x`. Creates branch, worktree, and generates agent configs.
+3.  **Develop**: Run `mochi workspace up feature-x`. Starts isolated container with port forwarding and lifecycle hooks.
 4.  **Code**: Open worktree in any AI agent. Agents connect via their generated configs to MCP server.
 5.  **Collaborate**: Multiple workspaces can run simultaneously with complete isolation.
-6.  **Sync**: Use `nexus config sync` for sharing configurations. Standard `git` for code.
+6.  **Sync**: Use `mochi config sync` for sharing configurations. Standard `git` for code.
 7.  **Clean**: Use `workspace down` to stop, `workspace rm` to delete workspace entirely.

@@ -7,8 +7,11 @@ coverage*.out
 coverage.html
 # Dependencies
 node_modules/
-# nexus artifacts
+# nexus artifacts (but keep config and templates)
 .nexus/worktrees/
+.nexus/plugins/
+.nexus/*.lock
+.nexus/*.db
 .cursor/
 .opencode/
 claude_desktop_config.json
@@ -56,15 +59,11 @@ STAGING_*.md
 QUICK_START_*.md
 RALPH_*.md
 M4_*.md
-
 # DAO and database implementation files (experimental)
 pkg/coordination/dao_*.go
 pkg/coordination/db.go
 pkg/coordination/db_test.go
 pkg/coordination/handlers_expanded_test.go
-
 # Test directory
 test/
-
-# Nexus configuration directory
-.nexus/
+# Nexus configuration directory (runtime artifacts only)

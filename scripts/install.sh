@@ -2,7 +2,7 @@
 set -euo pipefail
 
 VERSION="${1:-latest}"
-REPO_URL="https://github.com/nexus/nexus"
+REPO_URL="https://github.com/IniZio/nexus"
 RELEASES_URL="${REPO_URL}/releases"
 
 NEXUS_BIN_DIR="${HOME}/.local/bin"

@@ -1,78 +1,28 @@
 # nexus
 
-Isolated dev environments. SSH + Services. Works with Cursor, VSCode, AI agents.
+Isolated dev environments. SSH + Services.
 
 ```bash
-curl -fsSL https://nexus.example.com/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/IniZio/nexus/main/scripts/install.sh | bash
 ```
 
-3 minutes → Workspace ready. Editor connected. Services running.
-
----
-
-## Install
-
-[Full Installation Guide](scripts/INSTALL.md)
-
-**One-liner:**
-```bash
-curl -fsSL https://nexus.example.com/install.sh | bash
-```
-
-**Or:**
-```bash
-git clone https://github.com/nexus/nexus && cd nexus && make build
-```
-
----
-
-## Quick Start (After Install)
+## Quick Start
 
 ```bash
-nexus auth github         # Login with GitHub
-nexus ssh setup           # Generate/upload SSH keys
-nexus workspace create owner/repo   # Create workspace
-nexus workspace connect my-workspace  # Open in editor
+nexus auth github              # GitHub auth
+nexus ssh setup                # SSH key setup
+nexus workspace create owner/repo  # Create workspace
+nexus workspace connect name   # Connect editor
 ```
 
-Done. Your code is ready.
-
----
-
-## For Staging Environment
-
-[Staging Deployment](deploy/envs/staging/README.md) - Local testing/development
+## For Development
 
 ```bash
-cd deploy/envs/staging
-./ops/start.sh
+make build          # Build binary
+make test           # Run tests
+make test-coverage  # Coverage report
 ```
 
----
+## Deployment
 
-## For Developers (This Project)
-
-Build:
-```bash
-make build
-```
-
-Test:
-```bash
-make test
-make test-coverage
-```
-
-Dev setup:
-```bash
-make dev-setup
-```
-
----
-
-## Documentation
-
-- [Installation](scripts/INSTALL.md) - Binary download & setup
-- [Staging](deploy/envs/staging/README.md) - Local server ops
-- [M4 Implementation](docs/planning/M4/) - Current phase progress
-- [Architecture](docs/specs/m3.md) - System design
+Local staging: `cd deploy/envs/staging && ./ops/start.sh`

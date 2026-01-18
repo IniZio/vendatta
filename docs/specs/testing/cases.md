@@ -1,4 +1,4 @@
-# nexus Test Plan Specification
+# mochi Test Plan Specification
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@
 
 ## 1. Executive Summary
 
-This document provides a comprehensive test plan specification for the nexus project. It defines detailed test cases for all functional areas, organized by module and priority. The test plan aims to achieve:
+This document provides a comprehensive test plan specification for the mochi project. It defines detailed test cases for all functional areas, organized by module and priority. The test plan aims to achieve:
 
 - **Unit Test Coverage**: 85%+ for all logic packages
 - **Integration Test Coverage**: 100% for component interactions
@@ -59,7 +59,7 @@ This document provides a comprehensive test plan specification for the nexus pro
 | LXC Provider | M2 Alpha feature (future) |
 | QEMU Provider | M3 Beta feature (future) |
 | Multi-Machine | M3 Beta feature (future) |
-| Third-party agent internals | Outside nexus scope |
+| Third-party agent internals | Outside mochi scope |
 
 ---
 
@@ -125,17 +125,17 @@ internal/testfixtures/
 
 **Preconditions:**
 - Git repository initialized
-- No `.nexus` directory exists
+- No `.mochi` directory exists
 - Docker daemon running
 
 **Test Steps:**
-1. Run `nexus init`
-2. Verify `.nexus/` directory created
+1. Run `mochi init`
+2. Verify `.mochi/` directory created
 3. Verify `config.yaml` created with valid structure
 4. Verify default templates directory created
 
 **Expected Results:**
-- `.nexus/` directory exists
+- `.mochi/` directory exists
 - `config.yaml` contains required fields (name, services)
 - `templates/` directory contains base templates
 - Command exits with code 0
@@ -150,17 +150,17 @@ plugins: []
 
 **Automation:**
 ```go
-func TestnexusInit(t *testing.T) {
+func TestmochiInit(t *testing.T) {
     te := NewTestEnvironment(t)
     defer te.Cleanup()
 
-    output := te.Runnexus("init")
+    output := te.Runmochi("init")
     assert.Contains(t, output, "Initialized")
 
-    assert.True(t, te.DirExists(".nexus"))
-    assert.True(t, te.FileExists(".nexus/config.yaml"))
+    assert.True(t, te.DirExists(".mochi"))
+    assert.True(t, te.FileExists(".mochi/config.yaml"))
 
-    config := te.ReadConfig(".nexus/config.yaml")
+    config := te.ReadConfig(".mochi/config.yaml")
     assert.NotEmpty(t, config["name"])
 }
 ```
@@ -180,10 +180,10 @@ func TestnexusInit(t *testing.T) {
 - None
 
 **Test Steps:**
-1. Attempt `nexus workspace create invalid@name`
-2. Attempt `nexus workspace create "name with spaces"`
-3. Attempt `nexus workspace create .`
-4. Attempt `nexus workspace create ..`
+1. Attempt `mochi workspace create invalid@name`
+2. Attempt `mochi workspace create "name with spaces"`
+3. Attempt `mochi workspace create .`
+4. Attempt `mochi workspace create ..`
 
 **Expected Results:**
 - All commands fail with validation error
@@ -214,7 +214,7 @@ func TestnexusInit(t *testing.T) {
 - Some workspaces running, some stopped
 
 **Test Steps:**
-1. Run `nexus workspace list`
+1. Run `mochi workspace list`
 2. Verify output shows all workspaces
 3. Verify status indicators (running/stopped)
 4. Verify port mappings displayed
@@ -235,7 +235,7 @@ func TestWorkspaceList(t *testing.T) {
     te.CreateWorkspace("ws-2")
     te.StartWorkspace("ws-1")
 
-    output := te.Runnexus("workspace", "list")
+    output := te.Runmochi("workspace", "list")
 
     assert.Contains(t, output, "ws-1")
     assert.Contains(t, output, "ws-2")
@@ -263,14 +263,14 @@ func TestWorkspaceList(t *testing.T) {
 - No existing workspaces
 
 **Test Steps:**
-1. `nexus workspace create feature-test`
-2. Verify worktree created at `.nexus/worktrees/feature-test/`
+1. `mochi workspace create feature-test`
+2. Verify worktree created at `.mochi/worktrees/feature-test/`
 3. Verify agent configs generated
-4. `nexus workspace up feature-test`
+4. `mochi workspace up feature-test`
 5. Verify container running
-6. `nexus workspace down feature-test`
+6. `mochi workspace down feature-test`
 7. Verify container stopped
-8. `nexus workspace rm feature-test`
+8. `mochi workspace rm feature-test`
 9. Verify worktree removed
 
 **Expected Results:**
@@ -284,7 +284,7 @@ func TestWorkspaceList(t *testing.T) {
 **Test Data:**
 ```bash
 # Expected directory structure after create
-.nexus/
+.mochi/
 └── worktrees/
     └── feature-test/
         ├── .cursor/
@@ -308,10 +308,10 @@ func TestWorkspaceList(t *testing.T) {
 - Workspace `context-test` created and started
 
 **Test Steps:**
-1. `cd .nexus/worktrees/context-test`
-2. Run `nexus workspace up` (no name specified)
+1. `cd .mochi/worktrees/context-test`
+2. Run `mochi workspace up` (no name specified)
 3. Verify workspace starts without error
-4. Run `nexus workspace down` (no name specified)
+4. Run `mochi workspace down` (no name specified)
 5. Verify workspace stops without error
 
 **Expected Results:**
@@ -345,7 +345,7 @@ func TestWorkspaceList(t *testing.T) {
 **Expected Results:**
 - Both workspaces start successfully
 - No port conflicts
-- Container names unique (`nexus-workspace-ws-a`, `nexus-workspace-ws-b`)
+- Container names unique (`mochi-workspace-ws-a`, `mochi-workspace-ws-b`)
 - Worktrees contain different branches
 
 **Test Data:**
@@ -397,20 +397,20 @@ func TestConcurrentWorkspaceIsolation(t *testing.T) {
 
 **Test Steps:**
 1. Create config with services (web:3000, api:8080, db:5432)
-2. `nexus workspace create service-test`
-3. `nexus workspace up service-test`
-4. `nexus workspace shell service-test`
-5. Execute `env | grep nexus_SERVICE`
+2. `mochi workspace create service-test`
+3. `mochi workspace up service-test`
+4. `mochi workspace shell service-test`
+5. Execute `env | grep mochi_SERVICE`
 
 **Expected Results:**
 - Environment variables present:
-  - `nexus_SERVICE_WEB_URL=http://localhost:3000`
-  - `nexus_SERVICE_API_URL=http://localhost:8080`
-  - `nexus_SERVICE_DB_URL=postgresql://localhost:5432`
+  - `mochi_SERVICE_WEB_URL=http://localhost:3000`
+  - `mochi_SERVICE_API_URL=http://localhost:8080`
+  - `mochi_SERVICE_DB_URL=postgresql://localhost:5432`
 
 **Test Data:**
 ```yaml
-# .nexus/config.yaml
+# .mochi/config.yaml
 services:
   web:
     command: "cd client && npm run dev"
@@ -481,8 +481,8 @@ services:
 4. Verify environment variables reflect actual ports
 
 **Expected Results:**
-- First workspace: `nexus_SERVICE_WEB_URL=http://localhost:3000`
-- Second workspace: `nexus_SERVICE_WEB_URL=http://localhost:3001` (or similar)
+- First workspace: `mochi_SERVICE_WEB_URL=http://localhost:3000`
+- Second workspace: `mochi_SERVICE_WEB_URL=http://localhost:3001` (or similar)
 
 ---
 
@@ -503,7 +503,7 @@ services:
 
 **Test Steps:**
 1. Configure agents (cursor, opencode, claude-desktop)
-2. `nexus workspace create agent-test`
+2. `mochi workspace create agent-test`
 3. Verify `.cursor/mcp.json` generated
 4. Verify `opencode.json` generated
 5. Verify `.opencode/` directory created
@@ -516,7 +516,7 @@ services:
 
 **Test Data:**
 ```yaml
-# .nexus/config.yaml
+# .mochi/config.yaml
 agents:
   cursor:
     enabled: true
@@ -542,8 +542,8 @@ agents:
 - Override files defined
 
 **Test Steps:**
-1. Create override file `.nexus/agents/cursor/rules/custom.md`
-2. Create suppression file `.nexus/agents/opencode/rules/legacy.md` (empty)
+1. Create override file `.mochi/agents/cursor/rules/custom.md`
+2. Create suppression file `.mochi/agents/opencode/rules/legacy.md` (empty)
 3. Create workspace
 4. Verify override applied
 5. Verify suppressed rule not generated
@@ -596,8 +596,8 @@ agents:
 - Multiple plugins in various locations
 
 **Test Steps:**
-1. Place plugins in `.nexus/plugins/`
-2. Place plugins in `.nexus/plugins/subdir/`
+1. Place plugins in `.mochi/plugins/`
+2. Place plugins in `.mochi/plugins/subdir/`
 3. Run plugin discovery
 4. Verify all plugins found
 
@@ -607,7 +607,7 @@ agents:
 
 **Test Data:**
 ```
-.nexus/plugins/
+.mochi/plugins/
 ├── plugin-a/
 │   └── plugin.yaml
 └── subdir/
@@ -726,8 +726,8 @@ depends_on: []
 - No lockfile exists
 
 **Test Steps:**
-1. `nexus plugin update`
-2. Verify `nexus.lock` created
+1. `mochi plugin update`
+2. Verify `mochi.lock` created
 3. Verify lockfile contains all plugins with versions
 4. Verify checksums present
 
@@ -746,7 +746,7 @@ depends_on: []
   },
   "plugins": [
     {
-      "name": "nexus/standard",
+      "name": "mochi/standard",
       "url": "https://github.com/IniZio/laichi-config.git",
       "revision": "abc123..."
     }
@@ -771,7 +771,7 @@ depends_on: []
 
 **Test Steps:**
 1. Delete all plugin caches
-2. Run `nexus workspace create` with lockfile
+2. Run `mochi workspace create` with lockfile
 3. Verify plugins fetched from lockfile
 4. Repeat step 1-3
 5. Verify identical results
@@ -799,7 +799,7 @@ depends_on: []
 
 **Test Steps:**
 1. Disconnect network
-2. Run `nexus workspace create`
+2. Run `mochi workspace create`
 3. Verify workspace creation succeeds
 
 **Expected Results:**
@@ -845,7 +845,7 @@ depends_on: []
 | Type | Unit |
 
 **Preconditions:**
-- Hook scripts exist in `.nexus/hooks/`
+- Hook scripts exist in `.mochi/hooks/`
 
 **Test Steps:**
 1. Create hooks (create.sh, up.sh, down.sh)
@@ -872,10 +872,10 @@ depends_on: []
 - Services configured
 
 **Test Steps:**
-1. Create `.nexus/hooks/up.sh`:
+1. Create `.mochi/hooks/up.sh`:
    ```bash
    #!/bin/bash
-   echo "Web URL: $nexus_SERVICE_WEB_URL" >> /tmp/hook-test.log
+   echo "Web URL: $mochi_SERVICE_WEB_URL" >> /tmp/hook-test.log
    ```
 2. Start workspace
 3. Check `/tmp/hook-test.log`
@@ -961,8 +961,8 @@ depends_on: []
 
 **Expected Results:**
 - Container exists
-- Label `nexus.session.id` present
-- Name format: `nexus-workspace-<name>`
+- Label `mochi.session.id` present
+- Name format: `mochi-workspace-<name>`
 
 ---
 
@@ -1055,7 +1055,7 @@ depends_on: []
 
 **Test Steps:**
 1. Create invalid config (missing required fields)
-2. Run any nexus command
+2. Run any mochi command
 3. Verify clear error message
 
 **Expected Results:**
@@ -1354,14 +1354,14 @@ type TestEnvironment struct {
     t           *testing.T
     baseDir     string
     gitRepoDir  string
-    nexusBin string
+    mochiBin string
     containers  []string
     worktrees   []string
 }
 
 // Methods
 func (te *TestEnvironment) InitGitRepo() error
-func (te *TestEnvironment) Runnexus(args ...string) (string, error)
+func (te *TestEnvironment) Runmochi(args ...string) (string, error)
 func (te *TestEnvironment) CreateWorkspace(name string) error
 func (te *TestEnvironment) StartWorkspace(name string) error
 func (te *TestEnvironment) StopWorkspace(name string) error
@@ -1583,7 +1583,7 @@ clean:
 - Valid OS image available
 
 **Test Steps:**
-1. `nexus workspace create-multi test --machines 1 --provider qemu`
+1. `mochi workspace create-multi test --machines 1 --provider qemu`
 2. Verify VM started
 3. Verify SSH access available
 4. Verify network configured
@@ -1609,7 +1609,7 @@ clean:
 - Sufficient system resources (8GB+ RAM)
 
 **Test Steps:**
-1. `nexus workspace create-multi multi-test --machines 3 --provider qemu`
+1. `mochi workspace create-multi multi-test --machines 3 --provider qemu`
 2. Verify 3 VMs started
 3. Verify unique IPs assigned
 4. Verify SSH to each VM
@@ -1635,8 +1635,8 @@ clean:
 - No cached images
 
 **Test Steps:**
-1. `nexus machine image list`
-2. `nexus machine image pull ubuntu-22.04`
+1. `mochi machine image list`
+2. `mochi machine image pull ubuntu-22.04`
 3. Verify download completes
 4. Verify image cached
 
@@ -1663,7 +1663,7 @@ clean:
 **Test Steps:**
 1. Create VM with resource limits:
    ```bash
-   nexus workspace create test --provider qemu --memory 2g --cpus 2
+   mochi workspace create test --provider qemu --memory 2g --cpus 2
    ```
 2. Verify VM respects limits
 3. Verify host system stability
@@ -1700,7 +1700,7 @@ clean:
      - name: db
        role: database
    ```
-2. `nexus workspace create-multi app`
+2. `mochi workspace create-multi app`
 3. Verify all machines created
 4. Verify session state persisted
 
@@ -1760,10 +1760,10 @@ clean:
 - Multi-machine session running
 
 **Test Steps:**
-1. `nexus workspace scale app --add 1 --role worker`
+1. `mochi workspace scale app --add 1 --role worker`
 2. Verify new machine added
 3. Verify session still functional
-4. `nexus workspace scale app --remove worker-1`
+4. `mochi workspace scale app --remove worker-1`
 5. Verify machine removed
 
 **Expected Results:**
@@ -1786,7 +1786,7 @@ clean:
 - Multi-machine session running
 
 **Test Steps:**
-1. `nexus workspace status app`
+1. `mochi workspace status app`
 2. Verify all machines showing healthy
 3. Simulate machine failure
 4. Verify auto-recovery triggered
@@ -1921,9 +1921,9 @@ clean:
 - Provider available
 
 **Test Steps:**
-1. `nexus workspace create-multi --help`
+1. `mochi workspace create-multi --help`
 2. Verify help output correct
-3. `nexus workspace create-multi test --machines 2 --provider docker`
+3. `mochi workspace create-multi test --machines 2 --provider docker`
 4. Verify session created
 
 **Expected Results:**
@@ -1946,7 +1946,7 @@ clean:
 - Multi-machine session running
 
 **Test Steps:**
-1. `nexus workspace connect test machine-1`
+1. `mochi workspace connect test machine-1`
 2. Execute command inside machine
 3. Verify command runs correctly
 4. Exit and return to host
@@ -1971,11 +1971,11 @@ clean:
 - Multi-machine session running
 
 **Test Steps:**
-1. `nexus workspace scale --help`
+1. `mochi workspace scale --help`
 2. Verify help output correct
-3. `nexus workspace scale test --add 2`
+3. `mochi workspace scale test --add 2`
 4. Verify 2 new machines added
-5. `nexus workspace scale test --remove machine-3`
+5. `mochi workspace scale test --remove machine-3`
 6. Verify machine removed
 
 **Expected Results:**
@@ -1998,7 +1998,7 @@ clean:
 - Multi-machine session running
 
 **Test Steps:**
-1. `nexus workspace status test`
+1. `mochi workspace status test`
 2. Verify output shows all machines
 3. Verify status indicators correct
 4. Verify resource usage displayed
@@ -2025,8 +2025,8 @@ clean:
 - Multi-machine config with 3 machines
 
 **Test Steps:**
-1. `nexus plugin update`
-2. Verify `nexus.lock` created
+1. `mochi plugin update`
+2. Verify `mochi.lock` created
 3. Verify lockfile contains all machine configs
 4. Verify OS images and versions pinned
 
@@ -2078,7 +2078,7 @@ clean:
 
 **Test Steps:**
 1. Disconnect network
-2. Run `nexus workspace create-multi test`
+2. Run `mochi workspace create-multi test`
 3. Verify machines created from cache
 
 **Expected Results:**

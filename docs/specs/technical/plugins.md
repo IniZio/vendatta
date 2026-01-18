@@ -4,7 +4,7 @@
 
 > **Note:** This document describes the **plugin system**. For **extends** (remote template inheritance), see [Configuration Reference](../product/configuration.md).
 
-nexus's plugin system follows ESLint's model: load plugins as sources of capabilities, then enable/disable specific rules, skills, and commands. This provides fine-grained control while maintaining composability.
+mochi's plugin system follows ESLint's model: load plugins as sources of capabilities, then enable/disable specific rules, skills, and commands. This provides fine-grained control while maintaining composability.
 
 ## 2. Plugin Loading & Resolution
 
@@ -12,11 +12,11 @@ nexus's plugin system follows ESLint's model: load plugins as sources of capabil
 Plugins can be loaded from:
 - **Remote Git repositories**: `url` field with optional `branch`
 - **Local directories**: `path` field for project-specific plugins
-- **Default registry**: Short names like `"nexus/standard"` resolve to known repositories
+- **Default registry**: Short names like `"mochi/standard"` resolve to known repositories
 
 ### **Namespace Resolution**
 Each plugin gets a namespace based on its `name` field. Capabilities within plugins are prefixed with this namespace:
-- Plugin `"nexus/standard"` provides `nexus/standard/code-quality`
+- Plugin `"mochi/standard"` provides `mochi/standard/code-quality`
 - Plugin `"company/templates"` provides `company/templates/security`
 
 ## 3. Automatic Enablement
@@ -26,40 +26,40 @@ When you load plugins, all their capabilities are automatically enabled. This pr
 ```yaml
 # Load plugin sources - all capabilities automatically enabled
 plugins:
-  - name: "nexus/standard"
+  - name: "mochi/standard"
     url: "https://github.com/IniZio/laichi-config.git"
   - name: "company/internal"
-    path: "./.nexus/plugins/internal"
+    path: "./.mochi/plugins/internal"
 ```
 
-For customization, use local overrides in `.nexus/templates/` to modify or remove specific capabilities.
+For customization, use local overrides in `.mochi/templates/` to modify or remove specific capabilities.
 
 ## 4. Local Overrides
 
-Local templates in `.nexus/templates/` can override or extend plugin capabilities:
+Local templates in `.mochi/templates/` can override or extend plugin capabilities:
 
 ```
-.nexus/templates/
+.mochi/templates/
 ├── rules/
-│   └── custom-quality.md    # Overrides nexus/standard/code-quality
+│   └── custom-quality.md    # Overrides mochi/standard/code-quality
 ├── skills/
 │   └── local-web-search.yaml # Adds local/web-search
 └── commands/
-    └── custom-build.yaml    # Overrides nexus/standard/build
+    └── custom-build.yaml    # Overrides mochi/standard/build
 ```
 
 ## 4. Local Overrides
 
-Local templates in `.nexus/templates/` can override or disable plugin capabilities:
+Local templates in `.mochi/templates/` can override or disable plugin capabilities:
 
 ```
-.nexus/templates/
+.mochi/templates/
 ├── rules/
-│   └── custom-quality.md    # Override nexus/standard/code-quality
+│   └── custom-quality.md    # Override mochi/standard/code-quality
 ├── skills/
 │   └── local-web-search.yaml # Add custom web search
 └── commands/
-    └── custom-build.yaml    # Override nexus/standard/build
+    └── custom-build.yaml    # Override mochi/standard/build
 ```
 
 To disable a capability entirely, create an empty or minimal override file that effectively removes it.
@@ -111,9 +111,9 @@ To ensure that two different developers get the exact same environment, we imple
 1.  **Canonicalization**: Sort all active plugins alphabetically by namespace.
 2.  **Content Hashing**: Create a SHA256 hash of the "Merged Rule State":
     - Canonical JSON representation of all rules, skills, and commands.
-    - Version strings of all plugins from `nexus.lock`.
-3.  **Verification**: The hash is stored in `nexus.lock` as `metadata.content_hash`. If `nexus workspace create` results in a different hash, the process fails with a `DeterminismWarning`.
+    - Version strings of all plugins from `mochi.lock`.
+3.  **Verification**: The hash is stored in `mochi.lock` as `metadata.content_hash`. If `mochi workspace create` results in a different hash, the process fails with a `DeterminismWarning`.
 
 ## 4. Error Handling & Recovery
 - **Network Failures**: Implement an exponential backoff (3 retries) for remote clones.
-- **Lockfile Mismatch**: If `config.yaml` changes but `nexus.lock` is not updated, the CLI must suggest running `nexus plugin update`.
+- **Lockfile Mismatch**: If `config.yaml` changes but `mochi.lock` is not updated, the CLI must suggest running `mochi plugin update`.
