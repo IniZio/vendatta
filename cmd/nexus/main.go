@@ -302,6 +302,80 @@ The coordination server manages remote nodes and enables distributed branch exec
 	},
 }
 
+var coordinationRestartCmd = &cobra.Command{
+	Use:   "restart",
+	Short: "Restart the coordination server",
+	Long: `Gracefully restart the coordination server for remote node communication.
+Stops any running server, then starts a new instance with the same configuration.`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		fmt.Println("=== Restarting Coordination Server ===")
+
+		pidFile := ".nexus/server.pid"
+		if data, err := os.ReadFile(pidFile); err == nil {
+			pidStr := strings.TrimSpace(string(data))
+			fmt.Printf("Stopping existing server (PID: %s)...\n", pidStr)
+			if pid, err := strconv.Atoi(pidStr); err == nil {
+				if proc, err := os.FindProcess(pid); err == nil {
+					proc.Signal(os.Interrupt)
+					time.Sleep(2 * time.Second)
+					proc.Kill()
+				}
+			}
+			os.Remove(pidFile)
+		}
+
+		fmt.Println("Waiting for cleanup...")
+		time.Sleep(1 * time.Second)
+
+		fmt.Println("Starting coordination server in background...")
+		configPath := coordination.GetConfigPath()
+		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			configPath = ".nexus/coordination.yaml"
+			if _, err := os.Stat(configPath); os.IsNotExist(err) {
+				fmt.Println("Generating default configuration...")
+				if err := coordination.GenerateDefaultConfig(configPath); err != nil {
+					return fmt.Errorf("failed to generate config: %w", err)
+				}
+				fmt.Printf("Configuration written to %s\n", configPath)
+			}
+		}
+
+		cmd := exec.Command("nexus", "coordination", "start")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("failed to start server: %w", err)
+		}
+
+		os.WriteFile(pidFile, []byte(fmt.Sprintf("%d", cmd.Process.Pid)), 0644)
+		fmt.Printf("Server started (PID: %d)\n", cmd.Process.Pid)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		fmt.Println("Monitoring startup (15 seconds)...")
+		for i := 0; i < 15; i++ {
+			resp, err := http.Get("http://localhost:3001/health")
+			if err == nil && resp.StatusCode == 200 {
+				fmt.Println("✅ Server is healthy!")
+				return nil
+			}
+			if i > 0 {
+				fmt.Printf("Attempt %d/15...\n", i+1)
+			}
+			select {
+			case <-time.After(1 * time.Second):
+			case <-ctx.Done():
+				break
+			}
+		}
+
+		fmt.Println("⚠️  Server not responding after 15 seconds")
+		fmt.Println("Check logs: tail -f .nexus/server.log")
+		return nil
+	},
+}
+
 var agentCmd = &cobra.Command{
 	Use:   "agent",
 	Short: "Manage node agent",
@@ -686,6 +760,7 @@ func init() {
 
 	// Coordination subcommands
 	coordinationCmd.AddCommand(coordinationStartCmd)
+	coordinationCmd.AddCommand(coordinationRestartCmd)
 
 	// Agent subcommands
 	agentCmd.AddCommand(agentStartCmd)

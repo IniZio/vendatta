@@ -1,0 +1,6 @@
+Starting coordination server...
+Generating default configuration...
+Configuration written to .nexus/coordination.yaml
+Warning: GitHub App not configured: GITHUB_APP_ID environment variable not set
+2026/01/18 13:02:28 Starting coordination server on 0.0.0.0:3001
+2026/01/18 13:02:29 GET /health 200 90.691µs

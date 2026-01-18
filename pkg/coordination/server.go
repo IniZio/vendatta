@@ -27,6 +27,11 @@ type ServerInfo struct {
 
 // StartServer starts the coordination server with proper lifecycle management
 func StartServer(configPath string) error {
+	if dbPath := os.Getenv("DB_PATH"); dbPath == "" {
+		dbPath = ".nexus/nexus.db"
+		os.Setenv("DB_PATH", dbPath)
+	}
+
 	// Load configuration
 	cfg, err := LoadConfig(configPath)
 	if err != nil {
