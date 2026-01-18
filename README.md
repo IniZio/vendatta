@@ -1,62 +1,78 @@
 # nexus
 
-Remote SSH access to isolated dev environments. Workspaces on Docker/LXC/QEMU.
+Isolated dev environments. SSH + Services. Works with Cursor, VSCode, AI agents.
+
+```bash
+curl -fsSL https://nexus.example.com/install.sh | bash
+```
+
+3 minutes → Workspace ready. Editor connected. Services running.
 
 ---
 
-## Start Staging
+## Install
+
+[Full Installation Guide](scripts/INSTALL.md)
+
+**One-liner:**
+```bash
+curl -fsSL https://nexus.example.com/install.sh | bash
+```
+
+**Or:**
+```bash
+git clone https://github.com/nexus/nexus && cd nexus && make build
+```
+
+---
+
+## Quick Start (After Install)
+
+```bash
+nexus auth github         # Login with GitHub
+nexus ssh setup           # Generate/upload SSH keys
+nexus workspace create owner/repo   # Create workspace
+nexus workspace connect my-workspace  # Open in editor
+```
+
+Done. Your code is ready.
+
+---
+
+## For Staging Environment
+
+[Staging Deployment](deploy/envs/staging/README.md) - Local testing/development
 
 ```bash
 cd deploy/envs/staging
 ./ops/start.sh
 ```
 
-Server: http://localhost:3001
-
-Full guide: [deploy/envs/staging/README.md](deploy/envs/staging/README.md)
-
 ---
 
-## Dev: Connect to Workspace
+## For Developers (This Project)
 
-1. Get SSH key: `cat ~/.ssh/id_ed25519.pub`
-2. Register with admin
-3. Get workspace ID from admin
-4. SSH in: `ssh -p 2236 dev@localhost`
-5. Inside: `cd /workspace` → Your code
-
----
-
-## Admin: Deploy & Manage
-
-[Staging Deployment Guide](deploy/envs/staging/README.md)
-
-- Start server: `deploy/envs/staging/ops/start.sh`
-- Register users: `deploy/envs/staging/ops/users.sh`
-- Create workspaces: `deploy/envs/staging/ops/workspaces.sh`
-- Troubleshoot: `deploy/envs/staging/ops/troubleshoot.sh`
-
----
-
-## API Reference
-
-[deploy/envs/staging/docs/API.md](deploy/envs/staging/docs/API.md)
-
----
-
-## Setup from Scratch
-
-[deploy/envs/staging/docs/SETUP.md](deploy/envs/staging/docs/SETUP.md)
-
----
-
-## Build
-
+Build:
 ```bash
-go build -o bin/nexus ./cmd/nexus
+make build
 ```
 
 Test:
 ```bash
-go test ./...
+make test
+make test-coverage
 ```
+
+Dev setup:
+```bash
+make dev-setup
+```
+
+---
+
+## Documentation
+
+- [Installation](scripts/INSTALL.md) - Binary download & setup
+- [Staging](deploy/envs/staging/README.md) - Local server ops
+- [M4 Implementation](docs/planning/M4/) - Current phase progress
+- [Architecture](docs/specs/m3.md) - System design
