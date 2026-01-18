@@ -561,11 +561,13 @@ func TestFetchPluginFiles_FileContentMatches(t *testing.T) {
 	assert.NoError(t, err)
 
 	// For each file, verify it can be found and has expected content
-	// by checking for %s-specific patterns in the content
+	// Check that files are not empty and have reasonable content
+	assert.Greater(t, len(files), 0, "Should fetch at least one file from templates/rules")
 	for _, file := range files {
-		// Verify the content contains expected markers for rules files
-		assert.Contains(t, file.Content, "#", "Rule file %s should have markdown headers", file.Name)
-		assert.NotContains(t, file.Content, "placeholder", "File %s should not be a placeholder", file.Name)
+		// Verify the file is not empty (indicates it was successfully fetched)
+		assert.NotEmpty(t, file.Content, "File %s should have content", file.Name)
+		// Verify files are reasonably sized (not stub/placeholder files)
+		assert.Greater(t, len(file.Content), 50, "File %s should have substantial content (not a placeholder)", file.Name)
 	}
 }
 

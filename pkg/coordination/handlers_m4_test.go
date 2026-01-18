@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -141,6 +142,17 @@ func TestM4CreateWorkspace(t *testing.T) {
 		Username:  "testuser",
 		PublicKey: "ssh-ed25519 AAAA... test@example.com",
 	})
+
+	// Set up GitHub installation for the user
+	user, _ := userReg.GetByUsername("testuser")
+	server.gitHubInstallationsMu.Lock()
+	server.gitHubInstallations["testuser"] = &GitHubInstallation{
+		UserID:         user.ID,
+		GitHubUsername: "testuser",
+		Token:          "test-token-12345",
+		TokenExpiresAt: time.Now().Add(24 * time.Hour),
+	}
+	server.gitHubInstallationsMu.Unlock()
 
 	tests := []struct {
 		name           string
