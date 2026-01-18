@@ -393,6 +393,10 @@ func parseSSHTarget(target string) (host string, port int, err error) {
 		return "", 0, fmt.Errorf("invalid target format: %w", err)
 	}
 
+	if portStr == "" {
+		return "", 0, fmt.Errorf("invalid target format: port is required")
+	}
+
 	port, err = net.LookupPort("tcp", portStr)
 	if err != nil {
 		return "", 0, fmt.Errorf("invalid port: %w", err)

@@ -141,7 +141,7 @@ func TestParseSSHTarget(t *testing.T) {
 		{
 			name:     "IPv6 with port",
 			target:   "[::1]:2222",
-			wantHost: "[::1]",
+			wantHost: "::1",
 			wantPort: 2222,
 		},
 		{
